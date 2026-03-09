@@ -1,0 +1,75 @@
+import json
+
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.user import User
+from app.schemas.interview import (
+    InterviewStartRequest,
+    InterviewStartResponse,
+    InterviewChatRequest,
+    InterviewEndRequest,
+    EvaluationResponse,
+    InterviewHistoryResponse,
+)
+from app.api.deps import get_db, get_current_user
+from app.services import interview_service
+
+router = APIRouter(prefix="/api/interview", tags=["interview"])
+
+
+@router.post("/start", response_model=InterviewStartResponse)
+async def start(
+    req: InterviewStartRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        interview_id, job_title, message = await interview_service.start_interview(
+            current_user.id, req.job_id, db
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    return InterviewStartResponse(interview_id=interview_id, job_title=job_title, message=message)
+
+
+@router.post("/chat")
+async def chat(
+    req: InterviewChatRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    async def event_generator():
+        try:
+            async for chunk in interview_service.chat_stream(req.interview_id, req.message, db):
+                data = json.dumps({"text": chunk}, ensure_ascii=False)
+                yield f"data: {data}\n\n"
+            yield "data: [DONE]\n\n"
+        except ValueError as e:
+            error = json.dumps({"error": str(e)}, ensure_ascii=False)
+            yield f"data: {error}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+@router.post("/end", response_model=EvaluationResponse)
+async def end(
+    req: InterviewEndRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        job_title, evaluation = await interview_service.end_interview(req.interview_id, db)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    return EvaluationResponse(interview_id=req.interview_id, job_title=job_title, evaluation=evaluation)
+
+
+@router.get("/history", response_model=InterviewHistoryResponse)
+async def history(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    data = await interview_service.get_history(current_user.id, db)
+    return InterviewHistoryResponse(interviews=data)
