@@ -14,28 +14,29 @@ export default function MatchingPage() {
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("matching")
 
   useEffect(() => {
+    let ignore = false
     const load = async () => {
       try {
         const cached = await getResults()
-        if (cached.data.results && cached.data.results.length > 0) {
+        if (!ignore && cached.data.results && cached.data.results.length > 0) {
           setResults(cached.data.results)
           setLoading(false)
           return
         }
-      } catch {
-        // no cached results
-      }
+      } catch {}
 
+      if (ignore) return
       try {
         const res = await triggerMatch()
-        setResults(res.data.results)
+        if (!ignore) setResults(res.data.results)
       } catch (err) {
-        message.error(err.response?.data?.detail || '匹配失败，请先完成测评')
+        if (!ignore) message.error(err.response?.data?.detail || '匹配失败，请先完成测评')
       } finally {
-        setLoading(false)
+        if (!ignore) setLoading(false)
       }
     }
     load()
+    return () => { ignore = true }
   }, [])
 
   const handleInterview = (jobId) => {

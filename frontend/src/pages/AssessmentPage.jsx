@@ -24,22 +24,24 @@ export default function AssessmentPage() {
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("assessment")
 
   useEffect(() => {
+    let ignore = false
     const check = async () => {
       if (forceNew) {
-        beginAssessment()
-        setChecking(false)
+        if (!ignore) await beginAssessment()
+        if (!ignore) setChecking(false)
         return
       }
       try {
         await getProfile()
-        navigate('/profile', { replace: true })
-      } catch {
-        beginAssessment()
-      } finally {
-        setChecking(false)
-      }
+        if (!ignore) navigate('/profile', { replace: true })
+        return
+      } catch {}
+      if (ignore) return
+      await beginAssessment()
+      if (!ignore) setChecking(false)
     }
     check()
+    return () => { ignore = true }
   }, [])
 
   const beginAssessment = async () => {

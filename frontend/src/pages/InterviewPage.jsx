@@ -103,19 +103,22 @@ export default function InterviewPage() {
       return
     }
 
+    let ignore = false
     const init = async () => {
       try {
         const res = await startInterview(Number(jobId))
+        if (ignore) return
         setInterviewId(res.data.interview_id)
         setJobTitle(res.data.job_title)
         setMessages([{ role: 'ai', content: res.data.message }])
       } catch (err) {
-        message.error('启动面试失败')
+        if (!ignore) message.error('启动面试失败')
       } finally {
-        setStarting(false)
+        if (!ignore) setStarting(false)
       }
     }
     init()
+    return () => { ignore = true }
   }, [jobId, navigate])
 
   useEffect(() => {
