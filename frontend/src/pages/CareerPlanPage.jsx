@@ -94,25 +94,28 @@ export default function CareerPlanPage() {
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("career")
 
   useEffect(() => {
+    let ignore = false
     const load = async () => {
       try {
         const res = await getPlan()
-        setPlan(res.data)
+        if (!ignore) setPlan(res.data)
       } catch {
-        setGenerating(true)
+        if (ignore) return
+        if (!ignore) setGenerating(true)
         try {
           const res = await generatePlan()
-          setPlan(res.data)
+          if (!ignore) setPlan(res.data)
         } catch (err) {
-          message.error(err.response?.data?.detail || '生成规划失败，请先完成测评和匹配')
+          if (!ignore) message.error(err.response?.data?.detail || '生成规划失败，请先完成测评和匹配')
         } finally {
-          setGenerating(false)
+          if (!ignore) setGenerating(false)
         }
       } finally {
-        setLoading(false)
+        if (!ignore) setLoading(false)
       }
     }
     load()
+    return () => { ignore = true }
   }, [])
 
   const handleRegenerate = async () => {
