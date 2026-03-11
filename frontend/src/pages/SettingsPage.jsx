@@ -32,12 +32,12 @@ const FEATURE_LABELS = {
 }
 
 const FEATURE_CREDITS = {
-  assessment: { credits: 78, yuan: 0.78, label: '一次完整测评' },
-  matching: { credits: 33, yuan: 0.33, label: '一次岗位匹配' },
-  interview: { credits: 36, yuan: 0.36, label: '一次模拟面试' },
-  career: { credits: 19, yuan: 0.19, label: '一次职业规划' },
-  resume: { credits: 14, yuan: 0.14, label: '一次简历分析' },
-  quiz: { credits: 9, yuan: 0.09, label: '一轮刷题' },
+  assessment: { credits: 100, yuan: 1.00, label: '一次完整测评' },
+  matching: { credits: 50, yuan: 0.50, label: '一次岗位匹配' },
+  interview: { credits: 100, yuan: 1.00, label: '一次模拟面试' },
+  career: { credits: 50, yuan: 0.50, label: '一次职业规划' },
+  resume: { credits: 50, yuan: 0.50, label: '一次简历分析' },
+  quiz: { credits: 10, yuan: 0.10, label: '一轮刷题' },
 }
 
 const RECHARGE_TIERS = [

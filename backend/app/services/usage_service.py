@@ -19,7 +19,7 @@ async def log_usage(
     error_message: str | None = None,
     session_id: str | None = None,
 ):
-    """Write a usage record. Uses its own session to avoid interfering with caller's transaction."""
+    """Write a usage record. Credits are deducted upfront in check_access."""
     async with AsyncSessionLocal() as db:
         record = UsageRecord(
             user_id=user_id,

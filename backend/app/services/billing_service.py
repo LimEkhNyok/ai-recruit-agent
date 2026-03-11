@@ -1,14 +1,12 @@
-import math
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
 
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.billing import UserWallet, Subscription, RechargeRecord
 from app.config import (
-    CREDITS_PER_INPUT_1K_TOKENS,
-    CREDITS_PER_OUTPUT_1K_TOKENS,
     FREE_QUIZ_ROUNDS,
+    FEATURE_CREDITS_COST,
     RECHARGE_TIERS,
     SUBSCRIPTION_PLANS,
 )
@@ -42,8 +40,17 @@ async def get_active_subscription(user_id: int, db: AsyncSession) -> Subscriptio
     return result.scalar_one_or_none()
 
 
+def _maybe_reset_daily_quiz(wallet: UserWallet) -> None:
+    """Reset free quiz counter if the last reset was before today."""
+    today = date.today()
+    if wallet.free_quiz_reset_date != today:
+        wallet.free_quiz_remaining = FREE_QUIZ_ROUNDS
+        wallet.free_quiz_reset_date = today
+
+
 async def get_wallet_info(user_id: int, db: AsyncSession) -> dict:
     wallet = await get_or_create_wallet(user_id, db)
+    _maybe_reset_daily_quiz(wallet)
     sub = await get_active_subscription(user_id, db)
     await db.commit()
 
@@ -57,7 +64,7 @@ async def get_wallet_info(user_id: int, db: AsyncSession) -> dict:
 
 
 async def check_access(user_id: int, feature: str, mode: str, db: AsyncSession) -> tuple[bool, str]:
-    """Return (allowed, reason). For BYOK users, always allow."""
+    """Check access and deduct fixed credits upfront. Returns (allowed, reason)."""
     if mode == "byok":
         return True, "ok"
 
@@ -66,49 +73,23 @@ async def check_access(user_id: int, feature: str, mode: str, db: AsyncSession) 
         return True, "subscription"
 
     wallet = await get_or_create_wallet(user_id, db)
-
-    if feature == "quiz" and wallet.free_quiz_remaining > 0:
-        return True, "free_quiz"
-
-    if wallet.balance > 0:
-        return True, "balance"
-
-    return False, "余额不足，请充值或订阅"
-
-
-async def deduct_credits(
-    user_id: int,
-    input_tokens: int,
-    output_tokens: int,
-    total_tokens: int,
-    mode: str,
-    feature: str,
-    db: AsyncSession,
-) -> int:
-    """Deduct credits after an API call. Returns the credits cost. For BYOK, returns 0."""
-    if mode == "byok":
-        return 0
-
-    sub = await get_active_subscription(user_id, db)
-    if sub is not None:
-        return 0
-
-    wallet = await get_or_create_wallet(user_id, db)
+    _maybe_reset_daily_quiz(wallet)
 
     if feature == "quiz" and wallet.free_quiz_remaining > 0:
         wallet.free_quiz_remaining -= 1
-        await db.flush()
-        return 0
+        await db.commit()
+        return True, "free_quiz"
 
-    billable_output = max(total_tokens - input_tokens, output_tokens)
-    credits = math.ceil(
-        input_tokens / 1000 * CREDITS_PER_INPUT_1K_TOKENS
-        + billable_output / 1000 * CREDITS_PER_OUTPUT_1K_TOKENS
-    )
+    cost = FEATURE_CREDITS_COST.get(feature, 0)
+    if wallet.balance >= cost and cost > 0:
+        wallet.balance -= cost
+        await db.commit()
+        return True, "balance"
 
-    wallet.balance = max(wallet.balance - credits, 0)
-    await db.flush()
-    return credits
+    if feature == "quiz":
+        return False, "今日免费刷题额度已用尽，请充值或订阅后继续刷题"
+
+    return False, f"积分不足（需要 {cost} 积分），请充值或订阅"
 
 
 async def recharge(user_id: int, tier: str, db: AsyncSession) -> dict:

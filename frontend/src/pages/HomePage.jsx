@@ -12,9 +12,12 @@ import {
   SettingOutlined,
   ApiOutlined,
   SafetyCertificateOutlined,
+  WalletOutlined,
+  GiftOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../store/useAuthStore'
+import useBillingStore from '../store/useBillingStore'
 import { getProfile } from '../api/assessment'
 import { getResults } from '../api/matching'
 import { getConfig, getFeatures } from '../api/modelConfig'
@@ -82,6 +85,7 @@ export default function HomePage() {
   const [modelConfig, setModelConfig] = useState(null)
   const [featureStatus, setFeatureStatus] = useState(null)
   const [configLoaded, setConfigLoaded] = useState(false)
+  const { wallet, fetchWallet } = useBillingStore()
 
   useEffect(() => {
     getProfile().then(() => setHasProfile(true)).catch(() => {})
@@ -90,7 +94,10 @@ export default function HomePage() {
     }).catch(() => {})
 
     getConfig()
-      .then((res) => setModelConfig(res.data))
+      .then((res) => {
+        setModelConfig(res.data)
+        if (res.data.mode === 'platform') fetchWallet()
+      })
       .catch(() => {})
       .finally(() => setConfigLoaded(true))
 
@@ -107,15 +114,14 @@ export default function HomePage() {
         className="rounded-2xl p-10 mb-8 text-center"
         style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
       >
-        <Title style={{ color: '#fff', fontSize: 32, marginBottom: 8 }}>
-          从匹配到发现
+        <Title style={{ color: '#fff', fontSize: 32, fontWeight: 400, marginBottom: 8 }}>
+          AI 驱动职业探索，为计算机人精准定位未来
         </Title>
-        <Title level={3} style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 400, marginTop: 0 }}>
-          让每个人都能找到属于自己的工作
+        <Title level={3} style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 700, marginTop: 0 }}>
+          对话测评、智能匹配、模拟面试、简历分析、刷题训练、职业规划
         </Title>
-        <Paragraph style={{ color: 'rgba(255,255,255,0.7)', fontSize: 16, maxWidth: 600, margin: '0 auto' }}>
-          AI 驱动的职业探索平台，通过对话式测评、智能匹配、模拟面试和职业规划，
-          帮助你发现真正适合自己的职业方向
+        <Paragraph style={{ color: 'rgba(255,255,255,0.7)', fontSize: 30, maxWidth: 600, margin: '0 auto' }}>
+          一站式帮你找到真正适合的职业方向
         </Paragraph>
       </div>
 
@@ -149,6 +155,12 @@ export default function HomePage() {
                 <span className="text-xs text-gray-500">
                   可用功能：{Object.entries(featureStatus).filter(([, v]) => v).length} / {Object.keys(featureStatus).length}
                 </span>
+              )}
+              {modelConfig?.mode === 'platform' && wallet && (
+                <>
+                  <Tag icon={<WalletOutlined />} color="blue">{wallet.balance} 积分</Tag>
+                  <Tag icon={<GiftOutlined />} color="green">今日免费刷题 {wallet.free_quiz_remaining}/3</Tag>
+                </>
               )}
             </div>
             <Button size="small" icon={<SettingOutlined />} onClick={() => navigate('/settings')}>

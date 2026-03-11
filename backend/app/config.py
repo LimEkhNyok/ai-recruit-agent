@@ -21,9 +21,16 @@ def get_settings() -> Settings:
     return Settings()
 
 
-CREDITS_PER_INPUT_1K_TOKENS = 3
-CREDITS_PER_OUTPUT_1K_TOKENS = 12
 FREE_QUIZ_ROUNDS = 3
+
+FEATURE_CREDITS_COST = {
+    "assessment": 100,
+    "matching": 50,
+    "interview": 100,
+    "career": 50,
+    "resume": 50,
+    "quiz": 10,
+}
 
 RECHARGE_TIERS = {
     "mini": {"amount_yuan": 2, "credits": 200},
