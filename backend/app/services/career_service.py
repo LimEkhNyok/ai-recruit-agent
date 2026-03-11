@@ -8,13 +8,13 @@ from app.models.matching import MatchResult
 from app.models.job import JobPosition
 from app.models.career import CareerPlan
 from app.models.quiz import QuizRecord
-from app.services.gemini_service import get_gemini_service
+from app.services.model_service import ModelService
 from app.prompts.career import CAREER_PLAN_PROMPT
 
 MASTERY_THRESHOLD = 2
 
 
-async def generate_plan(user_id: int, db: AsyncSession) -> CareerPlan:
+async def generate_plan(user_id: int, db: AsyncSession, model_service: ModelService) -> CareerPlan:
     """Generate a career plan from the latest profile + top-5 match results."""
     # 1. Latest profile
     result = await db.execute(
@@ -119,8 +119,7 @@ async def generate_plan(user_id: int, db: AsyncSession) -> CareerPlan:
     )
 
     # 4. Call Gemini
-    gemini = get_gemini_service()
-    plan_data = await gemini.generate_json(
+    plan_data = await model_service.generate_json(
         system_prompt="你是一位资深职业规划师。请严格按照要求的 JSON 格式输出职业规划。",
         content=prompt_content,
     )

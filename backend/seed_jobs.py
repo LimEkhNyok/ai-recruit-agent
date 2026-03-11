@@ -12,7 +12,8 @@ load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 from app.database import engine, AsyncSessionLocal, Base
 import app.models  # noqa: F401
 from app.models.job import JobPosition
-from app.services.gemini_service import get_gemini_service
+from app.services.model_service import ModelService
+from app.config import get_settings
 
 JOBS = [
     {
@@ -199,7 +200,12 @@ JOBS = [
 
 
 async def seed(reseed=False):
-    gemini = get_gemini_service()
+    settings = get_settings()
+    gemini = ModelService(
+        base_url=settings.GEMINI_BASE_URL,
+        api_key=settings.GEMINI_API_KEY,
+        model=settings.GEMINI_MODEL,
+    )
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

@@ -6,6 +6,8 @@ import {
   AimOutlined,
   RocketOutlined,
   EditOutlined,
+  SettingOutlined,
+  BarChartOutlined,
   UserOutlined,
   LogoutOutlined,
   UploadOutlined,
@@ -26,6 +28,8 @@ const navItems = [
   { key: '/matching', icon: <AimOutlined />, label: '匹配' },
   { key: '/career', icon: <RocketOutlined />, label: '规划' },
   { key: '/quiz', icon: <EditOutlined />, label: '刷题' },
+  { key: '/usage', icon: <BarChartOutlined />, label: '统计' },
+  { key: '/settings', icon: <SettingOutlined />, label: '设置' },
 ]
 
 export default function Layout() {

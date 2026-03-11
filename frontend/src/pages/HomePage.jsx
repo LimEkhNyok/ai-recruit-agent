@@ -1,21 +1,27 @@
 import { useState, useEffect } from 'react'
-import { Card, Typography, Row, Col, Button, Tag } from 'antd'
+import { Card, Typography, Row, Col, Button, Tag, Alert, Badge, message } from 'antd'
 import {
   FormOutlined,
   AimOutlined,
   AudioOutlined,
   RocketOutlined,
+  FileTextOutlined,
+  BulbOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  SettingOutlined,
+  ApiOutlined,
+  SafetyCertificateOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../store/useAuthStore'
 import { getProfile } from '../api/assessment'
 import { getResults } from '../api/matching'
+import { getConfig, getFeatures } from '../api/modelConfig'
 
 const { Title, Text, Paragraph } = Typography
 
-const features = [
+const FEATURE_META = [
   {
     key: 'assessment',
     icon: <FormOutlined style={{ fontSize: 36, color: '#1677ff' }} />,
@@ -48,20 +54,52 @@ const features = [
     path: '/career',
     color: '#fff7e6',
   },
+  {
+    key: 'resume',
+    icon: <FileTextOutlined style={{ fontSize: 36, color: '#13c2c2' }} />,
+    title: 'AI 简历分析',
+    desc: '上传 PDF/DOCX/TXT 简历，AI 生成详细分析报告，帮你发现优化空间',
+    path: '/resume',
+    color: '#e6fffb',
+  },
+  {
+    key: 'quiz',
+    icon: <BulbOutlined style={{ fontSize: 36, color: '#eb2f96' }} />,
+    title: '高效刷题练习',
+    desc: 'AI 智能出题 + 判题，结合记忆系统帮你高效巩固知识、查漏补缺',
+    path: '/quiz',
+    color: '#fff0f6',
+  },
 ]
+
+const MODE_LABELS = { byok: '自有 API Key', platform: '平台提供模型' }
 
 export default function HomePage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const [hasProfile, setHasProfile] = useState(false)
   const [hasMatch, setHasMatch] = useState(false)
+  const [modelConfig, setModelConfig] = useState(null)
+  const [featureStatus, setFeatureStatus] = useState(null)
+  const [configLoaded, setConfigLoaded] = useState(false)
 
   useEffect(() => {
     getProfile().then(() => setHasProfile(true)).catch(() => {})
     getResults().then((res) => {
       if (res.data.results?.length > 0) setHasMatch(true)
     }).catch(() => {})
+
+    getConfig()
+      .then((res) => setModelConfig(res.data))
+      .catch(() => {})
+      .finally(() => setConfigLoaded(true))
+
+    getFeatures()
+      .then((res) => setFeatureStatus(res.data))
+      .catch(() => {})
   }, [])
+
+  const hasConfigured = modelConfig?.last_test_status != null
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -80,6 +118,45 @@ export default function HomePage() {
           帮助你发现真正适合自己的职业方向
         </Paragraph>
       </div>
+
+      {configLoaded && !hasConfigured && (
+        <Alert
+          type="warning"
+          showIcon
+          icon={<SettingOutlined />}
+          message="请先配置模型以使用平台功能"
+          description="你还没有设置 AI 模型配置。配置完成后才能使用测评、匹配、面试等功能。你可以选择使用自己的 API Key 或平台提供的服务。"
+          action={
+            <Button type="primary" icon={<SettingOutlined />} onClick={() => navigate('/settings')}>
+              前往设置
+            </Button>
+          }
+          style={{ marginBottom: 24 }}
+        />
+      )}
+
+      {configLoaded && hasConfigured && (
+        <Card size="small" style={{ marginBottom: 24 }}>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <Tag icon={<SafetyCertificateOutlined />} color="blue">
+                {MODE_LABELS[modelConfig.mode] || modelConfig.mode}
+              </Tag>
+              {modelConfig.mode === 'byok' && modelConfig.model && (
+                <Tag icon={<ApiOutlined />}>{modelConfig.model}</Tag>
+              )}
+              {featureStatus && (
+                <span className="text-xs text-gray-500">
+                  可用功能：{Object.entries(featureStatus).filter(([, v]) => v).length} / {Object.keys(featureStatus).length}
+                </span>
+              )}
+            </div>
+            <Button size="small" icon={<SettingOutlined />} onClick={() => navigate('/settings')}>
+              模型设置
+            </Button>
+          </div>
+        </Card>
+      )}
 
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-4">
@@ -104,35 +181,51 @@ export default function HomePage() {
       </div>
 
       <Row gutter={[16, 16]}>
-        {features.map((f) => (
-          <Col key={f.key} xs={24} sm={12}>
-            <Card
-              hoverable
-              className="h-full"
-              style={{ borderRadius: 12 }}
-              onClick={() => {
-                if (f.key === 'interview') {
-                  navigate('/matching')
-                } else {
-                  navigate(f.path)
-                }
-              }}
-            >
-              <div className="flex gap-4">
-                <div
-                  className="flex items-center justify-center rounded-xl shrink-0"
-                  style={{ width: 64, height: 64, background: f.color }}
+        {FEATURE_META.map((f) => {
+          const disabled = featureStatus && featureStatus[f.key] === false
+          return (
+            <Col key={f.key} xs={24} sm={12}>
+              <Badge.Ribbon
+                text="不可用"
+                color="red"
+                style={{ display: disabled ? undefined : 'none' }}
+              >
+                <Card
+                  hoverable={!disabled}
+                  className="h-full"
+                  style={{
+                    borderRadius: 12,
+                    opacity: disabled ? 0.6 : 1,
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                  }}
+                  onClick={() => {
+                    if (disabled) return
+                    if (f.key === 'interview') {
+                      navigate('/matching')
+                    } else if (f.key === 'resume') {
+                      message.info('请点击右上角「导入简历」按钮上传简历')
+                    } else {
+                      navigate(f.path)
+                    }
+                  }}
                 >
-                  {f.icon}
-                </div>
-                <div>
-                  <Title level={5} style={{ marginBottom: 4 }}>{f.title}</Title>
-                  <Text type="secondary" style={{ fontSize: 13 }}>{f.desc}</Text>
-                </div>
-              </div>
-            </Card>
-          </Col>
-        ))}
+                  <div className="flex gap-4">
+                    <div
+                      className="flex items-center justify-center rounded-xl shrink-0"
+                      style={{ width: 64, height: 64, background: f.color }}
+                    >
+                      {f.icon}
+                    </div>
+                    <div>
+                      <Title level={5} style={{ marginBottom: 4 }}>{f.title}</Title>
+                      <Text type="secondary" style={{ fontSize: 13 }}>{f.desc}</Text>
+                    </div>
+                  </div>
+                </Card>
+              </Badge.Ribbon>
+            </Col>
+          )
+        })}
       </Row>
 
       <div className="mt-10 text-center pb-8">

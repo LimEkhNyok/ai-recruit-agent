@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Typography, Spin, Row, Col, message, Divider, Empty } from 'antd'
+import { Typography, Spin, Row, Col, message, Divider, Empty, Button, Result } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import MatchCard from '../components/MatchCard'
 import { triggerMatch, getResults } from '../api/matching'
+import useFeatureGuard from '../hooks/useFeatureGuard'
 
 const { Title, Text } = Typography
 
@@ -10,6 +11,7 @@ export default function MatchingPage() {
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+  const { loading: guardLoading, available, featureLabel } = useFeatureGuard("matching")
 
   useEffect(() => {
     const load = async () => {
@@ -38,6 +40,29 @@ export default function MatchingPage() {
 
   const handleInterview = (jobId) => {
     navigate(`/interview?job_id=${jobId}`)
+  }
+
+  if (guardLoading) {
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight: 400 }}>
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (available === false) {
+    return (
+      <Result
+        status="warning"
+        title={`${featureLabel}功能不可用`}
+        subTitle="当前模型配置不支持此功能，请前往设置页更换 provider/model"
+        extra={
+          <Button type="primary" onClick={() => navigate('/settings')}>
+            前往设置
+          </Button>
+        }
+      />
+    )
   }
 
   if (loading) {

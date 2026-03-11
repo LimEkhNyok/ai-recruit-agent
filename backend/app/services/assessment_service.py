@@ -5,17 +5,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.assessment import Assessment, TalentProfile
-from app.services.gemini_service import get_gemini_service
+from app.services.model_service import ModelService
 from app.prompts.assessment import SYSTEM_PROMPT, PROFILE_GENERATION_PROMPT
 
 COMPLETE_MARKER = "[ASSESSMENT_COMPLETE]"
 
 
-async def start_assessment(user_id: int, db: AsyncSession) -> tuple[int, str]:
+async def start_assessment(user_id: int, db: AsyncSession, model_service: ModelService) -> tuple[int, str]:
     """Create a new assessment and return (assessment_id, first_ai_message)."""
-    gemini = get_gemini_service()
-
-    first_message = await gemini.chat(
+    first_message = await model_service.chat(
         system_prompt=SYSTEM_PROMPT,
         history=None,
         user_message="你好，我准备开始测评了。",
@@ -38,17 +36,16 @@ async def start_assessment(user_id: int, db: AsyncSession) -> tuple[int, str]:
     return assessment.id, first_message
 
 
-async def chat(assessment_id: int, user_message: str, db: AsyncSession) -> tuple[str, bool]:
+async def chat(assessment_id: int, user_message: str, db: AsyncSession, model_service: ModelService) -> tuple[str, bool]:
     """Append user message, get AI reply, return (reply, is_complete)."""
     result = await db.execute(select(Assessment).where(Assessment.id == assessment_id))
     assessment = result.scalar_one_or_none()
     if assessment is None:
         raise ValueError("Assessment not found")
 
-    gemini = get_gemini_service()
     history: list[dict] = list(assessment.chat_history) if assessment.chat_history else []
 
-    reply = await gemini.chat(
+    reply = await model_service.chat(
         system_prompt=SYSTEM_PROMPT,
         history=history,
         user_message=user_message,
@@ -70,14 +67,13 @@ async def chat(assessment_id: int, user_message: str, db: AsyncSession) -> tuple
     return display_reply, is_complete
 
 
-async def finish_assessment(assessment_id: int, db: AsyncSession) -> TalentProfile:
+async def finish_assessment(assessment_id: int, db: AsyncSession, model_service: ModelService) -> TalentProfile:
     """Generate talent profile from completed assessment dialogue."""
     result = await db.execute(select(Assessment).where(Assessment.id == assessment_id))
     assessment = result.scalar_one_or_none()
     if assessment is None:
         raise ValueError("Assessment not found")
 
-    gemini = get_gemini_service()
     history: list[dict] = assessment.chat_history or []
 
     dialogue_text = ""
@@ -86,13 +82,13 @@ async def finish_assessment(assessment_id: int, db: AsyncSession) -> TalentProfi
         text = msg["parts"][0]["text"]
         dialogue_text += f"{role}: {text}\n\n"
 
-    profile_data = await gemini.generate_json(
+    profile_data = await model_service.generate_json(
         system_prompt=PROFILE_GENERATION_PROMPT,
         content=dialogue_text,
     )
 
     summary_for_embedding = json.dumps(profile_data, ensure_ascii=False)
-    embedding = await gemini.get_embedding(summary_for_embedding)
+    embedding = await model_service.get_embedding(summary_for_embedding)
 
     profile = TalentProfile(
         user_id=assessment.user_id,
