@@ -7,8 +7,9 @@ const useAuthStore = create((set) => ({
 
   login: async (email, password) => {
     const res = await client.post('/auth/login', { email, password })
-    const { access_token } = res.data
+    const { access_token, refresh_token } = res.data
     localStorage.setItem('token', access_token)
+    localStorage.setItem('refresh_token', refresh_token)
     const me = await client.get('/auth/me')
     localStorage.setItem('user', JSON.stringify(me.data))
     set({ token: access_token, user: me.data })
@@ -16,8 +17,9 @@ const useAuthStore = create((set) => ({
 
   register: async (name, email, password) => {
     const res = await client.post('/auth/register', { name, email, password })
-    const { access_token } = res.data
+    const { access_token, refresh_token } = res.data
     localStorage.setItem('token', access_token)
+    localStorage.setItem('refresh_token', refresh_token)
     const me = await client.get('/auth/me')
     localStorage.setItem('user', JSON.stringify(me.data))
     set({ token: access_token, user: me.data })
@@ -25,6 +27,7 @@ const useAuthStore = create((set) => ({
 
   logout: () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('refresh_token')
     localStorage.removeItem('user')
     set({ token: null, user: null })
   },

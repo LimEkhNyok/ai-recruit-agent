@@ -19,3 +19,6 @@ Thumbs.db
 
 # Test files
 backend/test_*.py
+
+# Local Netlify folder
+.netlify

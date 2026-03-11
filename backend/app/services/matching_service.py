@@ -6,14 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.assessment import TalentProfile
 from app.models.job import JobPosition
 from app.models.matching import MatchResult
-from app.services.gemini_service import get_gemini_service
+from app.services.model_service import ModelService
 from app.services.vector_service import rank_by_similarity
 from app.prompts.matching import MATCHING_PROMPT_TEMPLATE
 
 TOP_N_CANDIDATES = 10
 
 
-async def match(user_id: int, db: AsyncSession) -> list[dict]:
+async def match(user_id: int, db: AsyncSession, model_service: ModelService) -> list[dict]:
     """Run the full matching pipeline and return sorted results."""
     # 1. Load latest profile
     result = await db.execute(
@@ -72,8 +72,7 @@ async def match(user_id: int, db: AsyncSession) -> list[dict]:
         "{job_list}", job_list_text
     )
 
-    gemini = get_gemini_service()
-    match_data = await gemini.generate_json(
+    match_data = await model_service.generate_json(
         system_prompt="你是一位专业的人岗匹配分析师。请严格按照要求的 JSON 格式输出。",
         content=prompt_content,
     )

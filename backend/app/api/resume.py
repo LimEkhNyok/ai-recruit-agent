@@ -1,16 +1,16 @@
 import io
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
-from app.api.deps import get_db, get_current_user
-from app.services.gemini_service import get_gemini_service
+from app.models.resume import Resume
+from app.services.model_service import ModelService
+from app.api.deps import get_db, get_current_user, get_model_service, require_feature
 from app.prompts.resume import RESUME_ANALYSIS_PROMPT
 
 router = APIRouter(prefix="/api/resume", tags=["resume"])
-
-_resume_store: dict[str, dict] = {}
 
 
 def _extract_text(filename: str, content: bytes) -> str:
@@ -60,15 +60,18 @@ async def upload(
     if not text.strip():
         raise HTTPException(status_code=400, detail="无法从文件中提取到文本内容")
 
-    resume_id = f"{current_user.id}_{file.filename}"
-    _resume_store[resume_id] = {
-        "user_id": current_user.id,
-        "filename": file.filename,
-        "text": text,
-    }
+    resume = Resume(
+        user_id=current_user.id,
+        filename=file.filename,
+        text_content=text,
+        file_size=len(content),
+    )
+    db.add(resume)
+    await db.commit()
+    await db.refresh(resume)
 
     preview = text[:200] + ("..." if len(text) > 200 else "")
-    return {"resume_id": resume_id, "filename": file.filename, "text_preview": preview}
+    return {"resume_id": resume.id, "filename": file.filename, "text_preview": preview}
 
 
 @router.post("/analyze")
@@ -76,19 +79,30 @@ async def analyze(
     body: dict,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    model_service: ModelService = Depends(get_model_service),
+    _=Depends(require_feature("resume")),
 ):
     resume_id = body.get("resume_id")
-    if not resume_id or resume_id not in _resume_store:
-        raise HTTPException(status_code=404, detail="简历未找到，请重新上传")
+    if not resume_id:
+        raise HTTPException(status_code=400, detail="缺少 resume_id")
 
-    record = _resume_store[resume_id]
-    if record["user_id"] != current_user.id:
+    result = await db.execute(select(Resume).where(Resume.id == int(resume_id)))
+    resume = result.scalar_one_or_none()
+
+    if resume is None:
+        raise HTTPException(status_code=404, detail="简历未找到，请重新上传")
+    if resume.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="无权访问此简历")
 
-    gemini = get_gemini_service()
-    result = await gemini.generate_json(
+    import uuid
+    model_service._feature = "resume"
+    model_service.set_session(str(uuid.uuid4()))
+    analysis = await model_service.generate_json(
         system_prompt=RESUME_ANALYSIS_PROMPT,
-        content=f"以下是简历内容：\n\n{record['text']}",
+        content=f"以下是简历内容：\n\n{resume.text_content}",
     )
 
-    return {"resume_id": resume_id, "filename": record["filename"], "analysis": result}
+    resume.analysis = analysis
+    await db.commit()
+
+    return {"resume_id": resume.id, "filename": resume.filename, "analysis": analysis}

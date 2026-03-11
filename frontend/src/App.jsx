@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
+import FeatureGuard from './components/FeatureGuard'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import HomePage from './pages/HomePage'
@@ -10,6 +11,8 @@ import MatchingPage from './pages/MatchingPage'
 import InterviewPage from './pages/InterviewPage'
 import CareerPlanPage from './pages/CareerPlanPage'
 import QuizPage from './pages/QuizPage'
+import SettingsPage from './pages/SettingsPage'
+import UsagePage from './pages/UsagePage'
 
 export default function App() {
   return (
@@ -24,12 +27,14 @@ export default function App() {
         }
       >
         <Route path="/" element={<HomePage />} />
-        <Route path="/assessment" element={<AssessmentPage />} />
+        <Route path="/assessment" element={<FeatureGuard feature="assessment"><AssessmentPage /></FeatureGuard>} />
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/matching" element={<MatchingPage />} />
-        <Route path="/interview" element={<InterviewPage />} />
-        <Route path="/career" element={<CareerPlanPage />} />
-        <Route path="/quiz" element={<QuizPage />} />
+        <Route path="/matching" element={<FeatureGuard feature="matching"><MatchingPage /></FeatureGuard>} />
+        <Route path="/interview" element={<FeatureGuard feature="interview"><InterviewPage /></FeatureGuard>} />
+        <Route path="/career" element={<FeatureGuard feature="career"><CareerPlanPage /></FeatureGuard>} />
+        <Route path="/quiz" element={<FeatureGuard feature="quiz"><QuizPage /></FeatureGuard>} />
+        <Route path="/usage" element={<UsagePage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
     </Routes>
   )

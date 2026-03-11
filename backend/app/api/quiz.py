@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select, func as sa_func, and_, case, Integer
@@ -5,13 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
 from app.models.quiz import QuizRecord
-from app.api.deps import get_db, get_current_user
-from app.services.gemini_service import get_gemini_service
+from app.services.model_service import ModelService
+from app.api.deps import get_db, get_current_user, get_model_service, require_feature
 from app.prompts.quiz import QUIZ_GENERATE_PROMPT, QUIZ_JUDGE_PROMPT
 
 router = APIRouter(prefix="/api/quiz", tags=["quiz"])
 
 MASTERY_THRESHOLD = 2
+_quiz_sessions: dict[int, str] = {}
 
 
 class GenerateRequest(BaseModel):
@@ -77,6 +80,8 @@ async def generate(
     req: GenerateRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    model_service: ModelService = Depends(get_model_service),
+    _=Depends(require_feature("quiz")),
 ):
     memory_context = await _build_memory_context(current_user.id, req.topic, db)
 
@@ -88,8 +93,11 @@ async def generate(
         "{memory_context}", memory_context
     )
 
-    gemini = get_gemini_service()
-    question_data = await gemini.generate_json(
+    sid = str(uuid.uuid4())
+    _quiz_sessions[current_user.id] = sid
+    model_service._feature = "quiz"
+    model_service.set_session(sid)
+    question_data = await model_service.generate_json(
         system_prompt="你是一位专业的技术出题官。请严格按照要求的 JSON 格式输出一道题目。",
         content=prompt_content,
     )
@@ -102,6 +110,8 @@ async def judge(
     req: JudgeRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    model_service: ModelService = Depends(get_model_service),
+    _=Depends(require_feature("quiz")),
 ):
     prompt_content = QUIZ_JUDGE_PROMPT.replace(
         "{question_type}", req.question_type
@@ -115,8 +125,11 @@ async def judge(
         "{user_answer}", req.user_answer
     )
 
-    gemini = get_gemini_service()
-    result = await gemini.generate_json(
+    model_service._feature = "quiz"
+    sid = _quiz_sessions.pop(current_user.id, None)
+    if sid:
+        model_service.set_session(sid)
+    result = await model_service.generate_json(
         system_prompt="你是一位严谨的技术评判官。请严格按照要求的 JSON 格式输出判断结果。",
         content=prompt_content,
     )

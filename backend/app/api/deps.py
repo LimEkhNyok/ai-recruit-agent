@@ -9,6 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import AsyncSessionLocal
 from app.config import get_settings
 from app.models.user import User
+from app.models.model_config import UserModelConfig
+from app.services.model_service import ModelService, get_model_service_for_user
+from app.services.capability_test import FEATURE_REQUIREMENTS, get_available_features
 
 security = HTTPBearer()
 
@@ -37,3 +40,58 @@ async def get_current_user(
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user
+
+
+async def get_model_service(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ModelService:
+    return await get_model_service_for_user(current_user, db)
+
+
+def require_feature(feature_name: str):
+    """Factory that returns a FastAPI dependency checking feature availability."""
+
+    CAPABILITY_LABELS = {
+        "chat": "Chat 对话",
+        "stream": "流式对话",
+        "json": "JSON 结构化输出",
+        "embedding": "向量嵌入 (Embedding)",
+    }
+
+    async def _guard(
+        current_user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+    ):
+        result = await db.execute(
+            select(UserModelConfig).where(UserModelConfig.user_id == current_user.id)
+        )
+        config = result.scalar_one_or_none()
+
+        if config is None:
+            features = get_available_features(True, True, True, False)
+        else:
+            features = get_available_features(
+                config.supports_chat, config.supports_stream,
+                config.supports_json, config.supports_embedding,
+            )
+
+        if not features.get(feature_name, False):
+            required = FEATURE_REQUIREMENTS.get(feature_name, [])
+            missing = []
+            caps = {
+                "chat": config.supports_chat if config else True,
+                "stream": config.supports_stream if config else True,
+                "json": config.supports_json if config else True,
+                "embedding": config.supports_embedding if config else False,
+            }
+            for req in required:
+                if not caps.get(req, False):
+                    missing.append(CAPABILITY_LABELS.get(req, req))
+
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"当前模型配置不支持此功能（缺少：{', '.join(missing)}），请在模型设置中更换 provider/model",
+            )
+
+    return _guard

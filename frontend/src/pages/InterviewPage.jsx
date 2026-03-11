@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { Input, Button, Card, Spin, Typography, Modal, Progress, Tag, message, Descriptions } from 'antd'
+import { Input, Button, Card, Spin, Typography, Modal, Progress, Tag, message, Descriptions, Result } from 'antd'
 import { SendOutlined, StopOutlined, FileTextOutlined, ArrowLeftOutlined } from '@ant-design/icons'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import ChatBubble from '../components/ChatBubble'
 import { startInterview, chatStream, endInterview } from '../api/interview'
+import useFeatureGuard from '../hooks/useFeatureGuard'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -54,16 +55,20 @@ function EvaluationReport({ evaluation, jobTitle }) {
         ))}
       </div>
 
-      <Descriptions column={1} size="small" bordered className="mb-4">
+      <Descriptions column={1} size="small" bordered className="mb-4" contentStyle={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
         <Descriptions.Item label="优势">
-          {(evaluation.strengths || []).map((s, i) => <Tag key={i} color="green" className="mb-1">{s}</Tag>)}
+          <div className="flex flex-wrap gap-1">
+            {(evaluation.strengths || []).map((s, i) => <Tag key={i} color="green" style={{ whiteSpace: 'normal', maxWidth: '100%' }}>{s}</Tag>)}
+          </div>
         </Descriptions.Item>
         <Descriptions.Item label="不足">
-          {(evaluation.weaknesses || []).map((s, i) => <Tag key={i} color="orange" className="mb-1">{s}</Tag>)}
+          <div className="flex flex-wrap gap-1">
+            {(evaluation.weaknesses || []).map((s, i) => <Tag key={i} color="orange" style={{ whiteSpace: 'normal', maxWidth: '100%' }}>{s}</Tag>)}
+          </div>
         </Descriptions.Item>
         <Descriptions.Item label="改进建议">
           <ul className="m-0 pl-4">
-            {(evaluation.improvement_suggestions || []).map((s, i) => <li key={i}>{s}</li>)}
+            {(evaluation.improvement_suggestions || []).map((s, i) => <li key={i} style={{ marginBottom: 4 }}>{s}</li>)}
           </ul>
         </Descriptions.Item>
       </Descriptions>
@@ -77,6 +82,7 @@ export default function InterviewPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const jobId = searchParams.get('job_id')
+  const { loading: guardLoading, available, featureLabel } = useFeatureGuard("interview")
 
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -161,6 +167,29 @@ export default function InterviewPage() {
       e.preventDefault()
       handleSend()
     }
+  }
+
+  if (guardLoading) {
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight: 400 }}>
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (available === false) {
+    return (
+      <Result
+        status="warning"
+        title={`${featureLabel}功能不可用`}
+        subTitle="当前模型配置不支持此功能，请前往设置页更换 provider/model"
+        extra={
+          <Button type="primary" onClick={() => navigate('/settings')}>
+            前往设置
+          </Button>
+        }
+      />
+    )
   }
 
   if (starting) {

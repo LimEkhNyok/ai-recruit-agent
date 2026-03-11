@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Card, Typography, Timeline, Tag, Spin, Button, Row, Col, message, Steps } from 'antd'
+import { Card, Typography, Timeline, Tag, Spin, Button, Row, Col, message, Steps, Result } from 'antd'
 import {
   RocketOutlined,
   AimOutlined,
@@ -9,7 +9,9 @@ import {
   BulbOutlined,
   SyncOutlined,
 } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
 import { generatePlan, getPlan } from '../api/career'
+import useFeatureGuard from '../hooks/useFeatureGuard'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -88,6 +90,8 @@ export default function CareerPlanPage() {
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
+  const navigate = useNavigate()
+  const { loading: guardLoading, available, featureLabel } = useFeatureGuard("career")
 
   useEffect(() => {
     const load = async () => {
@@ -122,6 +126,29 @@ export default function CareerPlanPage() {
     } finally {
       setRegenerating(false)
     }
+  }
+
+  if (guardLoading) {
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight: 400 }}>
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (available === false) {
+    return (
+      <Result
+        status="warning"
+        title={`${featureLabel}功能不可用`}
+        subTitle="当前模型配置不支持此功能，请前往设置页更换 provider/model"
+        extra={
+          <Button type="primary" onClick={() => navigate('/settings')}>
+            前往设置
+          </Button>
+        }
+      />
+    )
   }
 
   if (loading || generating) {

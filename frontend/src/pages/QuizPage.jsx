@@ -9,7 +9,9 @@ import {
   BulbOutlined,
   TrophyOutlined,
 } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
 import { generateQuiz, judgeQuiz, skipQuiz, getQuizStats } from '../api/quiz'
+import useFeatureGuard from '../hooks/useFeatureGuard'
 
 const { Title, Text, Paragraph } = Typography
 const { TextArea } = Input
@@ -34,6 +36,8 @@ export default function QuizPage() {
   const [judging, setJudging] = useState(false)
   const [result, setResult] = useState(null)
   const [stats, setStats] = useState(null)
+  const navigate = useNavigate()
+  const { loading: guardLoading, available, featureLabel } = useFeatureGuard("quiz")
 
   useEffect(() => {
     loadStats()
@@ -160,6 +164,29 @@ export default function QuizPage() {
         autoSize={{ minRows: questionType === '编程题' ? 8 : 3, maxRows: 20 }}
         disabled={disabled}
         style={questionType === '编程题' ? { fontFamily: 'Consolas, Monaco, monospace' } : {}}
+      />
+    )
+  }
+
+  if (guardLoading) {
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight: 400 }}>
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (available === false) {
+    return (
+      <Result
+        status="warning"
+        title={`${featureLabel}功能不可用`}
+        subTitle="当前模型配置不支持此功能，请前往设置页更换 provider/model"
+        extra={
+          <Button type="primary" onClick={() => navigate('/settings')}>
+            前往设置
+          </Button>
+        }
       />
     )
   }

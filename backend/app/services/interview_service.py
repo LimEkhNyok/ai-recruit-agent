@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.interview import Interview
 from app.models.job import JobPosition
-from app.services.gemini_service import get_gemini_service
+from app.services.model_service import ModelService
 from app.prompts.interview import INTERVIEW_SYSTEM_PROMPT_TEMPLATE, EVALUATION_PROMPT
 
 
@@ -24,17 +24,16 @@ def _build_system_prompt(job: JobPosition) -> str:
     )
 
 
-async def start_interview(user_id: int, job_id: int, db: AsyncSession) -> tuple[int, str, str]:
+async def start_interview(user_id: int, job_id: int, db: AsyncSession, model_service: ModelService) -> tuple[int, str, str]:
     """Create interview, return (interview_id, job_title, first_ai_message)."""
     result = await db.execute(select(JobPosition).where(JobPosition.id == job_id))
     job = result.scalar_one_or_none()
     if job is None:
         raise ValueError("Job position not found")
 
-    gemini = get_gemini_service()
     system_prompt = _build_system_prompt(job)
 
-    first_message = await gemini.chat(
+    first_message = await model_service.chat(
         system_prompt=system_prompt,
         history=None,
         user_message="你好，我来参加面试。",
@@ -59,7 +58,7 @@ async def start_interview(user_id: int, job_id: int, db: AsyncSession) -> tuple[
 
 
 async def chat_stream(
-    interview_id: int, user_message: str, db: AsyncSession
+    interview_id: int, user_message: str, db: AsyncSession, model_service: ModelService
 ) -> AsyncGenerator[str, None]:
     """Stream AI reply chunks via SSE, then persist the full reply to history."""
     result = await db.execute(select(Interview).where(Interview.id == interview_id))
@@ -70,12 +69,11 @@ async def chat_stream(
     result = await db.execute(select(JobPosition).where(JobPosition.id == interview.job_id))
     job = result.scalar_one_or_none()
 
-    gemini = get_gemini_service()
     system_prompt = _build_system_prompt(job)
     history: list[dict] = list(interview.chat_history) if interview.chat_history else []
 
     full_reply = ""
-    async for chunk in gemini.chat_stream(
+    async for chunk in model_service.chat_stream(
         system_prompt=system_prompt,
         history=history,
         user_message=user_message,
@@ -89,7 +87,7 @@ async def chat_stream(
     await db.commit()
 
 
-async def end_interview(interview_id: int, db: AsyncSession) -> tuple[str, dict]:
+async def end_interview(interview_id: int, db: AsyncSession, model_service: ModelService) -> tuple[str, dict]:
     """Generate evaluation report, return (job_title, evaluation_dict)."""
     result = await db.execute(select(Interview).where(Interview.id == interview_id))
     interview = result.scalar_one_or_none()
@@ -114,8 +112,7 @@ async def end_interview(interview_id: int, db: AsyncSession) -> tuple[str, dict]
         "{chat_history}", dialogue_text
     )
 
-    gemini = get_gemini_service()
-    evaluation = await gemini.generate_json(
+    evaluation = await model_service.generate_json(
         system_prompt="你是一位专业的面试评估师。请严格按照要求的 JSON 格式输出评估报告。",
         content=eval_prompt_content,
     )

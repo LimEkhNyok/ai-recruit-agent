@@ -4,6 +4,7 @@ import { SendOutlined, CheckCircleOutlined } from '@ant-design/icons'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import ChatBubble from '../components/ChatBubble'
 import { startAssessment, chat, finishAssessment, getProfile } from '../api/assessment'
+import useFeatureGuard from '../hooks/useFeatureGuard'
 
 const { Title, Text } = Typography
 
@@ -20,6 +21,7 @@ export default function AssessmentPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const forceNew = searchParams.get('force') === '1'
+  const { loading: guardLoading, available, featureLabel } = useFeatureGuard("assessment")
 
   useEffect(() => {
     const check = async () => {
@@ -96,6 +98,29 @@ export default function AssessmentPage() {
       e.preventDefault()
       handleSend()
     }
+  }
+
+  if (guardLoading) {
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight: 400 }}>
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (available === false) {
+    return (
+      <Result
+        status="warning"
+        title={`${featureLabel}功能不可用`}
+        subTitle="当前模型配置不支持此功能，请前往设置页更换 provider/model"
+        extra={
+          <Button type="primary" onClick={() => navigate('/settings')}>
+            前往设置
+          </Button>
+        }
+      />
+    )
   }
 
   if (checking || starting) {

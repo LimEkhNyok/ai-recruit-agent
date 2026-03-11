@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_BASE_URL: str = "https://www.sophnet.com/api/open-apis/v1"
     GEMINI_MODEL: str = "gemini-3-pro-preview"
+    ENCRYPTION_KEY: str = ""
     JWT_SECRET_KEY: str = "dev-secret-change-in-production"
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
