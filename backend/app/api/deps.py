@@ -12,6 +12,7 @@ from app.models.user import User
 from app.models.model_config import UserModelConfig
 from app.services.model_service import ModelService, get_model_service_for_user
 from app.services.capability_test import FEATURE_REQUIREMENTS, get_available_features
+from app.services.billing_service import check_access
 
 security = HTTPBearer()
 
@@ -92,6 +93,29 @@ def require_feature(feature_name: str):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"当前模型配置不支持此功能（缺少：{', '.join(missing)}），请在模型设置中更换 provider/model",
+            )
+
+    return _guard
+
+
+def require_billing(feature_name: str):
+    """Factory that returns a dependency enforcing billing access for platform-mode users."""
+
+    async def _guard(
+        current_user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+    ):
+        result = await db.execute(
+            select(UserModelConfig).where(UserModelConfig.user_id == current_user.id)
+        )
+        config = result.scalar_one_or_none()
+        mode = config.mode if config else "platform"
+
+        allowed, reason = await check_access(current_user.id, feature_name, mode, db)
+        if not allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=reason,
             )
 
     return _guard

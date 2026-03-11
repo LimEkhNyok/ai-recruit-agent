@@ -12,7 +12,7 @@ from app.schemas.assessment import (
     FinishRequest,
     ProfileResponse,
 )
-from app.api.deps import get_db, get_current_user, get_model_service, require_feature
+from app.api.deps import get_db, get_current_user, get_model_service, require_feature, require_billing
 from app.services import assessment_service
 
 router = APIRouter(prefix="/api/assessment", tags=["assessment"])
@@ -26,6 +26,7 @@ async def start(
     db: AsyncSession = Depends(get_db),
     model_service: ModelService = Depends(get_model_service),
     _=Depends(require_feature("assessment")),
+    __=Depends(require_billing("assessment")),
 ):
     sid = str(uuid.uuid4())
     _assessment_sessions[current_user.id] = sid
