@@ -17,7 +17,7 @@ from app.services.billing_service import (
     subscribe,
     get_billing_records,
 )
-from app.config import RECHARGE_TIERS, SUBSCRIPTION_PLANS
+from app.config import RECHARGE_TIERS, SUBSCRIPTION_PLANS, FEATURE_CREDITS_COST
 
 router = APIRouter(prefix="/api/billing", tags=["billing"])
 
@@ -70,16 +70,7 @@ async def records(
 async def pricing():
     return {
         "credits_per_yuan": 100,
-        "input_credits_per_1k": 3,
-        "output_credits_per_1k": 12,
         "recharge_tiers": RECHARGE_TIERS,
         "subscription_plans": SUBSCRIPTION_PLANS,
-        "feature_estimates": {
-            "assessment": {"credits": 78, "yuan": 0.78},
-            "matching": {"credits": 33, "yuan": 0.33},
-            "interview": {"credits": 36, "yuan": 0.36},
-            "career": {"credits": 19, "yuan": 0.19},
-            "resume": {"credits": 14, "yuan": 0.14},
-            "quiz": {"credits": 9, "yuan": 0.09},
-        },
+        "feature_costs": {k: {"credits": v, "yuan": v / 100} for k, v in FEATURE_CREDITS_COST.items()},
     }

@@ -12,6 +12,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { generateQuiz, judgeQuiz, skipQuiz, getQuizStats } from '../api/quiz'
 import useFeatureGuard from '../hooks/useFeatureGuard'
+import useBillingStore from '../store/useBillingStore'
 
 const { Title, Text, Paragraph } = Typography
 const { TextArea } = Input
@@ -38,6 +39,7 @@ export default function QuizPage() {
   const [stats, setStats] = useState(null)
   const navigate = useNavigate()
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("quiz")
+  const { fetchWallet } = useBillingStore()
 
   useEffect(() => {
     loadStats()
@@ -62,8 +64,9 @@ export default function QuizPage() {
     try {
       const res = await generateQuiz(topic, questionType)
       setQuestion(res.data)
+      fetchWallet()
     } catch (err) {
-      message.error('出题失败，请重试')
+      message.error(err.response?.data?.detail || '出题失败，请重试')
     } finally {
       setGenerating(false)
     }
