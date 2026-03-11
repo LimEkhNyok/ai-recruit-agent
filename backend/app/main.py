@@ -18,6 +18,7 @@ from app.api.resume import router as resume_router
 from app.api.quiz import router as quiz_router
 from app.api.model_config import router as model_config_router
 from app.api.usage import router as usage_router
+from app.api.billing import router as billing_router
 
 
 @asynccontextmanager
@@ -53,6 +54,7 @@ app.include_router(resume_router)
 app.include_router(quiz_router)
 app.include_router(model_config_router)
 app.include_router(usage_router)
+app.include_router(billing_router)
 
 
 @app.get("/api/health")

@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { Layout as AntLayout, Menu, Dropdown, Avatar, Space, Typography, Button, Modal, message, Spin } from 'antd'
+import { useState, useRef, useEffect } from 'react'
+import { Layout as AntLayout, Menu, Dropdown, Avatar, Space, Typography, Button, Modal, message, Spin, Tag } from 'antd'
 import {
   HomeOutlined,
   FormOutlined,
@@ -13,10 +13,14 @@ import {
   UploadOutlined,
   FileSearchOutlined,
   CheckCircleOutlined,
+  WalletOutlined,
+  CrownOutlined,
 } from '@ant-design/icons'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import useAuthStore from '../store/useAuthStore'
+import useBillingStore from '../store/useBillingStore'
 import { uploadResume, analyzeResume } from '../api/resume'
+import { getConfig } from '../api/modelConfig'
 import ResumeReport from './ResumeReport'
 
 const { Header, Content } = AntLayout
@@ -36,6 +40,7 @@ export default function Layout() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout } = useAuthStore()
+  const { wallet, fetchWallet } = useBillingStore()
   const fileInputRef = useRef(null)
 
   const [resumeId, setResumeId] = useState(null)
@@ -44,6 +49,21 @@ export default function Layout() {
   const [analyzing, setAnalyzing] = useState(false)
   const [analysis, setAnalysis] = useState(null)
   const [showReport, setShowReport] = useState(false)
+  const [isPlatformMode, setIsPlatformMode] = useState(false)
+
+  useEffect(() => {
+    const loadMode = async () => {
+      try {
+        const res = await getConfig()
+        const mode = res.data.mode || 'platform'
+        setIsPlatformMode(mode === 'platform')
+        if (mode === 'platform') {
+          fetchWallet()
+        }
+      } catch {}
+    }
+    if (user) loadMode()
+  }, [user])
 
   const handleLogout = () => {
     logout()
@@ -116,6 +136,18 @@ export default function Layout() {
           />
         </div>
         <Space size="middle">
+          {isPlatformMode && wallet && (
+            <Tag
+              icon={wallet.subscription_active ? <CrownOutlined /> : <WalletOutlined />}
+              color={wallet.subscription_active ? 'gold' : 'blue'}
+              style={{ cursor: 'pointer', fontSize: 13, padding: '2px 10px' }}
+              onClick={() => navigate('/settings')}
+            >
+              {wallet.subscription_active
+                ? (wallet.subscription_plan === 'weekly' ? '周卡' : '月卡')
+                : `${wallet.balance} 积分`}
+            </Tag>
+          )}
           <input
             ref={fileInputRef}
             type="file"

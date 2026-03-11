@@ -19,3 +19,21 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+CREDITS_PER_INPUT_1K_TOKENS = 3
+CREDITS_PER_OUTPUT_1K_TOKENS = 12
+FREE_QUIZ_ROUNDS = 3
+
+RECHARGE_TIERS = {
+    "mini": {"amount_yuan": 2, "credits": 200},
+    "starter": {"amount_yuan": 5, "credits": 500},
+    "basic": {"amount_yuan": 10, "credits": 1000},
+    "plus": {"amount_yuan": 30, "credits": 3200},
+    "premium": {"amount_yuan": 100, "credits": 11000},
+}
+
+SUBSCRIPTION_PLANS = {
+    "weekly": {"amount_yuan": 9.9, "duration_days": 7},
+    "monthly": {"amount_yuan": 29.9, "duration_days": 30},
+}

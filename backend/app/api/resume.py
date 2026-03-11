@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from app.models.resume import Resume
 from app.services.model_service import ModelService
-from app.api.deps import get_db, get_current_user, get_model_service, require_feature
+from app.api.deps import get_db, get_current_user, get_model_service, require_feature, require_billing
 from app.prompts.resume import RESUME_ANALYSIS_PROMPT
 
 router = APIRouter(prefix="/api/resume", tags=["resume"])
@@ -81,6 +81,7 @@ async def analyze(
     db: AsyncSession = Depends(get_db),
     model_service: ModelService = Depends(get_model_service),
     _=Depends(require_feature("resume")),
+    __=Depends(require_billing("resume")),
 ):
     resume_id = body.get("resume_id")
     if not resume_id:

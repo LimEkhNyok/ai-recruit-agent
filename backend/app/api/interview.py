@@ -15,7 +15,7 @@ from app.schemas.interview import (
     EvaluationResponse,
     InterviewHistoryResponse,
 )
-from app.api.deps import get_db, get_current_user, get_model_service, require_feature
+from app.api.deps import get_db, get_current_user, get_model_service, require_feature, require_billing
 from app.services import interview_service
 
 router = APIRouter(prefix="/api/interview", tags=["interview"])
@@ -30,6 +30,7 @@ async def start(
     db: AsyncSession = Depends(get_db),
     model_service: ModelService = Depends(get_model_service),
     _=Depends(require_feature("interview")),
+    __=Depends(require_billing("interview")),
 ):
     sid = str(uuid.uuid4())
     _interview_sessions[current_user.id] = sid
