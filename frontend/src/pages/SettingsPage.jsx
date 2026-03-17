@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Card, Typography, Radio, Input, Button, Tag, Spin, message, Row, Col, Space, Alert, Divider, Statistic, Badge } from 'antd'
+import { Card, Typography, Radio, Input, Button, Tag, Spin, message, Row, Col, Space, Alert, Divider, Statistic, Badge, Modal } from 'antd'
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -369,9 +369,16 @@ export default function SettingsPage() {
           size="large"
         >
           <Space direction="vertical" className="w-full">
-            <Radio value="platform">
-              <div>
-                <Text strong>使用平台提供的服务</Text>
+            <Radio value="platform" disabled onClick={() => {
+              Modal.info({
+                title: '功能暂未开放',
+                content: '平台提供的服务功能正在开发中，敬请期待！目前请使用「使用自己的 API Key (BYOK)」模式。',
+                okText: '知道了',
+              })
+            }}>
+              <div style={{ opacity: 0.5 }}>
+                <Text strong style={{ textDecoration: 'line-through' }}>使用平台提供的服务</Text>
+                <Tag color="warning" className="ml-2">暂未开放</Tag>
                 <br />
                 <Text type="secondary" style={{ fontSize: 13 }}>无需配置，开箱即用，按量计费或订阅不限量</Text>
               </div>
