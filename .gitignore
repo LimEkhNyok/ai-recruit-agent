@@ -22,3 +22,9 @@ backend/test_*.py
 
 # Local Netlify folder
 .netlify
+
+# 内部开发文档（含敏感信息/商业机密）
+AWS部署.md
+商业计划书.md
+计费.md
+plan.md
