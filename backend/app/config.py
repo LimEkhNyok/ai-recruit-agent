@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
+    SMTP_HOST: str = "smtpdm-ap-southeast-1.aliyun.com"
+    SMTP_PORT: int = 465
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = "noreply@smartmeal.longstock.com"
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 
@@ -20,6 +26,10 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     return Settings()
 
+
+VERIFY_CODE_LENGTH = 6
+VERIFY_CODE_EXPIRE_SECONDS = 300
+VERIFY_CODE_SEND_INTERVAL = 60
 
 FREE_QUIZ_ROUNDS = 3
 

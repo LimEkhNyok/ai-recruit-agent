@@ -15,8 +15,8 @@ const useAuthStore = create((set) => ({
     set({ token: access_token, user: me.data })
   },
 
-  register: async (name, email, password) => {
-    const res = await client.post('/auth/register', { name, email, password })
+  register: async (name, email, password, code) => {
+    const res = await client.post('/auth/register', { name, email, password, code })
     const { access_token, refresh_token } = res.data
     localStorage.setItem('token', access_token)
     localStorage.setItem('refresh_token', refresh_token)

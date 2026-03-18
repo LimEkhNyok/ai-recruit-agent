@@ -10,8 +10,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_settings
 from app.models.user import User
 from app.models.refresh_token import RefreshToken
-from app.schemas.auth import RegisterRequest, LoginRequest, TokenResponse, UserInfo, RefreshRequest
+from app.schemas.auth import (
+    RegisterRequest, LoginRequest, TokenResponse, UserInfo, RefreshRequest,
+    SendVerifyCodeRequest, SendVerifyCodeResponse,
+)
 from app.api.deps import get_db, get_current_user
+from app.services.verify_code import generate_code, store_code, verify_code, check_send_interval
+from app.services.email import send_verification_email
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -42,11 +47,30 @@ async def _create_tokens(user_id: int, db: AsyncSession) -> TokenResponse:
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 
-@router.post("/register", response_model=TokenResponse)
-async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
+@router.post("/send-verify-code", response_model=SendVerifyCodeResponse)
+async def send_verify_code(req: SendVerifyCodeRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == req.email))
     if result.scalar_one_or_none() is not None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="该邮箱已注册")
+
+    if await check_send_interval(req.email):
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="发送过于频繁，请稍后再试")
+
+    code = generate_code()
+    await store_code(req.email, code)
+    await send_verification_email(req.email, code)
+
+    return SendVerifyCodeResponse(message="验证码已发送")
+
+
+@router.post("/register", response_model=TokenResponse)
+async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    if not await verify_code(req.email, req.code):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="验证码错误或已过期")
+
+    result = await db.execute(select(User).where(User.email == req.email))
+    if result.scalar_one_or_none() is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="该邮箱已注册")
 
     user = User(
         email=req.email,
