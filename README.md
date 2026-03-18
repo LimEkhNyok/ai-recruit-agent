@@ -1,4 +1,5 @@
 # AI Recruit Agent — AI 驱动的智能招聘平台
+已上线！It's live！http://13.214.147.27
 
 ## 目录
 
