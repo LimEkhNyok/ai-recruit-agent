@@ -1,10 +1,19 @@
 from pydantic import BaseModel, EmailStr
 
 
+class SendVerifyCodeRequest(BaseModel):
+    email: EmailStr
+
+
+class SendVerifyCodeResponse(BaseModel):
+    message: str
+
+
 class RegisterRequest(BaseModel):
     name: str
     email: EmailStr
     password: str
+    code: str
 
 
 class LoginRequest(BaseModel):

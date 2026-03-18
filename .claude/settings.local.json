@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(redis-cli ping:*)",
+      "Bash(python -c \"from app.config import get_settings; s=get_settings\\(\\); print\\(f''SMTP: {s.SMTP_HOST}:{s.SMTP_PORT}, user={s.SMTP_USERNAME}, pwd_set={bool\\(s.SMTP_PASSWORD\\)}''\\)\")",
+      "Bash(python3 -c \"from app.config import get_settings; s=get_settings\\(\\); print\\(f''SMTP: {s.SMTP_HOST}:{s.SMTP_PORT}, user={s.SMTP_USERNAME}, pwd_set={bool\\(s.SMTP_PASSWORD\\)}''\\)\")",
+      "Bash(pip3 list:*)",
+      "Bash(pip3 install:*)",
+      "Bash(python3 -c \":*)",
+      "Bash(python3:*)",
+      "Bash(npx --yes acorn --ecma2020 --module src/store/useAuthStore.js)",
+      "Bash(node:*)",
+      "Bash(git check-ignore:*)"
+    ]
+  }
+}
