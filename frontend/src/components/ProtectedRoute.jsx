@@ -16,7 +16,10 @@ export default function ProtectedRoute({ children }) {
     if (!token) return
 
     const alreadyChecked = sessionStorage.getItem(ONBOARDING_KEY)
-    if (alreadyChecked) return
+    if (alreadyChecked) {
+      setRedirectToSettings(false)
+      return
+    }
 
     if (location.pathname === '/settings') {
       sessionStorage.setItem(ONBOARDING_KEY, '1')

@@ -25,7 +25,7 @@ async def generate_plan(user_id: int, db: AsyncSession, model_service: ModelServ
     )
     profile = result.scalar_one_or_none()
     if profile is None:
-        raise ValueError("No talent profile found. Please complete an assessment first.")
+        raise ValueError("尚未找到人才画像，请先完成职业测评。")
 
     # 2. Top-5 match results
     result = await db.execute(

@@ -209,7 +209,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
-  const [mode, setMode] = useState('platform')
+  const [mode, setMode] = useState('byok')
   const [baseUrl, setBaseUrl] = useState('')
   const [model, setModel] = useState('')
   const [apiKey, setApiKey] = useState('')
@@ -470,16 +470,11 @@ export default function SettingsPage() {
       {mode === 'platform' && !showPricing && (
         <Card className="mb-4">
           <Alert
-            type="info"
+            type="warning"
             showIcon
-            message="使用平台默认模型"
-            description="无需配置 API Key。平台将使用默认模型为你提供服务，所有功能开箱可用。"
+            message="平台模型服务暂未开放"
+            description="请切换到「使用自己的 API Key (BYOK)」模式进行配置。"
           />
-          <div className="mt-4">
-            <Button type="primary" onClick={handleSave} loading={saving}>
-              确认使用平台付费模型
-            </Button>
-          </div>
         </Card>
       )}
 
