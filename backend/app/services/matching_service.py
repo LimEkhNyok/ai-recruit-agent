@@ -24,7 +24,7 @@ async def match(user_id: int, db: AsyncSession, model_service: ModelService) -> 
     )
     profile = result.scalar_one_or_none()
     if profile is None:
-        raise ValueError("No talent profile found. Please complete an assessment first.")
+        raise ValueError("尚未找到人才画像，请先完成职业测评。")
 
     # 2. Load all jobs
     result = await db.execute(select(JobPosition))
