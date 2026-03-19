@@ -109,7 +109,7 @@ def require_billing(feature_name: str):
             select(UserModelConfig).where(UserModelConfig.user_id == current_user.id)
         )
         config = result.scalar_one_or_none()
-        mode = config.mode if config else "platform"
+        mode = config.mode if config else "byok"
 
         allowed, reason = await check_access(current_user.id, feature_name, mode, db)
         if not allowed:

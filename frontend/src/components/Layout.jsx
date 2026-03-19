@@ -57,9 +57,10 @@ export default function Layout() {
     const loadMode = async () => {
       try {
         const res = await getConfig()
-        const mode = res.data.mode || 'platform'
-        setIsPlatformMode(mode === 'platform')
-        if (mode === 'platform') {
+        const mode = res.data.mode
+        const configured = res.data.last_test_status != null
+        setIsPlatformMode(mode === 'platform' && configured)
+        if (mode === 'platform' && configured) {
           fetchWallet()
         }
       } catch {}
