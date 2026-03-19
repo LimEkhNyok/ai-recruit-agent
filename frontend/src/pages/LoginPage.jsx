@@ -38,6 +38,11 @@ export default function LoginPage() {
           <Form.Item name="password" rules={[{ required: true, message: '请输入密码' }]}>
             <Input.Password prefix={<LockOutlined />} placeholder="密码" />
           </Form.Item>
+          <Form.Item style={{ marginTop: -16, marginBottom: 16 }}>
+            <div className="text-right">
+              <Link to="/forgot-password" style={{ fontSize: 13 }}>忘记密码？</Link>
+            </div>
+          </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={loading} block>
               登录
