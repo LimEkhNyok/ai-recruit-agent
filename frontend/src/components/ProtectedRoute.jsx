@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
-import { Spin } from 'antd'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Result, Button, Spin } from 'antd'
+import { LoginOutlined } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../store/useAuthStore'
 import { getConfig } from '../api/modelConfig'
 
 const ONBOARDING_KEY = 'onboarding_config_checked'
 
-export default function ProtectedRoute({ children }) {
+export default function ProtectedRoute() {
   const token = useAuthStore((s) => s.token)
   const location = useLocation()
+  const navigate = useNavigate()
   const [checking, setChecking] = useState(false)
   const [redirectToSettings, setRedirectToSettings] = useState(false)
 
@@ -41,7 +44,23 @@ export default function ProtectedRoute({ children }) {
   }, [token, location.pathname])
 
   if (!token) {
-    return <Navigate to="/login" replace />
+    return (
+      <Result
+        status="warning"
+        title="请先登录后使用该功能"
+        subTitle="登录后即可体验测评、匹配、刷题等全部功能"
+        extra={
+          <Button
+            type="primary"
+            size="large"
+            icon={<LoginOutlined />}
+            onClick={() => navigate('/login')}
+          >
+            去登录
+          </Button>
+        }
+      />
+    )
   }
 
   if (redirectToSettings && location.pathname !== '/settings') {
@@ -56,5 +75,5 @@ export default function ProtectedRoute({ children }) {
     )
   }
 
-  return children
+  return <Outlet />
 }
