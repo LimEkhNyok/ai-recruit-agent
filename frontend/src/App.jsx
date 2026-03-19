@@ -19,22 +19,18 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route
-        element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }
-      >
+      <Route element={<Layout />}>
         <Route path="/" element={<HomePage />} />
-        <Route path="/assessment" element={<FeatureGuard feature="assessment"><AssessmentPage /></FeatureGuard>} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/matching" element={<FeatureGuard feature="matching"><MatchingPage /></FeatureGuard>} />
-        <Route path="/interview" element={<FeatureGuard feature="interview"><InterviewPage /></FeatureGuard>} />
-        <Route path="/career" element={<FeatureGuard feature="career"><CareerPlanPage /></FeatureGuard>} />
-        <Route path="/quiz" element={<FeatureGuard feature="quiz"><QuizPage /></FeatureGuard>} />
-        <Route path="/usage" element={<UsagePage />} />
-        <Route path="/settings" element={<SettingsPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/assessment" element={<FeatureGuard feature="assessment"><AssessmentPage /></FeatureGuard>} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/matching" element={<FeatureGuard feature="matching"><MatchingPage /></FeatureGuard>} />
+          <Route path="/interview" element={<FeatureGuard feature="interview"><InterviewPage /></FeatureGuard>} />
+          <Route path="/career" element={<FeatureGuard feature="career"><CareerPlanPage /></FeatureGuard>} />
+          <Route path="/quiz" element={<FeatureGuard feature="quiz"><QuizPage /></FeatureGuard>} />
+          <Route path="/usage" element={<UsagePage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+        </Route>
       </Route>
     </Routes>
   )

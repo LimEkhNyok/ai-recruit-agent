@@ -51,6 +51,8 @@ export default function Layout() {
   const [showReport, setShowReport] = useState(false)
   const [isPlatformMode, setIsPlatformMode] = useState(false)
 
+  const token = useAuthStore((s) => s.token)
+
   useEffect(() => {
     const loadMode = async () => {
       try {
@@ -136,51 +138,60 @@ export default function Layout() {
           />
         </div>
         <Space size="middle">
-          {isPlatformMode && wallet && (
-            <Tag
-              icon={wallet.subscription_active ? <CrownOutlined /> : <WalletOutlined />}
-              color={wallet.subscription_active ? 'gold' : 'blue'}
-              style={{ cursor: 'pointer', fontSize: 13, padding: '2px 10px' }}
-              onClick={() => navigate('/settings')}
-            >
-              {wallet.subscription_active
-                ? (wallet.subscription_plan === 'weekly' ? '周卡' : '月卡')
-                : `${wallet.balance} 积分`}
-            </Tag>
+          {token ? (
+            <>
+              {isPlatformMode && wallet && (
+                <Tag
+                  icon={wallet.subscription_active ? <CrownOutlined /> : <WalletOutlined />}
+                  color={wallet.subscription_active ? 'gold' : 'blue'}
+                  style={{ cursor: 'pointer', fontSize: 13, padding: '2px 10px' }}
+                  onClick={() => navigate('/settings')}
+                >
+                  {wallet.subscription_active
+                    ? (wallet.subscription_plan === 'weekly' ? '周卡' : '月卡')
+                    : `${wallet.balance} 积分`}
+                </Tag>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.docx,.txt"
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+              />
+              <Button
+                icon={resumeId ? <CheckCircleOutlined /> : <UploadOutlined />}
+                onClick={handleUploadClick}
+                loading={uploading}
+                type={resumeId ? 'default' : 'default'}
+                style={resumeId ? { color: '#52c41a', borderColor: '#52c41a' } : {}}
+              >
+                {resumeId ? '重新导入' : '导入简历'}
+              </Button>
+              {resumeId && (
+                <Button
+                  icon={<FileSearchOutlined />}
+                  onClick={analysis ? () => setShowReport(true) : handleAnalyze}
+                  loading={analyzing}
+                  type="primary"
+                  ghost
+                >
+                  简历分析
+                </Button>
+              )}
+              <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+                <Space className="cursor-pointer">
+                  <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1677ff' }} />
+                  <Text>{user?.name}</Text>
+                </Space>
+              </Dropdown>
+            </>
+          ) : (
+            <>
+              <Button type="primary" onClick={() => navigate('/login')}>登录</Button>
+              <Button onClick={() => navigate('/register')}>注册</Button>
+            </>
           )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.docx,.txt"
-            style={{ display: 'none' }}
-            onChange={handleFileChange}
-          />
-          <Button
-            icon={resumeId ? <CheckCircleOutlined /> : <UploadOutlined />}
-            onClick={handleUploadClick}
-            loading={uploading}
-            type={resumeId ? 'default' : 'default'}
-            style={resumeId ? { color: '#52c41a', borderColor: '#52c41a' } : {}}
-          >
-            {resumeId ? '重新导入' : '导入简历'}
-          </Button>
-          {resumeId && (
-            <Button
-              icon={<FileSearchOutlined />}
-              onClick={analysis ? () => setShowReport(true) : handleAnalyze}
-              loading={analyzing}
-              type="primary"
-              ghost
-            >
-              简历分析
-            </Button>
-          )}
-          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-            <Space className="cursor-pointer">
-              <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1677ff' }} />
-              <Text>{user?.name}</Text>
-            </Space>
-          </Dropdown>
         </Space>
       </Header>
       <Content className="p-6" style={{ background: '#f5f5f5', minHeight: 'calc(100vh - 64px)' }}>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Card, Typography, Row, Col, Button, Tag, Alert, Badge, message } from 'antd'
+import { Card, Typography, Row, Col, Button, Tag, Alert, Badge, message, Modal } from 'antd'
 import {
   FormOutlined,
   AimOutlined,
@@ -14,6 +14,7 @@ import {
   SafetyCertificateOutlined,
   WalletOutlined,
   GiftOutlined,
+  LoginOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../store/useAuthStore'
@@ -80,6 +81,7 @@ const MODE_LABELS = { byok: '自有 API Key', platform: '平台提供模型' }
 export default function HomePage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
+  const token = useAuthStore((s) => s.token)
   const [hasProfile, setHasProfile] = useState(false)
   const [hasMatch, setHasMatch] = useState(false)
   const [modelConfig, setModelConfig] = useState(null)
@@ -88,6 +90,8 @@ export default function HomePage() {
   const { wallet, fetchWallet } = useBillingStore()
 
   useEffect(() => {
+    if (!token) return
+
     getProfile().then(() => setHasProfile(true)).catch(() => {})
     getResults().then((res) => {
       if (res.data.results?.length > 0) setHasMatch(true)
@@ -104,9 +108,34 @@ export default function HomePage() {
     getFeatures()
       .then((res) => setFeatureStatus(res.data))
       .catch(() => {})
-  }, [])
+  }, [token])
 
   const hasConfigured = modelConfig?.last_test_status != null
+
+  const handleFeatureClick = (f) => {
+    if (!token) {
+      Modal.confirm({
+        title: '请先登录',
+        content: '登录后即可使用该功能，体验测评、匹配、刷题等全部服务。',
+        icon: <LoginOutlined style={{ color: '#1677ff' }} />,
+        okText: '去登录',
+        cancelText: '取消',
+        onOk: () => navigate('/login'),
+      })
+      return
+    }
+
+    const disabled = featureStatus && featureStatus[f.key] === false
+    if (disabled) return
+
+    if (f.key === 'interview') {
+      navigate('/matching')
+    } else if (f.key === 'resume') {
+      message.info('请点击右上角「导入简历」按钮上传简历')
+    } else {
+      navigate(f.path)
+    }
+  }
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -125,7 +154,7 @@ export default function HomePage() {
         </Paragraph>
       </div>
 
-      {configLoaded && !hasConfigured && (
+      {token && configLoaded && !hasConfigured && (
         <Alert
           type="warning"
           showIcon
@@ -141,7 +170,7 @@ export default function HomePage() {
         />
       )}
 
-      {configLoaded && hasConfigured && (
+      {token && configLoaded && hasConfigured && (
         <Card size="small" style={{ marginBottom: 24 }}>
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
@@ -171,22 +200,33 @@ export default function HomePage() {
       )}
 
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-4">
-          <Title level={5} style={{ margin: 0 }}>你好，{user?.name}</Title>
-          <div className="flex gap-2">
-            {hasProfile ? (
-              <Tag icon={<CheckCircleOutlined />} color="success">已完成测评</Tag>
-            ) : (
-              <Tag icon={<ClockCircleOutlined />} color="default">未测评</Tag>
+        {token ? (
+          <>
+            <div className="flex items-center gap-3 mb-4">
+              <Title level={5} style={{ margin: 0 }}>你好，{user?.name}</Title>
+              <div className="flex gap-2">
+                {hasProfile ? (
+                  <Tag icon={<CheckCircleOutlined />} color="success">已完成测评</Tag>
+                ) : (
+                  <Tag icon={<ClockCircleOutlined />} color="default">未测评</Tag>
+                )}
+                {hasMatch && <Tag icon={<CheckCircleOutlined />} color="success">已匹配岗位</Tag>}
+              </div>
+            </div>
+            {!hasProfile && (
+              <Card size="small" style={{ background: '#e6f4ff', border: '1px solid #91caff' }}>
+                <div className="flex items-center justify-between">
+                  <Text>完成 AI 测评，开启你的职业探索之旅</Text>
+                  <Button type="primary" onClick={() => navigate('/assessment')}>开始测评</Button>
+                </div>
+              </Card>
             )}
-            {hasMatch && <Tag icon={<CheckCircleOutlined />} color="success">已匹配岗位</Tag>}
-          </div>
-        </div>
-        {!hasProfile && (
-          <Card size="small" style={{ background: '#e6f4ff', border: '1px solid #91caff' }}>
+          </>
+        ) : (
+          <Card size="small" style={{ background: '#e6f4ff', border: '1px solid #91caff', marginBottom: 8 }}>
             <div className="flex items-center justify-between">
-              <Text>完成 AI 测评，开启你的职业探索之旅</Text>
-              <Button type="primary" onClick={() => navigate('/assessment')}>开始测评</Button>
+              <Text>登录后即可体验全部功能，开启你的职业探索之旅</Text>
+              <Button type="primary" icon={<LoginOutlined />} onClick={() => navigate('/login')}>去登录</Button>
             </div>
           </Card>
         )}
@@ -194,7 +234,7 @@ export default function HomePage() {
 
       <Row gutter={[16, 16]}>
         {FEATURE_META.map((f) => {
-          const disabled = featureStatus && featureStatus[f.key] === false
+          const disabled = token && featureStatus && featureStatus[f.key] === false
           return (
             <Col key={f.key} xs={24} sm={12}>
               <Badge.Ribbon
@@ -210,16 +250,7 @@ export default function HomePage() {
                     opacity: disabled ? 0.6 : 1,
                     cursor: disabled ? 'not-allowed' : 'pointer',
                   }}
-                  onClick={() => {
-                    if (disabled) return
-                    if (f.key === 'interview') {
-                      navigate('/matching')
-                    } else if (f.key === 'resume') {
-                      message.info('请点击右上角「导入简历」按钮上传简历')
-                    } else {
-                      navigate(f.path)
-                    }
-                  }}
+                  onClick={() => handleFeatureClick(f)}
                 >
                   <div className="flex gap-4">
                     <div
