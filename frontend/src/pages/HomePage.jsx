@@ -125,6 +125,18 @@ export default function HomePage() {
       return
     }
 
+    if (!hasConfigured) {
+      Modal.confirm({
+        title: '请先配置 API',
+        content: '你还没有设置 AI 模型配置，配置完成后才能使用该功能。',
+        icon: <SettingOutlined style={{ color: '#fa8c16' }} />,
+        okText: '前往设置',
+        cancelText: '取消',
+        onOk: () => navigate('/settings'),
+      })
+      return
+    }
+
     const disabled = featureStatus && featureStatus[f.key] === false
     if (disabled) return
 
