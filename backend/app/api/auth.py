@@ -12,11 +12,11 @@ from app.models.user import User
 from app.models.refresh_token import RefreshToken
 from app.schemas.auth import (
     RegisterRequest, LoginRequest, TokenResponse, UserInfo, RefreshRequest,
-    SendVerifyCodeRequest, SendVerifyCodeResponse,
+    SendVerifyCodeRequest, SendVerifyCodeResponse, ResetPasswordRequest,
 )
 from app.api.deps import get_db, get_current_user
 from app.services.verify_code import generate_code, store_code, verify_code, check_send_interval
-from app.services.email import send_verification_email
+from app.services.email import send_verification_email, send_reset_password_email
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -111,6 +111,38 @@ async def refresh(req: RefreshRequest, db: AsyncSession = Depends(get_db)):
     await db.commit()
 
     return await _create_tokens(rt.user_id, db)
+
+
+@router.post("/send-reset-code", response_model=SendVerifyCodeResponse)
+async def send_reset_code(req: SendVerifyCodeRequest, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.email == req.email))
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="该邮箱未注册")
+
+    if await check_send_interval(req.email):
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="发送过于频繁，请稍后再试")
+
+    code = generate_code()
+    await store_code(req.email, code)
+    await send_reset_password_email(req.email, code)
+
+    return SendVerifyCodeResponse(message="验证码已发送")
+
+
+@router.post("/reset-password")
+async def reset_password(req: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
+    if not await verify_code(req.email, req.code):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="验证码错误或已过期")
+
+    result = await db.execute(select(User).where(User.email == req.email))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="该邮箱未注册")
+
+    user.hashed_password = pwd_context.hash(req.new_password)
+    await db.commit()
+
+    return {"message": "密码重置成功"}
 
 
 @router.get("/me", response_model=UserInfo)

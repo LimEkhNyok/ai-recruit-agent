@@ -9,4 +9,10 @@ export const register = (name, email, password, code) =>
 export const login = (email, password) =>
   client.post('/auth/login', { email, password })
 
+export const sendResetCode = (email) =>
+  client.post('/auth/send-reset-code', { email })
+
+export const resetPassword = (email, code, new_password) =>
+  client.post('/auth/reset-password', { email, code, new_password })
+
 export const getMe = () => client.get('/auth/me')

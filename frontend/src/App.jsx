@@ -4,6 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import FeatureGuard from './components/FeatureGuard'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import HomePage from './pages/HomePage'
 import AssessmentPage from './pages/AssessmentPage'
 import ProfilePage from './pages/ProfilePage'
@@ -19,6 +20,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route element={<Layout />}>
         <Route path="/" element={<HomePage />} />
         <Route element={<ProtectedRoute />}>
