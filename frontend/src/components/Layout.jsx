@@ -50,6 +50,7 @@ export default function Layout() {
   const [analysis, setAnalysis] = useState(null)
   const [showReport, setShowReport] = useState(false)
   const [isPlatformMode, setIsPlatformMode] = useState(false)
+  const [hasConfigured, setHasConfigured] = useState(false)
 
   const token = useAuthStore((s) => s.token)
 
@@ -59,6 +60,7 @@ export default function Layout() {
         const res = await getConfig()
         const mode = res.data.mode
         const configured = res.data.last_test_status != null
+        setHasConfigured(configured)
         setIsPlatformMode(mode === 'platform' && configured)
         if (mode === 'platform' && configured) {
           fetchWallet()
@@ -107,6 +109,16 @@ export default function Layout() {
 
   const handleAnalyze = async () => {
     if (!resumeId) return
+    if (!hasConfigured) {
+      Modal.confirm({
+        title: '请先配置 API',
+        content: '请先配置 API 以使用该功能。',
+        okText: '去配置',
+        cancelText: '取消',
+        onOk: () => navigate('/settings'),
+      })
+      return
+    }
     setAnalyzing(true)
     try {
       const res = await analyzeResume(resumeId)
