@@ -346,10 +346,11 @@ export default function Layout() {
                       ? {
                           color: 'var(--ctw-success)',
                           borderColor: 'var(--ctw-success)',
+                          borderWidth: 1.5,
                           borderRadius: 8,
                           height: 36,
                         }
-                      : { borderRadius: 8, height: 36 }
+                      : { borderRadius: 8, height: 36, borderWidth: 1.5, borderColor: 'var(--ctw-text-tertiary)' }
                   }
                 >
                   {resumeId ? t('nav.reuploadResume') : t('nav.uploadResume')}
@@ -363,7 +364,7 @@ export default function Layout() {
                     type="primary"
                     ghost
                     className="hidden sm:inline-flex"
-                    style={{ borderRadius: 8, height: 36 }}
+                    style={{ borderRadius: 8, height: 36, borderWidth: 1.5 }}
                   >
                     {t('nav.analyzeResume')}
                   </Button>

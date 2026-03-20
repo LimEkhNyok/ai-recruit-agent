@@ -248,13 +248,13 @@ export default function ProfilePage() {
                 fontFamily: "'DM Sans', sans-serif",
                 color: 'var(--ctw-text-primary)',
                 background: 'transparent',
-                border: '1px solid var(--ctw-border-default)',
+                border: '1.5px solid var(--ctw-text-tertiary)',
                 borderRadius: 8,
                 cursor: 'pointer',
                 transition: 'border-color 200ms',
               }}
               onMouseEnter={(e) => e.currentTarget.style.borderColor = '#0066FF'}
-              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--ctw-border-default)'}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--ctw-text-tertiary)'}
             >
               {t('profile.reassess')}
             </button>

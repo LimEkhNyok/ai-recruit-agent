@@ -516,14 +516,14 @@ export default function CareerPlanPage() {
               fontFamily: "'DM Sans', sans-serif",
               color: 'var(--ctw-text-primary)',
               background: 'transparent',
-              border: '1px solid var(--ctw-border-default)',
+              border: '1.5px solid var(--ctw-text-tertiary)',
               borderRadius: 8,
               cursor: regenerating ? 'not-allowed' : 'pointer',
               opacity: regenerating ? 0.6 : 1,
               transition: 'border-color 200ms',
             }}
             onMouseEnter={(e) => !regenerating && (e.currentTarget.style.borderColor = '#0066FF')}
-            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--ctw-border-default)'}
+            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--ctw-text-tertiary)'}
           >
             {regenerating ? t('common.loading') : t('career.regenerate')}
           </button>
