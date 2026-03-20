@@ -1,17 +1,133 @@
 import { useState, useEffect } from 'react'
-import { Typography, Spin, Row, Col, message, Divider, Empty, Button, Result } from 'antd'
+import { message, Button } from 'antd'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'motion/react'
 import MatchCard from '../components/MatchCard'
 import { triggerMatch, getResults } from '../api/matching'
 import useFeatureGuard from '../hooks/useFeatureGuard'
+import { useTranslation } from '../i18n'
+import FadeIn from '../components/motion/FadeIn'
+import StaggerContainer, { StaggerItem } from '../components/motion/StaggerContainer'
 
-const { Title, Text } = Typography
+function LoadingCursor({ title, subtitle }) {
+  return (
+    <div
+      className="flex flex-col items-center justify-center gap-4"
+      style={{ minHeight: 400 }}
+    >
+      <motion.span
+        style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 24,
+          color: 'var(--ctw-text-tertiary)',
+        }}
+        animate={{ opacity: [1, 0.3, 1] }}
+        transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+      >
+        {'>_'}
+      </motion.span>
+      {title && (
+        <div className="text-center mt-2">
+          <h2
+            style={{
+              fontFamily: "'Sora', 'DM Sans', sans-serif",
+              fontSize: 20,
+              fontWeight: 600,
+              color: 'var(--ctw-text-primary)',
+              margin: 0,
+              marginBottom: 4,
+            }}
+          >
+            {title}
+          </h2>
+          {subtitle && (
+            <p
+              style={{
+                fontSize: 14,
+                color: 'var(--ctw-text-secondary)',
+                margin: 0,
+              }}
+            >
+              {subtitle}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function EmptyState({ text }) {
+  return (
+    <div
+      className="flex flex-col items-center justify-center gap-4"
+      style={{ minHeight: 300 }}
+    >
+      <svg
+        width="48"
+        height="48"
+        viewBox="0 0 48 48"
+        fill="none"
+        style={{ color: 'var(--ctw-text-tertiary)' }}
+      >
+        <rect
+          x="4"
+          y="8"
+          width="40"
+          height="32"
+          rx="4"
+          stroke="currentColor"
+          strokeWidth="2"
+          fill="none"
+        />
+        <line
+          x1="4"
+          y1="18"
+          x2="44"
+          y2="18"
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+        <circle cx="12" cy="13" r="2" fill="currentColor" />
+        <circle cx="20" cy="13" r="2" fill="currentColor" />
+        <line
+          x1="14"
+          y1="26"
+          x2="34"
+          y2="26"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <line
+          x1="18"
+          y1="32"
+          x2="30"
+          y2="32"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+      </svg>
+      <span
+        style={{
+          fontSize: 14,
+          color: 'var(--ctw-text-tertiary)',
+          fontFamily: "'DM Sans', sans-serif",
+        }}
+      >
+        {text}
+      </span>
+    </div>
+  )
+}
 
 export default function MatchingPage() {
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("matching")
+  const { t } = useTranslation()
 
   useEffect(() => {
     let ignore = false
@@ -30,7 +146,7 @@ export default function MatchingPage() {
         const res = await triggerMatch()
         if (!ignore) setResults(res.data.results)
       } catch (err) {
-        if (!ignore) message.error(err.response?.data?.detail || '匹配失败，请先完成测评')
+        if (!ignore) message.error(err.response?.data?.detail || t('matching.matchFailed'))
       } finally {
         if (!ignore) setLoading(false)
       }
@@ -44,82 +160,188 @@ export default function MatchingPage() {
   }
 
   if (guardLoading) {
-    return (
-      <div className="flex items-center justify-center" style={{ minHeight: 400 }}>
-        <Spin size="large" />
-      </div>
-    )
+    return <LoadingCursor />
   }
 
   if (available === false) {
     return (
-      <Result
-        status="warning"
-        title={`${featureLabel}功能不可用`}
-        subTitle="当前模型配置不支持此功能，请前往设置页更换 provider/model"
-        extra={
-          <Button type="primary" onClick={() => navigate('/settings')}>
-            前往设置
-          </Button>
-        }
-      />
+      <div
+        className="flex flex-col items-center justify-center gap-4"
+        style={{ minHeight: 400 }}
+      >
+        <svg
+          width="48"
+          height="48"
+          viewBox="0 0 48 48"
+          fill="none"
+          style={{ color: 'var(--ctw-warning)' }}
+        >
+          <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2" fill="none" />
+          <line x1="24" y1="14" x2="24" y2="28" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+          <circle cx="24" cy="34" r="1.5" fill="currentColor" />
+        </svg>
+        <h2
+          style={{
+            fontFamily: "'Sora', 'DM Sans', sans-serif",
+            fontSize: 20,
+            fontWeight: 600,
+            color: 'var(--ctw-text-primary)',
+            margin: 0,
+          }}
+        >
+          {t('guard.featureUnavailable')}
+        </h2>
+        <p
+          style={{
+            fontSize: 14,
+            color: 'var(--ctw-text-secondary)',
+            margin: 0,
+          }}
+        >
+          {t('guard.featureUnavailableDesc')}
+        </p>
+        <Button type="primary" onClick={() => navigate('/settings')}>
+          {t('common.goSettings')}
+        </Button>
+      </div>
     )
   }
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4" style={{ minHeight: 400 }}>
-        <Spin size="large" />
-        <div className="text-center">
-          <Title level={4} style={{ margin: 0 }}>AI 正在为你匹配最佳岗位...</Title>
-          <Text type="secondary">正在分析你的画像与岗位的契合度，请稍候</Text>
-        </div>
-      </div>
+      <LoadingCursor
+        title={t('matching.analyzing')}
+        subtitle={t('matching.analyzingSubtitle')}
+      />
     )
   }
 
   if (!results || results.length === 0) {
-    return <Empty description="暂无匹配结果" />
+    return <EmptyState text={t('matching.noResults')} />
   }
 
   const normal = results.filter((r) => !r.is_beyond_cognition)
   const beyond = results.filter((r) => r.is_beyond_cognition)
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-4">
-        <Title level={4} style={{ margin: 0 }}>岗位匹配结果</Title>
-        <Text type="secondary">基于你的人才画像，AI 为你推荐了以下岗位</Text>
-      </div>
+    <div className="max-w-6xl mx-auto px-4 py-6">
+      {/* Page header */}
+      <FadeIn>
+        <div className="mb-8">
+          <h1
+            style={{
+              fontFamily: "'Sora', 'DM Sans', sans-serif",
+              fontSize: 24,
+              fontWeight: 600,
+              color: 'var(--ctw-text-primary)',
+              margin: 0,
+              marginBottom: 4,
+            }}
+          >
+            {t('matching.title')}
+          </h1>
+          <p
+            style={{
+              fontSize: 14,
+              color: 'var(--ctw-text-secondary)',
+              margin: 0,
+            }}
+          >
+            {t('matching.subtitle')}
+          </p>
+        </div>
+      </FadeIn>
 
+      {/* Recommended section */}
       {normal.length > 0 && (
-        <>
-          <Title level={5}>推荐岗位</Title>
-          <Row gutter={[16, 16]}>
+        <FadeIn delay={0.1}>
+          <h2
+            className="mb-4"
+            style={{
+              fontFamily: "'Sora', 'DM Sans', sans-serif",
+              fontSize: 24,
+              fontWeight: 600,
+              color: 'var(--ctw-text-primary)',
+              margin: 0,
+              marginBottom: 16,
+            }}
+          >
+            {t('matching.recommended')}
+          </h2>
+          <StaggerContainer
+            staggerDelay={0.08}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
             {normal.map((m) => (
-              <Col key={m.job_id} xs={24} md={12} lg={8}>
+              <StaggerItem key={m.job_id}>
                 <MatchCard match={m} onInterview={handleInterview} />
-              </Col>
+              </StaggerItem>
             ))}
-          </Row>
-        </>
+          </StaggerContainer>
+        </FadeIn>
       )}
 
+      {/* Divider + Beyond section */}
       {beyond.length > 0 && (
-        <>
-          <Divider />
-          <div className="mb-3">
-            <Title level={5} style={{ color: '#722ed1', margin: 0 }}>突破认知推荐</Title>
-            <Text type="secondary">这些岗位你可能从未考虑过，但 AI 分析认为非常适合你</Text>
+        <FadeIn delay={0.3}>
+          <div
+            className="my-16"
+            style={{
+              height: 1,
+              backgroundColor: 'var(--ctw-border-default)',
+            }}
+          />
+
+          <div className="flex items-center gap-3 mb-4">
+            <h2
+              style={{
+                fontFamily: "'Sora', 'DM Sans', sans-serif",
+                fontSize: 24,
+                fontWeight: 600,
+                color: 'var(--ctw-text-primary)',
+                margin: 0,
+              }}
+            >
+              {t('matching.beyond')}
+            </h2>
+            <span
+              className="px-2 py-0.5 rounded"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 10,
+                fontWeight: 500,
+                color: '#00D4AA',
+                border: '1px solid #00D4AA',
+                letterSpacing: '0.05em',
+                lineHeight: '16px',
+              }}
+            >
+              {t('matching.discovery')}
+            </span>
           </div>
-          <Row gutter={[16, 16]}>
+          <p
+            className="mb-4"
+            style={{
+              fontSize: 14,
+              color: 'var(--ctw-text-secondary)',
+              margin: 0,
+              marginBottom: 16,
+            }}
+          >
+            {t('matching.beyondSubtitle')}
+          </p>
+
+          <StaggerContainer
+            staggerDelay={0.08}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
             {beyond.map((m) => (
-              <Col key={m.job_id} xs={24} md={12} lg={8}>
+              <StaggerItem key={m.job_id}>
                 <MatchCard match={m} onInterview={handleInterview} />
-              </Col>
+              </StaggerItem>
             ))}
-          </Row>
-        </>
+          </StaggerContainer>
+        </FadeIn>
       )}
     </div>
   )

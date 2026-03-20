@@ -1,79 +1,337 @@
 import { useState, useEffect, useRef } from 'react'
-import { Input, Button, Card, Spin, Typography, Modal, Progress, Tag, message, Descriptions, Result } from 'antd'
-import { SendOutlined, StopOutlined, FileTextOutlined, ArrowLeftOutlined } from '@ant-design/icons'
+import { message } from 'antd'
+import { ArrowUpOutlined, ArrowLeftOutlined, FileTextOutlined } from '@ant-design/icons'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import ChatBubble from '../components/ChatBubble'
 import { startInterview, chatStream, endInterview } from '../api/interview'
 import useFeatureGuard from '../hooks/useFeatureGuard'
+import { useTranslation } from '../i18n'
+import FadeIn from '../components/motion/FadeIn'
 
-const { Title, Text, Paragraph } = Typography
-
-const dimLabels = {
-  professional_skill: '专业技能',
-  communication: '沟通表达',
-  problem_solving: '问题解决',
-  culture_fit: '文化匹配',
-  growth_potential: '成长潜力',
+const dimKeys = {
+  professional_skill: 'professionalSkill',
+  communication: 'communication',
+  problem_solving: 'problemSolving',
+  culture_fit: 'cultureFit',
+  growth_potential: 'growthPotential',
 }
 
-function EvaluationReport({ evaluation, jobTitle }) {
-  if (!evaluation) return null
+function LoadingCursor({ text }) {
+  return (
+    <div className="flex items-center justify-center" style={{ minHeight: 400 }}>
+      <div className="flex items-center gap-3">
+        <span
+          className="font-mono"
+          style={{
+            fontSize: 24,
+            fontWeight: 700,
+            color: '#0066FF',
+            animation: 'cursorBlink 1s step-end infinite',
+          }}
+        >
+          {'>_'}
+        </span>
+        {text && (
+          <span className="font-body" style={{ fontSize: 14, color: 'var(--ctw-text-secondary)' }}>
+            {text}
+          </span>
+        )}
+      </div>
+      <style>{`
+        @keyframes cursorBlink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+function EvaluationModal({ open, onClose, evaluation, jobTitle, onBack, t }) {
+  const [animatedScore, setAnimatedScore] = useState(0)
+  const [showBars, setShowBars] = useState(false)
+
+  useEffect(() => {
+    if (!open || !evaluation) return
+    setAnimatedScore(0)
+    setShowBars(false)
+
+    const target = evaluation.overall_score || 0
+    const duration = 1200
+    const start = performance.now()
+
+    const animate = (now) => {
+      const elapsed = now - start
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setAnimatedScore(Math.round(target * eased))
+      if (progress < 1) requestAnimationFrame(animate)
+    }
+    requestAnimationFrame(animate)
+
+    const timer = setTimeout(() => setShowBars(true), 400)
+    return () => clearTimeout(timer)
+  }, [open, evaluation])
+
+  if (!open || !evaluation) return null
 
   const dims = evaluation.dimensions || {}
 
   return (
-    <div>
-      <div className="text-center mb-4">
-        <Title level={4} style={{ margin: 0 }}>{jobTitle} - 面试评估报告</Title>
-        <div className="mt-2">
-          <Text>综合评分：</Text>
-          <Progress
-            type="circle"
-            percent={evaluation.overall_score}
-            size={80}
-            strokeColor={evaluation.overall_score >= 70 ? '#52c41a' : '#faad14'}
-          />
-        </div>
-        <div className="mt-2">
-          <Tag color={evaluation.recommended ? 'green' : 'orange'}>
-            {evaluation.recommended ? '推荐录用' : '暂不推荐'}
-          </Tag>
-        </div>
-      </div>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative overflow-y-auto"
+        style={{
+          width: 640,
+          maxWidth: '90vw',
+          maxHeight: '85vh',
+          background: 'var(--ctw-surface-card)',
+          borderRadius: 16,
+          padding: 32,
+        }}
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: 16,
+            right: 16,
+            background: 'none',
+            border: 'none',
+            fontSize: 20,
+            color: 'var(--ctw-text-tertiary)',
+            cursor: 'pointer',
+            lineHeight: 1,
+          }}
+        >
+          &times;
+        </button>
 
-      <div className="mb-4">
-        <Title level={5}>各维度评分</Title>
-        {Object.entries(dims).map(([key, dim]) => (
-          <div key={key} className="mb-3">
-            <div className="flex items-center justify-between mb-1">
-              <Text strong>{dimLabels[key] || key}</Text>
-              <Text>{dim.score} 分</Text>
+        {/* Title */}
+        <h2
+          className="font-display text-center"
+          style={{ fontSize: 18, fontWeight: 600, color: 'var(--ctw-text-primary)', marginBottom: 4 }}
+        >
+          {jobTitle} - {t('interview.report.title')}
+        </h2>
+
+        {/* Recommendation badge */}
+        <div className="text-center" style={{ marginBottom: 24 }}>
+          <span
+            className="font-body"
+            style={{
+              fontSize: 12,
+              padding: '2px 10px',
+              borderRadius: 9999,
+              background: evaluation.recommended ? 'rgba(0,212,170,0.1)' : 'rgba(250,140,22,0.1)',
+              color: evaluation.recommended ? 'var(--ctw-success)' : 'var(--ctw-warning)',
+            }}
+          >
+            {evaluation.recommended ? t('interview.report.recommended') : t('interview.report.notRecommended')}
+          </span>
+        </div>
+
+        {/* Overall Score */}
+        <div className="text-center" style={{ marginBottom: 32 }}>
+          <span
+            className="font-mono"
+            style={{
+              fontSize: 72,
+              fontWeight: 700,
+              background: 'linear-gradient(135deg, #0066FF, #00D4AA)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              lineHeight: 1,
+            }}
+          >
+            {animatedScore}
+          </span>
+          <p className="font-body" style={{ fontSize: 13, color: 'var(--ctw-text-tertiary)', marginTop: 4 }}>
+            {t('interview.report.overallScore')}
+          </p>
+        </div>
+
+        {/* Dimension bars */}
+        <div style={{ marginBottom: 28 }}>
+          <h3
+            className="font-display"
+            style={{ fontSize: 14, fontWeight: 600, color: 'var(--ctw-text-primary)', marginBottom: 16 }}
+          >
+            {t('interview.report.dimensions')}
+          </h3>
+          {Object.entries(dims).map(([key, dim]) => (
+            <div key={key} style={{ marginBottom: 14 }}>
+              <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
+                <span className="font-body" style={{ fontSize: 13, color: 'var(--ctw-text-secondary)' }}>
+                  {t(`interview.report.${dimKeys[key]}`, key)}
+                </span>
+                <span className="font-mono" style={{ fontSize: 13, color: 'var(--ctw-text-primary)' }}>
+                  {dim.score}
+                </span>
+              </div>
+              <div
+                style={{
+                  height: 4,
+                  borderRadius: 2,
+                  background: 'var(--ctw-border-default)',
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    height: '100%',
+                    borderRadius: 2,
+                    background: '#0066FF',
+                    width: showBars ? `${dim.score}%` : '0%',
+                    transition: 'width 800ms cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                />
+              </div>
+              {dim.comment && (
+                <p className="font-body" style={{ fontSize: 12, color: 'var(--ctw-text-tertiary)', marginTop: 4 }}>
+                  {dim.comment}
+                </p>
+              )}
             </div>
-            <Progress percent={dim.score} strokeColor="#1677ff" showInfo={false} size="small" />
-            <Text type="secondary" style={{ fontSize: 12 }}>{dim.comment}</Text>
+          ))}
+        </div>
+
+        {/* Strengths */}
+        {evaluation.strengths?.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <h3
+              className="font-display"
+              style={{ fontSize: 14, fontWeight: 600, color: 'var(--ctw-text-primary)', marginBottom: 10 }}
+            >
+              {t('interview.report.strengths')}
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {evaluation.strengths.map((s, i) => (
+                <span
+                  key={i}
+                  className="font-body"
+                  style={{
+                    fontSize: 13,
+                    padding: '4px 12px',
+                    borderRadius: 6,
+                    background: 'rgba(0, 212, 170, 0.08)',
+                    color: 'var(--ctw-success)',
+                  }}
+                >
+                  {s}
+                </span>
+              ))}
+            </div>
           </div>
-        ))}
+        )}
+
+        {/* Weaknesses */}
+        {evaluation.weaknesses?.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <h3
+              className="font-display"
+              style={{ fontSize: 14, fontWeight: 600, color: 'var(--ctw-text-primary)', marginBottom: 10 }}
+            >
+              {t('interview.report.weaknesses')}
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {evaluation.weaknesses.map((s, i) => (
+                <span
+                  key={i}
+                  className="font-body"
+                  style={{
+                    fontSize: 13,
+                    padding: '4px 12px',
+                    borderRadius: 6,
+                    background: 'rgba(250, 140, 22, 0.08)',
+                    color: 'var(--ctw-warning)',
+                  }}
+                >
+                  {s}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Suggestions - quote style */}
+        {evaluation.improvement_suggestions?.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <h3
+              className="font-display"
+              style={{ fontSize: 14, fontWeight: 600, color: 'var(--ctw-text-primary)', marginBottom: 10 }}
+            >
+              {t('interview.report.suggestions')}
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {evaluation.improvement_suggestions.map((s, i) => (
+                <div
+                  key={i}
+                  className="font-body"
+                  style={{
+                    fontSize: 13,
+                    lineHeight: 1.6,
+                    color: 'var(--ctw-text-secondary)',
+                    paddingLeft: 14,
+                    borderLeft: '2px solid #0066FF',
+                  }}
+                >
+                  {s}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Overall comment */}
+        {evaluation.overall_comment && (
+          <p className="font-body" style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ctw-text-secondary)', marginBottom: 24 }}>
+            {evaluation.overall_comment}
+          </p>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3">
+          <button
+            onClick={onBack}
+            className="font-body"
+            style={{
+              padding: '8px 20px',
+              fontSize: 14,
+              color: 'var(--ctw-text-primary)',
+              background: 'transparent',
+              border: '1px solid var(--ctw-border-default)',
+              borderRadius: 8,
+              cursor: 'pointer',
+            }}
+          >
+            {t('interview.backToMatching')}
+          </button>
+          <button
+            onClick={onClose}
+            className="font-body"
+            style={{
+              padding: '8px 20px',
+              fontSize: 14,
+              fontWeight: 500,
+              color: '#fff',
+              background: 'var(--ctw-text-primary)',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+            }}
+          >
+            {t('common.close')}
+          </button>
+        </div>
       </div>
-
-      <Descriptions column={1} size="small" bordered className="mb-4" contentStyle={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
-        <Descriptions.Item label="优势">
-          <div className="flex flex-wrap gap-1">
-            {(evaluation.strengths || []).map((s, i) => <Tag key={i} color="green" style={{ whiteSpace: 'normal', maxWidth: '100%' }}>{s}</Tag>)}
-          </div>
-        </Descriptions.Item>
-        <Descriptions.Item label="不足">
-          <div className="flex flex-wrap gap-1">
-            {(evaluation.weaknesses || []).map((s, i) => <Tag key={i} color="orange" style={{ whiteSpace: 'normal', maxWidth: '100%' }}>{s}</Tag>)}
-          </div>
-        </Descriptions.Item>
-        <Descriptions.Item label="改进建议">
-          <ul className="m-0 pl-4">
-            {(evaluation.improvement_suggestions || []).map((s, i) => <li key={i} style={{ marginBottom: 4 }}>{s}</li>)}
-          </ul>
-        </Descriptions.Item>
-      </Descriptions>
-
-      <Paragraph>{evaluation.overall_comment}</Paragraph>
     </div>
   )
 }
@@ -81,6 +339,7 @@ function EvaluationReport({ evaluation, jobTitle }) {
 export default function InterviewPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const jobId = searchParams.get('job_id')
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("interview")
 
@@ -98,7 +357,7 @@ export default function InterviewPage() {
 
   useEffect(() => {
     if (!jobId) {
-      message.error('缺少岗位信息，请从匹配结果中选择岗位')
+      message.error(t('interview.missingJob'))
       navigate('/matching', { replace: true })
       return
     }
@@ -112,7 +371,7 @@ export default function InterviewPage() {
         setJobTitle(res.data.job_title)
         setMessages([{ role: 'ai', content: res.data.message }])
       } catch (err) {
-        if (!ignore) message.error('启动面试失败')
+        if (!ignore) message.error(t('interview.startFailed'))
       } finally {
         if (!ignore) setStarting(false)
       }
@@ -146,7 +405,7 @@ export default function InterviewPage() {
         })
       }
     } catch (err) {
-      message.error('对话失败')
+      message.error(t('interview.chatFailed'))
     } finally {
       setStreaming(false)
     }
@@ -159,7 +418,7 @@ export default function InterviewPage() {
       setEvaluation(res.data.evaluation)
       setShowReport(true)
     } catch (err) {
-      message.error('生成评估报告失败')
+      message.error(t('interview.endFailed'))
     } finally {
       setEnding(false)
     }
@@ -173,123 +432,271 @@ export default function InterviewPage() {
   }
 
   if (guardLoading) {
-    return (
-      <div className="flex items-center justify-center" style={{ minHeight: 400 }}>
-        <Spin size="large" />
-      </div>
-    )
+    return <LoadingCursor />
   }
 
   if (available === false) {
     return (
-      <Result
-        status="warning"
-        title={`${featureLabel}功能不可用`}
-        subTitle="当前模型配置不支持此功能，请前往设置页更换 provider/model"
-        extra={
-          <Button type="primary" onClick={() => navigate('/settings')}>
-            前往设置
-          </Button>
-        }
-      />
+      <FadeIn>
+        <div className="flex flex-col items-center justify-center" style={{ minHeight: 400 }}>
+          <div
+            className="font-mono"
+            style={{ fontSize: 24, color: 'var(--ctw-warning)', marginBottom: 16 }}
+          >
+            !
+          </div>
+          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 600, color: 'var(--ctw-text-primary)', marginBottom: 8 }}>
+            {featureLabel}{t('guard.featureUnavailable')}
+          </h2>
+          <p className="font-body" style={{ fontSize: 14, color: 'var(--ctw-text-secondary)', marginBottom: 24 }}>
+            {t('guard.featureUnavailableDesc')}
+          </p>
+          <button
+            onClick={() => navigate('/settings')}
+            className="font-body"
+            style={{
+              padding: '10px 28px',
+              fontSize: 14,
+              fontWeight: 500,
+              color: '#fff',
+              background: 'var(--ctw-text-primary)',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+            }}
+          >
+            {t('common.goSettings')}
+          </button>
+        </div>
+      </FadeIn>
     )
   }
 
   if (starting) {
-    return (
-      <div className="flex items-center justify-center" style={{ minHeight: 400 }}>
-        <Spin size="large" tip="正在准备面试..." />
-      </div>
-    )
+    return <LoadingCursor text={t('interview.preparing')} />
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <Card>
-        <div className="flex items-center justify-between mb-4">
+    <FadeIn>
+      <div
+        className="mx-auto flex flex-col"
+        style={{
+          maxWidth: 720,
+          minHeight: 'calc(100vh - 64px)',
+          position: 'relative',
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between" style={{ padding: '24px 16px 16px' }}>
           <div>
-            <Title level={4} style={{ margin: 0 }}>AI 模拟面试</Title>
-            <Text type="secondary">岗位：{jobTitle}</Text>
+            <h1
+              className="font-display"
+              style={{ fontSize: 20, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: 0 }}
+            >
+              {t('interview.title')}
+            </h1>
+            <p className="font-body" style={{ fontSize: 14, color: 'var(--ctw-text-secondary)', margin: '4px 0 0' }}>
+              {t('interview.position')}: {jobTitle}
+            </p>
           </div>
           <div className="flex gap-2">
             {evaluation ? (
               <>
-                <Button
-                  icon={<FileTextOutlined />}
+                <button
                   onClick={() => setShowReport(true)}
+                  className="flex items-center gap-1.5 font-body"
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: 13,
+                    color: 'var(--ctw-text-primary)',
+                    background: 'transparent',
+                    border: '1px solid var(--ctw-border-default)',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                  }}
                 >
-                  面试结果
-                </Button>
-                <Button
-                  icon={<ArrowLeftOutlined />}
+                  <FileTextOutlined style={{ fontSize: 14 }} />
+                  {t('interview.result')}
+                </button>
+                <button
                   onClick={() => navigate('/matching')}
+                  className="flex items-center gap-1.5 font-body"
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: 13,
+                    color: 'var(--ctw-text-primary)',
+                    background: 'transparent',
+                    border: '1px solid var(--ctw-border-default)',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                  }}
                 >
-                  返回匹配
-                </Button>
+                  <ArrowLeftOutlined style={{ fontSize: 14 }} />
+                  {t('interview.backToMatching')}
+                </button>
               </>
             ) : (
-              <Button
-                danger
-                icon={<StopOutlined />}
+              <button
                 onClick={handleEnd}
-                loading={ending}
-                disabled={messages.length < 3}
+                disabled={ending || messages.length < 3}
+                className="font-body"
+                style={{
+                  padding: '8px 16px',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: ending || messages.length < 3 ? 'var(--ctw-text-tertiary)' : 'var(--ctw-error)',
+                  background: 'transparent',
+                  border: '1px solid var(--ctw-border-default)',
+                  borderRadius: 8,
+                  cursor: ending || messages.length < 3 ? 'not-allowed' : 'pointer',
+                  opacity: ending || messages.length < 3 ? 0.5 : 1,
+                  transition: 'background 200ms',
+                }}
+                onMouseEnter={(e) => {
+                  if (!ending && messages.length >= 3) {
+                    e.currentTarget.style.background = 'rgba(255,77,79,0.06)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                }}
               >
-                结束面试
-              </Button>
+                {ending ? t('common.loading') : t('interview.endInterview')}
+              </button>
             )}
           </div>
         </div>
 
+        {/* Chat Area */}
         <div
-          className="border rounded-lg p-4 mb-4 overflow-y-auto"
-          style={{ height: 'calc(100vh - 340px)', minHeight: 300, background: '#fafafa' }}
+          className="flex-1 overflow-y-auto relative"
+          style={{
+            padding: '8px 16px',
+            paddingBottom: evaluation ? 16 : 80,
+          }}
         >
-          {messages.map((msg, i) => (
-            <ChatBubble key={i} role={msg.role} content={msg.content} />
-          ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {messages.map((msg, i) => (
+              <ChatBubble key={i} role={msg.role} content={msg.content} />
+            ))}
+          </div>
+
           {streaming && messages[messages.length - 1]?.content === '' && (
-            <div className="px-4 py-3">
-              <Spin size="small" />
-              <Text type="secondary" className="ml-2">面试官思考中...</Text>
+            <div className="flex items-center gap-2" style={{ padding: '8px 0' }}>
+              <span
+                className="font-mono"
+                style={{
+                  fontSize: 14,
+                  color: '#0066FF',
+                  animation: 'cursorBlink 1s step-end infinite',
+                }}
+              >
+                {'>_'}
+              </span>
+              <span className="font-body" style={{ fontSize: 13, color: 'var(--ctw-text-tertiary)' }}>
+                {t('interview.thinking')}
+              </span>
             </div>
           )}
           <div ref={bottomRef} />
+
+          {/* Bottom gradient mask */}
+          {!evaluation && (
+            <div
+              className="pointer-events-none"
+              style={{
+                position: 'sticky',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: 32,
+                background: 'linear-gradient(transparent, var(--ctw-surface-base))',
+              }}
+            />
+          )}
         </div>
 
+        {/* Input Area */}
         {!evaluation && (
-          <div className="flex gap-2">
-            <Input.TextArea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="输入你的回答..."
-              autoSize={{ minRows: 1, maxRows: 4 }}
-              disabled={streaming || ending}
-            />
-            <Button
-              type="primary"
-              icon={<SendOutlined />}
-              onClick={handleSend}
-              loading={streaming}
-              disabled={!input.trim()}
-            />
+          <div
+            style={{
+              position: 'sticky',
+              bottom: 0,
+              padding: '12px 16px 24px',
+              background: 'var(--ctw-surface-base)',
+            }}
+          >
+            <div
+              className="flex items-center gap-3"
+              style={{
+                border: '1px solid var(--ctw-border-default)',
+                borderRadius: 12,
+                padding: '6px 6px 6px 16px',
+                background: 'var(--ctw-surface-card)',
+              }}
+            >
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={t('interview.inputPlaceholder')}
+                disabled={streaming || ending}
+                className="font-body"
+                style={{
+                  flex: 1,
+                  border: 'none',
+                  outline: 'none',
+                  background: 'transparent',
+                  fontSize: 14,
+                  height: 36,
+                  color: 'var(--ctw-text-primary)',
+                }}
+              />
+              <button
+                onClick={handleSend}
+                disabled={!input.trim() || streaming}
+                className="shrink-0 flex items-center justify-center"
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: input.trim() && !streaming ? 'var(--ctw-text-primary)' : 'var(--ctw-border-default)',
+                  color: '#fff',
+                  cursor: input.trim() && !streaming ? 'pointer' : 'not-allowed',
+                  transition: 'transform 200ms, background 200ms',
+                }}
+                onMouseEnter={(e) => {
+                  if (input.trim() && !streaming) e.currentTarget.style.transform = 'scale(1.05)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)'
+                }}
+              >
+                <ArrowUpOutlined style={{ fontSize: 16 }} />
+              </button>
+            </div>
           </div>
         )}
-      </Card>
+      </div>
 
-      <Modal
-        title={null}
+      {/* Evaluation Modal */}
+      <EvaluationModal
         open={showReport}
-        onCancel={() => setShowReport(false)}
-        footer={[
-          <Button key="back" onClick={() => navigate('/matching')}>返回匹配</Button>,
-          <Button key="close" type="primary" onClick={() => setShowReport(false)}>关闭</Button>,
-        ]}
-        width={640}
-      >
-        <EvaluationReport evaluation={evaluation} jobTitle={jobTitle} />
-      </Modal>
-    </div>
+        onClose={() => setShowReport(false)}
+        evaluation={evaluation}
+        jobTitle={jobTitle}
+        onBack={() => navigate('/matching')}
+        t={t}
+      />
+
+      <style>{`
+        @keyframes cursorBlink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+      `}</style>
+    </FadeIn>
   )
 }

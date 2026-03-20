@@ -1,20 +1,11 @@
-import { useState, useEffect } from 'react'
-import { Card, Select, Button, Typography, Radio, Input, Tag, Spin, Row, Col, message, Result, Space, Progress } from 'antd'
-import {
-  PlayCircleOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  QuestionCircleOutlined,
-  RightOutlined,
-  BulbOutlined,
-  TrophyOutlined,
-} from '@ant-design/icons'
+import { useState, useEffect, useRef } from 'react'
+import { Select, Button, Input, Tag, Space, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { generateQuiz, judgeQuiz, skipQuiz, getQuizStats } from '../api/quiz'
 import useFeatureGuard from '../hooks/useFeatureGuard'
 import useBillingStore from '../store/useBillingStore'
+import { useTranslation } from '../i18n'
 
-const { Title, Text, Paragraph } = Typography
 const { TextArea } = Input
 
 const TOPICS = [
@@ -37,9 +28,12 @@ export default function QuizPage() {
   const [judging, setJudging] = useState(false)
   const [result, setResult] = useState(null)
   const [stats, setStats] = useState(null)
+  const [resultAnimState, setResultAnimState] = useState('hidden')
   const navigate = useNavigate()
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("quiz")
   const { fetchWallet } = useBillingStore()
+  const { t } = useTranslation()
+  const questionCountRef = useRef(0)
 
   useEffect(() => {
     loadStats()
@@ -54,19 +48,21 @@ export default function QuizPage() {
 
   const handleGenerate = async () => {
     if (!topic || !questionType) {
-      message.warning('请选择考察内容和题型')
+      message.warning(t('quiz.topicRequired'))
       return
     }
     setGenerating(true)
     setQuestion(null)
     setResult(null)
+    setResultAnimState('hidden')
     setUserAnswer('')
     try {
       const res = await generateQuiz(topic, questionType)
       setQuestion(res.data)
+      questionCountRef.current += 1
       fetchWallet()
     } catch (err) {
-      message.error(err.response?.data?.detail || '出题失败，请重试')
+      message.error(err.response?.data?.detail || t('quiz.generateFailed'))
     } finally {
       setGenerating(false)
     }
@@ -74,7 +70,7 @@ export default function QuizPage() {
 
   const handleSubmit = async () => {
     if (!userAnswer.trim()) {
-      message.warning('请输入你的答案')
+      message.warning(t('quiz.answerRequired'))
       return
     }
     setJudging(true)
@@ -88,9 +84,11 @@ export default function QuizPage() {
         user_answer: userAnswer,
       })
       setResult(res.data)
+      setResultAnimState('entering')
+      setTimeout(() => setResultAnimState('visible'), 50)
       loadStats()
     } catch (err) {
-      message.error('判题失败，请重试')
+      message.error(t('quiz.judgeFailed'))
     } finally {
       setJudging(false)
     }
@@ -108,9 +106,11 @@ export default function QuizPage() {
         explanation: question.explanation,
       })
       setResult(res.data)
+      setResultAnimState('entering')
+      setTimeout(() => setResultAnimState('visible'), 50)
       loadStats()
     } catch (err) {
-      message.error('操作失败')
+      message.error(t('quiz.judgeFailed'))
     } finally {
       setJudging(false)
     }
@@ -120,42 +120,105 @@ export default function QuizPage() {
     handleGenerate()
   }
 
+  const handleCodeKeyDown = (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault()
+      const textarea = e.target
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const value = textarea.value
+      const newValue = value.substring(0, start) + '    ' + value.substring(end)
+      setUserAnswer(newValue)
+      setTimeout(() => {
+        textarea.selectionStart = textarea.selectionEnd = start + 4
+      }, 0)
+    }
+  }
+
   const renderAnswerInput = () => {
     if (!question) return null
     const disabled = !!result
 
     if (questionType === '判断题') {
       return (
-        <Radio.Group
-          value={userAnswer}
-          onChange={(e) => setUserAnswer(e.target.value)}
-          disabled={disabled}
-          size="large"
-        >
-          <Space direction="vertical">
-            <Radio value="对">对</Radio>
-            <Radio value="错">错</Radio>
-          </Space>
-        </Radio.Group>
+        <div className="flex gap-3">
+          {[{ value: '对', label: t('quiz.true') }, { value: '错', label: t('quiz.false') }].map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => !disabled && setUserAnswer(opt.value)}
+              disabled={disabled}
+              style={{
+                flex: 1,
+                padding: '12px 16px',
+                borderRadius: 8,
+                border: `1px solid ${userAnswer === opt.value ? '#0066FF' : 'var(--ctw-border-default)'}`,
+                background: userAnswer === opt.value ? '#0066FF' : 'var(--ctw-surface-card)',
+                color: userAnswer === opt.value ? '#fff' : 'var(--ctw-text-primary)',
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 15,
+                fontWeight: 500,
+                cursor: disabled ? 'default' : 'pointer',
+                transition: 'all 0.2s',
+                opacity: disabled ? 0.7 : 1,
+              }}
+              onMouseEnter={(e) => {
+                if (!disabled && userAnswer !== opt.value) {
+                  e.currentTarget.style.borderColor = '#0066FF'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!disabled && userAnswer !== opt.value) {
+                  e.currentTarget.style.borderColor = 'var(--ctw-border-default)'
+                }
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       )
     }
 
     if (questionType === '选择题' && question.options?.length > 0) {
       return (
-        <Radio.Group
-          value={userAnswer}
-          onChange={(e) => setUserAnswer(e.target.value)}
-          disabled={disabled}
-          size="large"
-        >
-          <Space direction="vertical" className="w-full">
-            {question.options.map((opt, i) => (
-              <Radio key={i} value={opt.charAt(0)} className="w-full">
+        <div className="flex flex-col gap-2">
+          {question.options.map((opt, i) => {
+            const optValue = opt.charAt(0)
+            const isSelected = userAnswer === optValue
+            return (
+              <button
+                key={i}
+                onClick={() => !disabled && setUserAnswer(optValue)}
+                disabled={disabled}
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: 8,
+                  border: `1px solid ${isSelected ? '#0066FF' : 'var(--ctw-border-default)'}`,
+                  background: isSelected ? '#0066FF' : 'var(--ctw-surface-card)',
+                  color: isSelected ? '#fff' : 'var(--ctw-text-primary)',
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 14,
+                  textAlign: 'left',
+                  cursor: disabled ? 'default' : 'pointer',
+                  transition: 'all 0.2s',
+                  opacity: disabled ? 0.7 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  if (!disabled && !isSelected) {
+                    e.currentTarget.style.borderColor = '#0066FF'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!disabled && !isSelected) {
+                    e.currentTarget.style.borderColor = 'var(--ctw-border-default)'
+                  }
+                }}
+              >
                 {opt}
-              </Radio>
-            ))}
-          </Space>
-        </Radio.Group>
+              </button>
+            )
+          })}
+        </div>
       )
     }
 
@@ -163,101 +226,174 @@ export default function QuizPage() {
       <TextArea
         value={userAnswer}
         onChange={(e) => setUserAnswer(e.target.value)}
-        placeholder={questionType === '编程题' ? '在此输入你的代码...' : '在此输入你的答案...'}
+        onKeyDown={questionType === '编程题' ? handleCodeKeyDown : undefined}
+        placeholder={questionType === '编程题' ? t('quiz.codePlaceholder') : t('quiz.answerPlaceholder')}
         autoSize={{ minRows: questionType === '编程题' ? 8 : 3, maxRows: 20 }}
         disabled={disabled}
-        style={questionType === '编程题' ? { fontFamily: 'Consolas, Monaco, monospace' } : {}}
+        style={{
+          fontFamily: questionType === '编程题' ? "'JetBrains Mono', monospace" : "'DM Sans', sans-serif",
+          fontSize: 14,
+          borderRadius: 8,
+          border: '1px solid var(--ctw-border-default)',
+          padding: '12px 14px',
+        }}
       />
     )
   }
 
   if (guardLoading) {
     return (
-      <div className="flex items-center justify-center" style={{ minHeight: 400 }}>
-        <Spin size="large" />
+      <div className="flex items-center justify-center" style={{ minHeight: 300 }}>
+        <span
+          style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 20,
+            color: 'var(--ctw-text-tertiary)',
+          }}
+        >
+          {'>'}_<span className="animate-cursor-blink">|</span>
+        </span>
       </div>
     )
   }
 
   if (available === false) {
     return (
-      <Result
-        status="warning"
-        title={`${featureLabel}功能不可用`}
-        subTitle="当前模型配置不支持此功能，请前往设置页更换 provider/model"
-        extra={
-          <Button type="primary" onClick={() => navigate('/settings')}>
-            前往设置
-          </Button>
-        }
-      />
+      <div className="flex flex-col items-center justify-center" style={{ minHeight: 400 }}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ctw-text-tertiary)' }}>
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 20, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '16px 0 0' }}>
+          {`${featureLabel} ${t('guard.featureUnavailable')}`}
+        </h3>
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-secondary)', margin: '8px 0 0' }}>
+          {t('guard.featureUnavailableDesc')}
+        </p>
+        <Button type="primary" onClick={() => navigate('/settings')} style={{ marginTop: 24 }}>
+          {t('common.goSettings')}
+        </Button>
+      </div>
     )
   }
 
+  const questionNumber = String(questionCountRef.current).padStart(3, '0')
+
   return (
     <div className="max-w-6xl mx-auto">
-      <Row gutter={24}>
-        <Col xs={24} lg={17}>
-          <Card className="mb-4">
-            <div className="flex items-center justify-between mb-4">
-              <Title level={4} style={{ margin: 0 }}>AI 刷题练习</Title>
+      <div className="quiz-layout" style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: 24 }}>
+        {/* Left Panel */}
+        <div>
+          <div
+            style={{
+              border: '1px solid var(--ctw-border-default)',
+              borderRadius: 12,
+              padding: 24,
+              background: 'var(--ctw-surface-card)',
+            }}
+          >
+            {/* Header */}
+            <div style={{ marginBottom: 20 }}>
+              <h2
+                style={{
+                  fontFamily: "'Sora', sans-serif",
+                  fontSize: 20,
+                  fontWeight: 600,
+                  color: 'var(--ctw-text-primary)',
+                  margin: 0,
+                }}
+              >
+                {t('quiz.title')}
+              </h2>
             </div>
 
-            <div className="flex gap-3 mb-4 flex-wrap">
+            {/* Controls */}
+            <div className="flex gap-3 mb-5 flex-wrap">
               <Select
                 style={{ width: 200 }}
-                placeholder="选择考察内容"
+                placeholder={t('quiz.selectTopic')}
                 value={topic}
                 onChange={(val) => setTopic(Array.isArray(val) ? val[val.length - 1] : val)}
                 showSearch
-                options={TOPICS.map((t) => ({ label: t, value: t }))}
+                options={TOPICS.map((tp) => ({ label: tp, value: tp }))}
               />
               <Select
                 style={{ width: 140 }}
-                placeholder="选择题型"
+                placeholder={t('quiz.selectType')}
                 value={questionType}
                 onChange={setQuestionType}
-                options={QUESTION_TYPES.map((t) => ({ label: t, value: t }))}
+                options={QUESTION_TYPES.map((tp) => ({ label: tp, value: tp }))}
               />
               <Button
                 type="primary"
-                icon={<PlayCircleOutlined />}
                 onClick={handleGenerate}
                 loading={generating}
               >
-                {question ? '换一题' : '开始出题'}
+                {question ? t('quiz.change') : t('quiz.start')}
               </Button>
             </div>
 
+            {/* Generating state */}
             {generating && (
               <div className="flex flex-col items-center justify-center py-16">
-                <Spin size="large" />
-                <Text type="secondary" className="mt-4">AI 正在出题...</Text>
+                <span
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 20,
+                    color: 'var(--ctw-text-tertiary)',
+                  }}
+                >
+                  {'>'}_<span className="animate-cursor-blink">|</span>
+                </span>
+                <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-secondary)', marginTop: 16 }}>
+                  {t('quiz.generating')}
+                </p>
               </div>
             )}
 
+            {/* Question display */}
             {question && !generating && (
               <div>
-                <div className="mb-3 flex items-center gap-2">
+                {/* Question number + tags */}
+                <div className="flex items-center gap-3 mb-3">
+                  <span
+                    style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: 12,
+                      color: 'var(--ctw-text-tertiary)',
+                    }}
+                  >
+                    #{questionNumber}
+                  </span>
                   <Tag color={difficultyColors[question.difficulty] || 'blue'}>{question.difficulty}</Tag>
                   <Tag>{question.knowledge_point}</Tag>
                   <Tag color="cyan">{questionType}</Tag>
                 </div>
 
-                <Card
-                  size="small"
-                  className="mb-4"
-                  style={{ background: '#fafafa' }}
-                >
-                  <Paragraph style={{ fontSize: 15, whiteSpace: 'pre-wrap', margin: 0 }}>
+                {/* Question text */}
+                <div style={{ marginBottom: 20 }}>
+                  <p
+                    style={{
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontSize: 18,
+                      fontWeight: 500,
+                      color: 'var(--ctw-text-primary)',
+                      whiteSpace: 'pre-wrap',
+                      margin: 0,
+                      lineHeight: 1.6,
+                    }}
+                  >
                     {question.question}
-                  </Paragraph>
-                </Card>
+                  </p>
+                </div>
 
-                <div className="mb-4">
+                {/* Answer input */}
+                <div style={{ marginBottom: 16 }}>
                   {renderAnswerInput()}
                 </div>
 
+                {/* Action buttons */}
                 {!result && (
                   <div className="flex gap-2">
                     <Button
@@ -266,123 +402,286 @@ export default function QuizPage() {
                       loading={judging}
                       disabled={!userAnswer.trim()}
                     >
-                      提交答案
+                      {t('quiz.submit')}
                     </Button>
                     <Button
-                      icon={<QuestionCircleOutlined />}
                       onClick={handleSkip}
                       loading={judging}
                     >
-                      不会
+                      {t('quiz.skip')}
                     </Button>
                   </div>
                 )}
 
+                {/* Result feedback */}
                 {result && (
-                  <Card
-                    size="small"
-                    className="mt-4"
+                  <div
                     style={{
-                      border: `2px solid ${result.is_correct ? '#52c41a' : '#ff4d4f'}`,
-                      background: result.is_correct ? '#f6ffed' : '#fff2f0',
+                      marginTop: 16,
+                      borderLeft: `3px solid ${result.is_correct ? 'var(--ctw-success)' : 'var(--ctw-error)'}`,
+                      borderRadius: 8,
+                      padding: 20,
+                      background: result.is_correct ? 'rgba(0,212,170,0.05)' : 'rgba(239,68,68,0.05)',
+                      opacity: resultAnimState === 'hidden' ? 0 : 1,
+                      transform: resultAnimState === 'hidden' ? 'translateY(8px)' : 'translateY(0)',
+                      transition: 'opacity 0.3s ease, transform 0.3s ease, background-color 0.3s ease',
                     }}
                   >
-                    <div className="flex items-center gap-2 mb-2">
-                      {result.is_correct ? (
-                        <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 20 }} />
-                      ) : (
-                        <CloseCircleOutlined style={{ color: '#ff4d4f', fontSize: 20 }} />
-                      )}
-                      <Text strong style={{ fontSize: 16, color: result.is_correct ? '#52c41a' : '#ff4d4f' }}>
-                        {result.is_correct ? '回答正确！' : '回答错误'}
-                      </Text>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          animation: resultAnimState === 'visible' ? 'icon-bounce 0.2s ease-out' : 'none',
+                        }}
+                      >
+                        {result.is_correct ? (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ctw-success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        ) : (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ctw-error)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        )}
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: "'DM Sans', sans-serif",
+                          fontSize: 16,
+                          fontWeight: 600,
+                          color: result.is_correct ? 'var(--ctw-success)' : 'var(--ctw-error)',
+                        }}
+                      >
+                        {result.is_correct ? t('quiz.correct') : t('quiz.incorrect')}
+                      </span>
                     </div>
 
-                    <div className="mb-2">
-                      <Text strong>正确答案：</Text>
-                      <Paragraph style={{ whiteSpace: 'pre-wrap', margin: '4px 0' }}>
+                    <div style={{ marginBottom: 12 }}>
+                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-primary)' }}>
+                        {t('quiz.correctAnswer')}
+                      </span>
+                      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-primary)', whiteSpace: 'pre-wrap', margin: '4px 0 0' }}>
                         {result.correct_answer}
-                      </Paragraph>
+                      </p>
                     </div>
 
-                    <div className="mb-3">
-                      <Text strong><BulbOutlined className="mr-1" />解析：</Text>
-                      <Paragraph style={{ whiteSpace: 'pre-wrap', margin: '4px 0' }}>
+                    <div style={{ marginBottom: 16 }}>
+                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-primary)' }}>
+                        {t('quiz.explanation')}
+                      </span>
+                      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-secondary)', whiteSpace: 'pre-wrap', margin: '4px 0 0', lineHeight: 1.7 }}>
                         {result.explanation}
-                      </Paragraph>
+                      </p>
                     </div>
 
-                    <Button type="primary" icon={<RightOutlined />} onClick={handleNext}>
-                      下一题
+                    <Button type="primary" onClick={handleNext}>
+                      {t('quiz.next')}
                     </Button>
-                  </Card>
+                  </div>
                 )}
               </div>
             )}
 
+            {/* Empty state */}
             {!question && !generating && (
-              <Result
-                icon={<BulbOutlined style={{ color: '#1677ff' }} />}
-                title="选择考察内容和题型，开始刷题"
-                subTitle="AI 会根据你的做题记录智能出题，已掌握的知识点不再重复考察"
-              />
+              <div className="flex flex-col items-center justify-center py-12">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ctw-text-tertiary)' }}>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                <h3
+                  style={{
+                    fontFamily: "'Sora', sans-serif",
+                    fontSize: 18,
+                    fontWeight: 600,
+                    color: 'var(--ctw-text-primary)',
+                    margin: '16px 0 0',
+                  }}
+                >
+                  {t('quiz.emptyTitle')}
+                </h3>
+                <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-secondary)', margin: '8px 0 0' }}>
+                  {t('quiz.emptySubtitle')}
+                </p>
+              </div>
             )}
-          </Card>
-        </Col>
+          </div>
+        </div>
 
-        <Col xs={24} lg={7}>
-          <Card title={<><TrophyOutlined className="mr-2" />刷题统计</>} size="small">
+        {/* Right Panel - Stats */}
+        <div>
+          <div
+            style={{
+              border: '1px solid var(--ctw-border-default)',
+              borderRadius: 12,
+              padding: 20,
+              background: 'var(--ctw-surface-card)',
+              position: 'sticky',
+              top: 24,
+            }}
+          >
+            <h3
+              style={{
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 14,
+                fontWeight: 600,
+                color: 'var(--ctw-text-primary)',
+                margin: '0 0 20px',
+              }}
+            >
+              {t('quiz.stats')}
+            </h3>
+
             {stats ? (
               <div>
-                <div className="text-center mb-3">
-                  <Progress
-                    type="circle"
-                    percent={stats.accuracy}
-                    size={80}
-                    format={(p) => <span style={{ fontSize: 14 }}>{p}%</span>}
-                    strokeColor={stats.accuracy >= 70 ? '#52c41a' : '#faad14'}
-                  />
-                  <div className="mt-1">
-                    <Text type="secondary">正确率</Text>
+                {/* Accuracy big number */}
+                <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                  <p
+                    style={{
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontSize: 13,
+                      color: 'var(--ctw-text-tertiary)',
+                      margin: '0 0 4px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.03em',
+                    }}
+                  >
+                    {t('quiz.accuracy')}
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center' }}>
+                    <span
+                      style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: 48,
+                        fontWeight: 700,
+                        color: 'var(--ctw-text-primary)',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {stats.accuracy}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: 18,
+                        color: 'var(--ctw-text-tertiary)',
+                        marginLeft: 2,
+                      }}
+                    >
+                      %
+                    </span>
                   </div>
                 </div>
-                <div className="flex justify-between mb-2">
-                  <Text type="secondary">总题数</Text>
-                  <Text strong>{stats.total}</Text>
-                </div>
-                <div className="flex justify-between mb-3">
-                  <Text type="secondary">答对</Text>
-                  <Text strong style={{ color: '#52c41a' }}>{stats.correct}</Text>
+
+                {/* Stats list */}
+                <div style={{ marginBottom: 16 }}>
+                  <div className="flex justify-between" style={{ padding: '8px 0', borderBottom: '1px solid var(--ctw-border-default)' }}>
+                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--ctw-text-secondary)' }}>
+                      {t('quiz.total')}
+                    </span>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 600, color: 'var(--ctw-text-primary)' }}>
+                      {stats.total}
+                    </span>
+                  </div>
+                  <div className="flex justify-between" style={{ padding: '8px 0', borderBottom: '1px solid var(--ctw-border-default)' }}>
+                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--ctw-text-secondary)' }}>
+                      {t('quiz.correctCount')}
+                    </span>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 600, color: 'var(--ctw-success)' }}>
+                      {stats.correct}
+                    </span>
+                  </div>
                 </div>
 
+                {/* Mastered tags */}
                 {stats.mastered?.length > 0 && (
-                  <div className="mb-3">
-                    <Text strong style={{ fontSize: 13 }}>已掌握：</Text>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {stats.mastered.map((k, i) => <Tag key={i} color="green" style={{ fontSize: 11 }}>{k}</Tag>)}
+                  <div style={{ marginBottom: 12 }}>
+                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 6px' }}>
+                      {t('quiz.mastered')}
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {stats.mastered.map((k, i) => (
+                        <span
+                          key={i}
+                          style={{
+                            fontFamily: "'DM Sans', sans-serif",
+                            fontSize: 11,
+                            padding: '2px 8px',
+                            borderRadius: 4,
+                            border: '1px solid var(--ctw-success)',
+                            color: 'var(--ctw-success)',
+                          }}
+                        >
+                          {k}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 )}
 
+                {/* Weak tags */}
                 {stats.weak?.length > 0 && (
                   <div>
-                    <Text strong style={{ fontSize: 13 }}>需加强：</Text>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {stats.weak.map((k, i) => <Tag key={i} color="orange" style={{ fontSize: 11 }}>{k}</Tag>)}
+                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 6px' }}>
+                      {t('quiz.weak')}
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {stats.weak.map((k, i) => (
+                        <span
+                          key={i}
+                          style={{
+                            fontFamily: "'DM Sans', sans-serif",
+                            fontSize: 11,
+                            padding: '2px 8px',
+                            borderRadius: 4,
+                            border: '1px solid var(--ctw-warning)',
+                            color: 'var(--ctw-warning)',
+                          }}
+                        >
+                          {k}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 )}
 
                 {stats.total === 0 && (
-                  <Text type="secondary" style={{ fontSize: 13 }}>还没有做题记录，开始刷题吧</Text>
+                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--ctw-text-tertiary)', margin: 0 }}>
+                    {t('quiz.noRecords')}
+                  </p>
                 )}
               </div>
             ) : (
-              <Spin size="small" />
+              <div className="flex items-center justify-center" style={{ padding: 20 }}>
+                <span
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 16,
+                    color: 'var(--ctw-text-tertiary)',
+                  }}
+                >
+                  {'>'}_<span className="animate-cursor-blink">|</span>
+                </span>
+              </div>
             )}
-          </Card>
-        </Col>
-      </Row>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes icon-bounce {
+          0% { transform: scale(0); }
+          60% { transform: scale(1.2); }
+          100% { transform: scale(1); }
+        }
+        @media (max-width: 1024px) {
+          .quiz-layout {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

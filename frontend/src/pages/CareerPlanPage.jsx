@@ -1,86 +1,353 @@
 import { useState, useEffect } from 'react'
-import { Card, Typography, Timeline, Tag, Spin, Button, Row, Col, message, Steps, Result } from 'antd'
-import {
-  RocketOutlined,
-  AimOutlined,
-  TrophyOutlined,
-  BookOutlined,
-  FileTextOutlined,
-  BulbOutlined,
-  SyncOutlined,
-} from '@ant-design/icons'
+import { Button, message, Modal } from 'antd'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'motion/react'
 import { generatePlan, getPlan } from '../api/career'
 import useFeatureGuard from '../hooks/useFeatureGuard'
+import { useTranslation } from '../i18n'
+import FadeIn from '../components/motion/FadeIn'
+import StaggerContainer, { StaggerItem } from '../components/motion/StaggerContainer'
 
-const { Title, Text, Paragraph } = Typography
+function LoadingCursor({ title, subtitle }) {
+  return (
+    <div
+      className="flex flex-col items-center justify-center gap-4"
+      style={{ minHeight: 400 }}
+    >
+      <motion.span
+        style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 24,
+          color: 'var(--ctw-text-tertiary)',
+        }}
+        animate={{ opacity: [1, 0.3, 1] }}
+        transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+      >
+        {'>_'}
+      </motion.span>
+      {title && (
+        <div className="text-center mt-2">
+          <h2
+            style={{
+              fontFamily: "'Sora', 'DM Sans', sans-serif",
+              fontSize: 20,
+              fontWeight: 600,
+              color: 'var(--ctw-text-primary)',
+              margin: 0,
+              marginBottom: 4,
+            }}
+          >
+            {title}
+          </h2>
+          {subtitle && (
+            <p
+              style={{
+                fontSize: 14,
+                color: 'var(--ctw-text-secondary)',
+                margin: 0,
+              }}
+            >
+              {subtitle}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const stageConfig = {
+  short_term: { labelKey: 'shortTerm', color: '#0066FF' },
+  mid_term: { labelKey: 'midTerm', color: '#0066FF' },
+  long_term: { labelKey: 'longTerm', color: '#0066FF' },
+}
 
 const levelColors = {
   '初级': '#faad14',
-  '中级': '#1677ff',
-  '高级': '#52c41a',
-  '专家': '#722ed1',
+  '中级': '#0066FF',
+  '高级': '#00D4AA',
+  '专家': '#7c3aed',
 }
 
-function SkillCard({ skill }) {
+function TimelineNode({ stageKey, data, isLast, isCurrent, t, index }) {
+  if (!data) return null
+
+  const config = stageConfig[stageKey] || { labelKey: stageKey, color: '#0066FF' }
+
   return (
-    <Card size="small" className="h-full">
+    <StaggerItem>
+      <div className="relative flex" style={{ paddingLeft: 48, paddingBottom: isLast ? 0 : 32 }}>
+        {/* Vertical line */}
+        {!isLast && (
+          <div
+            className="absolute"
+            style={{
+              left: 19,
+              top: 12,
+              bottom: 0,
+              width: 1,
+              backgroundColor: 'var(--ctw-border-default)',
+            }}
+          />
+        )}
+
+        {/* Node circle */}
+        <div
+          className="absolute"
+          style={{
+            left: 16,
+            top: 4,
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            backgroundColor: config.color,
+            boxShadow: isCurrent
+              ? `0 0 0 4px ${config.color}33, 0 0 12px ${config.color}44`
+              : 'none',
+          }}
+        />
+
+        <div className="flex-1 min-w-0">
+          {/* Stage label */}
+          <span
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 12,
+              fontWeight: 500,
+              color: 'var(--ctw-text-tertiary)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
+            {t(`career.${config.labelKey}`)}
+          </span>
+
+          {/* Content block with border-left */}
+          <div
+            className="mt-2"
+            style={{
+              borderLeft: '2px solid #0066FF',
+              paddingLeft: 16,
+            }}
+          >
+            {data.title && (
+              <h4
+                style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 16,
+                  fontWeight: 600,
+                  color: 'var(--ctw-text-primary)',
+                  margin: 0,
+                  marginBottom: 12,
+                }}
+              >
+                {data.title}
+              </h4>
+            )}
+
+            {data.goals && data.goals.length > 0 && (
+              <div className="mb-3">
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: 'var(--ctw-text-primary)',
+                  }}
+                >
+                  {t('career.goals')}
+                </span>
+                <ul
+                  className="mt-1 pl-4"
+                  style={{
+                    margin: 0,
+                    marginTop: 4,
+                    paddingLeft: 20,
+                    listStyle: 'disc',
+                  }}
+                >
+                  {data.goals.map((g, i) => (
+                    <li
+                      key={i}
+                      style={{
+                        fontSize: 13,
+                        lineHeight: 1.8,
+                        color: 'var(--ctw-text-secondary)',
+                      }}
+                    >
+                      {g}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {data.actions && data.actions.length > 0 && (
+              <div className="mb-3">
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: 'var(--ctw-text-primary)',
+                  }}
+                >
+                  {t('career.actions')}
+                </span>
+                <ul
+                  className="mt-1 pl-4"
+                  style={{
+                    margin: 0,
+                    marginTop: 4,
+                    paddingLeft: 20,
+                    listStyle: 'disc',
+                  }}
+                >
+                  {data.actions.map((a, i) => (
+                    <li
+                      key={i}
+                      style={{
+                        fontSize: 13,
+                        lineHeight: 1.8,
+                        color: 'var(--ctw-text-secondary)',
+                      }}
+                    >
+                      {a}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {data.milestones && data.milestones.length > 0 && (
+              <div className="mb-3">
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: 'var(--ctw-text-primary)',
+                  }}
+                >
+                  {t('career.milestones')}
+                </span>
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {data.milestones.map((m, i) => (
+                    <span
+                      key={i}
+                      className="px-2 py-0.5 rounded"
+                      style={{
+                        fontSize: 12,
+                        color: '#0066FF',
+                        backgroundColor: 'rgba(0, 102, 255, 0.08)',
+                        border: '1px solid rgba(0, 102, 255, 0.2)',
+                      }}
+                    >
+                      {m}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {data.vision && (
+              <p
+                style={{
+                  fontSize: 13,
+                  lineHeight: 1.6,
+                  color: 'var(--ctw-text-tertiary)',
+                  margin: 0,
+                }}
+              >
+                {data.vision}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </StaggerItem>
+  )
+}
+
+function SkillItem({ skill, t }) {
+  const currentColor = levelColors[skill.current_level] || 'var(--ctw-text-tertiary)'
+  const targetColor = levelColors[skill.target_level] || '#0066FF'
+
+  return (
+    <div
+      className="py-4"
+      style={{ borderBottom: '1px solid var(--ctw-border-default)' }}
+    >
       <div className="flex items-center justify-between mb-2">
-        <Text strong>{skill.skill}</Text>
-        <Text type="secondary" style={{ fontSize: 12 }}>{skill.timeline}</Text>
+        <span
+          style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 14,
+            fontWeight: 500,
+            color: 'var(--ctw-text-primary)',
+          }}
+        >
+          {skill.skill}
+        </span>
+        {skill.timeline && (
+          <span
+            style={{
+              fontSize: 12,
+              color: 'var(--ctw-text-tertiary)',
+            }}
+          >
+            {skill.timeline}
+          </span>
+        )}
       </div>
+
       <div className="flex items-center gap-2 mb-2">
-        <Tag color={levelColors[skill.current_level] || '#999'}>{skill.current_level}</Tag>
-        <Text type="secondary">→</Text>
-        <Tag color={levelColors[skill.target_level] || '#1677ff'}>{skill.target_level}</Tag>
+        <span
+          className="px-2 py-0.5 rounded text-xs"
+          style={{
+            color: currentColor,
+            border: `1px solid ${currentColor}`,
+          }}
+        >
+          {skill.current_level}
+        </span>
+        <span style={{ color: 'var(--ctw-text-tertiary)', fontSize: 12 }}>→</span>
+        <span
+          className="px-2 py-0.5 rounded text-xs"
+          style={{
+            color: targetColor,
+            border: `1px solid ${targetColor}`,
+          }}
+        >
+          {skill.target_level}
+        </span>
       </div>
+
       {skill.resources && skill.resources.length > 0 && (
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>学习资源：</Text>
-          <div className="flex flex-wrap gap-1 mt-1">
+          <span
+            style={{
+              fontSize: 12,
+              color: 'var(--ctw-text-tertiary)',
+            }}
+          >
+            {t('career.resources')}
+          </span>
+          <div className="flex flex-wrap gap-1.5 mt-1">
             {skill.resources.map((r, i) => (
-              <Tag key={i} style={{ fontSize: 11 }}>{r}</Tag>
+              <span
+                key={i}
+                className="px-2 py-0.5 rounded"
+                style={{
+                  fontSize: 11,
+                  color: 'var(--ctw-text-secondary)',
+                  backgroundColor: 'var(--ctw-surface-base)',
+                  border: '1px solid var(--ctw-border-default)',
+                }}
+              >
+                {r}
+              </span>
             ))}
           </div>
         </div>
       )}
-    </Card>
-  )
-}
-
-function GoalSection({ data, icon, color }) {
-  if (!data) return null
-  return (
-    <div className="mb-2">
-      <div className="flex items-center gap-2 mb-2">
-        {icon}
-        <Title level={5} style={{ margin: 0 }}>{data.title}</Title>
-      </div>
-      {data.goals && (
-        <div className="mb-2">
-          <Text strong style={{ fontSize: 13 }}>目标：</Text>
-          <ul className="m-0 pl-5">
-            {data.goals.map((g, i) => <li key={i}>{g}</li>)}
-          </ul>
-        </div>
-      )}
-      {data.actions && (
-        <div className="mb-2">
-          <Text strong style={{ fontSize: 13 }}>行动计划：</Text>
-          <ul className="m-0 pl-5">
-            {data.actions.map((a, i) => <li key={i}>{a}</li>)}
-          </ul>
-        </div>
-      )}
-      {data.milestones && (
-        <div className="mb-2">
-          <Text strong style={{ fontSize: 13 }}>里程碑：</Text>
-          <div className="flex flex-wrap gap-1 mt-1">
-            {data.milestones.map((m, i) => <Tag key={i} color={color}>{m}</Tag>)}
-          </div>
-        </div>
-      )}
-      {data.vision && <Paragraph type="secondary">{data.vision}</Paragraph>}
     </div>
   )
 }
@@ -92,6 +359,7 @@ export default function CareerPlanPage() {
   const [regenerating, setRegenerating] = useState(false)
   const navigate = useNavigate()
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("career")
+  const { t } = useTranslation()
 
   useEffect(() => {
     let ignore = false
@@ -106,7 +374,7 @@ export default function CareerPlanPage() {
           const res = await generatePlan()
           if (!ignore) setPlan(res.data)
         } catch (err) {
-          if (!ignore) message.error(err.response?.data?.detail || '生成规划失败，请先完成测评和匹配')
+          if (!ignore) message.error(err.response?.data?.detail || t('career.generateFailed'))
         } finally {
           if (!ignore) setGenerating(false)
         }
@@ -123,48 +391,68 @@ export default function CareerPlanPage() {
     try {
       const res = await generatePlan()
       setPlan(res.data)
-      message.success('规划已更新')
+      message.success(t('career.regenerateSuccess'))
     } catch (err) {
-      message.error(err.response?.data?.detail || '重新规划失败')
+      message.error(err.response?.data?.detail || t('career.regenerateFailed'))
     } finally {
       setRegenerating(false)
     }
   }
 
   if (guardLoading) {
-    return (
-      <div className="flex items-center justify-center" style={{ minHeight: 400 }}>
-        <Spin size="large" />
-      </div>
-    )
+    return <LoadingCursor />
   }
 
   if (available === false) {
     return (
-      <Result
-        status="warning"
-        title={`${featureLabel}功能不可用`}
-        subTitle="当前模型配置不支持此功能，请前往设置页更换 provider/model"
-        extra={
-          <Button type="primary" onClick={() => navigate('/settings')}>
-            前往设置
-          </Button>
-        }
-      />
+      <div
+        className="flex flex-col items-center justify-center gap-4"
+        style={{ minHeight: 400 }}
+      >
+        <svg
+          width="48"
+          height="48"
+          viewBox="0 0 48 48"
+          fill="none"
+          style={{ color: 'var(--ctw-warning)' }}
+        >
+          <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2" fill="none" />
+          <line x1="24" y1="14" x2="24" y2="28" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+          <circle cx="24" cy="34" r="1.5" fill="currentColor" />
+        </svg>
+        <h2
+          style={{
+            fontFamily: "'Sora', 'DM Sans', sans-serif",
+            fontSize: 20,
+            fontWeight: 600,
+            color: 'var(--ctw-text-primary)',
+            margin: 0,
+          }}
+        >
+          {t('guard.featureUnavailable')}
+        </h2>
+        <p
+          style={{
+            fontSize: 14,
+            color: 'var(--ctw-text-secondary)',
+            margin: 0,
+          }}
+        >
+          {t('guard.featureUnavailableDesc')}
+        </p>
+        <Button type="primary" onClick={() => navigate('/settings')}>
+          {t('common.goSettings')}
+        </Button>
+      </div>
     )
   }
 
   if (loading || generating) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4" style={{ minHeight: 400 }}>
-        <Spin size="large" />
-        <div className="text-center">
-          <Title level={4} style={{ margin: 0 }}>
-            {generating ? 'AI 正在为你生成职业规划...' : '加载中...'}
-          </Title>
-          <Text type="secondary">结合你的画像和匹配结果，定制专属发展路径</Text>
-        </div>
-      </div>
+      <LoadingCursor
+        title={generating ? t('career.generating') : t('common.loading')}
+        subtitle={t('career.generatingSubtitle')}
+      />
     )
   }
 
@@ -173,78 +461,218 @@ export default function CareerPlanPage() {
   const pc = plan.plan_content || {}
   const skills = pc.skill_roadmap || []
 
+  const stages = [
+    { key: 'short_term', data: pc.short_term },
+    { key: 'mid_term', data: pc.mid_term },
+    { key: 'long_term', data: pc.long_term },
+  ].filter((s) => s.data)
+
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <Title level={4} style={{ margin: 0 }}>我的职业规划</Title>
-          <Text type="secondary">AI 为你量身定制的职业发展路径</Text>
-        </div>
-        <Button
-          icon={<SyncOutlined />}
-          onClick={handleRegenerate}
-          loading={regenerating}
-          type="primary"
-          ghost
-        >
-          结合近期刷题再次规划
-        </Button>
-      </div>
-
-      {pc.career_direction && (
-        <Card className="mb-4" style={{ background: 'linear-gradient(135deg, #667eea22, #764ba222)' }}>
-          <div className="flex items-center gap-3">
-            <RocketOutlined style={{ fontSize: 28, color: '#722ed1' }} />
-            <div>
-              <Text type="secondary">核心职业方向</Text>
-              <Title level={4} style={{ margin: 0 }}>{pc.career_direction}</Title>
-            </div>
+    <div className="max-w-[800px] mx-auto px-4 py-6">
+      {/* Header */}
+      <FadeIn>
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h1
+              style={{
+                fontFamily: "'Sora', 'DM Sans', sans-serif",
+                fontSize: 28,
+                fontWeight: 700,
+                color: 'var(--ctw-text-primary)',
+                margin: 0,
+                lineHeight: 1.3,
+              }}
+            >
+              {t('career.title')}
+            </h1>
+            <p
+              className="mt-1"
+              style={{
+                fontSize: 14,
+                color: 'var(--ctw-text-secondary)',
+                margin: 0,
+                marginTop: 4,
+              }}
+            >
+              {t('career.subtitle')}
+            </p>
           </div>
-        </Card>
+          <Button
+            ghost
+            onClick={handleRegenerate}
+            loading={regenerating}
+          >
+            {t('career.regenerate')}
+          </Button>
+        </div>
+      </FadeIn>
+
+      {/* Career Direction */}
+      {pc.career_direction && (
+        <FadeIn delay={0.1}>
+          <div
+            className="mb-8 p-5 rounded-xl"
+            style={{
+              background: 'linear-gradient(135deg, rgba(0, 102, 255, 0.06), rgba(0, 212, 170, 0.06))',
+              border: '1px solid var(--ctw-border-default)',
+            }}
+          >
+            <span
+              style={{
+                fontSize: 13,
+                color: 'var(--ctw-text-tertiary)',
+                display: 'block',
+                marginBottom: 4,
+              }}
+            >
+              {t('career.direction')}
+            </span>
+            <h2
+              style={{
+                fontFamily: "'Sora', 'DM Sans', sans-serif",
+                fontSize: 22,
+                fontWeight: 700,
+                color: 'var(--ctw-text-primary)',
+                margin: 0,
+              }}
+            >
+              {pc.career_direction}
+            </h2>
+          </div>
+        </FadeIn>
       )}
 
-      <Card title="发展路线图" className="mb-4">
-        <Timeline
-          mode="left"
-          items={[
-            pc.short_term && {
-              color: '#1677ff',
-              children: <GoalSection data={pc.short_term} icon={<AimOutlined style={{ color: '#1677ff' }} />} color="blue" />,
-            },
-            pc.mid_term && {
-              color: '#52c41a',
-              children: <GoalSection data={pc.mid_term} icon={<TrophyOutlined style={{ color: '#52c41a' }} />} color="green" />,
-            },
-            pc.long_term && {
-              color: '#722ed1',
-              children: <GoalSection data={pc.long_term} icon={<RocketOutlined style={{ color: '#722ed1' }} />} color="purple" />,
-            },
-          ].filter(Boolean)}
-        />
-      </Card>
+      {/* Development Roadmap / Timeline */}
+      {stages.length > 0 && (
+        <FadeIn delay={0.2}>
+          <div
+            className="mb-8 pb-6"
+            style={{ borderBottom: '1px solid var(--ctw-border-default)' }}
+          >
+            <h3
+              style={{
+                fontFamily: "'Sora', 'DM Sans', sans-serif",
+                fontSize: 18,
+                fontWeight: 600,
+                color: 'var(--ctw-text-primary)',
+                margin: 0,
+                marginBottom: 24,
+              }}
+            >
+              {t('career.roadmap')}
+            </h3>
 
+            <StaggerContainer staggerDelay={0.15}>
+              {stages.map((stage, i) => (
+                <TimelineNode
+                  key={stage.key}
+                  stageKey={stage.key}
+                  data={stage.data}
+                  isLast={i === stages.length - 1}
+                  isCurrent={i === 0}
+                  t={t}
+                  index={i}
+                />
+              ))}
+            </StaggerContainer>
+          </div>
+        </FadeIn>
+      )}
+
+      {/* Skills */}
       {skills.length > 0 && (
-        <Card title={<><BookOutlined className="mr-2" />技能提升路径</>} className="mb-4">
-          <Row gutter={[16, 16]}>
-            {skills.map((s, i) => (
-              <Col key={i} xs={24} sm={12} lg={8}>
-                <SkillCard skill={s} />
-              </Col>
-            ))}
-          </Row>
-        </Card>
+        <FadeIn delay={0.3}>
+          <div
+            className="mb-8 pb-2"
+            style={{ borderBottom: '1px solid var(--ctw-border-default)' }}
+          >
+            <h3
+              style={{
+                fontFamily: "'Sora', 'DM Sans', sans-serif",
+                fontSize: 18,
+                fontWeight: 600,
+                color: 'var(--ctw-text-primary)',
+                margin: 0,
+                marginBottom: 8,
+              }}
+            >
+              {t('career.skills')}
+            </h3>
+
+            <StaggerContainer staggerDelay={0.08}>
+              {skills.map((s, i) => (
+                <StaggerItem key={i}>
+                  <SkillItem skill={s} t={t} />
+                </StaggerItem>
+              ))}
+            </StaggerContainer>
+          </div>
+        </FadeIn>
       )}
 
+      {/* Resume Advice */}
       {plan.resume_advice && (
-        <Card title={<><FileTextOutlined className="mr-2" />简历优化建议</>} className="mb-4">
-          <Paragraph style={{ whiteSpace: 'pre-wrap' }}>{plan.resume_advice}</Paragraph>
-        </Card>
+        <FadeIn delay={0.4}>
+          <div
+            className="mb-8 pb-6"
+            style={{ borderBottom: '1px solid var(--ctw-border-default)' }}
+          >
+            <h3
+              style={{
+                fontFamily: "'Sora', 'DM Sans', sans-serif",
+                fontSize: 18,
+                fontWeight: 600,
+                color: 'var(--ctw-text-primary)',
+                margin: 0,
+                marginBottom: 12,
+              }}
+            >
+              {t('career.resumeAdvice')}
+            </h3>
+            <p
+              style={{
+                fontSize: 14,
+                lineHeight: 1.8,
+                color: 'var(--ctw-text-secondary)',
+                margin: 0,
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {plan.resume_advice}
+            </p>
+          </div>
+        </FadeIn>
       )}
 
+      {/* Overall Advice */}
       {pc.overall_advice && (
-        <Card title={<><BulbOutlined className="mr-2" />总体建议</>}>
-          <Paragraph style={{ whiteSpace: 'pre-wrap' }}>{pc.overall_advice}</Paragraph>
-        </Card>
+        <FadeIn delay={0.5}>
+          <div className="pb-6">
+            <h3
+              style={{
+                fontFamily: "'Sora', 'DM Sans', sans-serif",
+                fontSize: 18,
+                fontWeight: 600,
+                color: 'var(--ctw-text-primary)',
+                margin: 0,
+                marginBottom: 12,
+              }}
+            >
+              {t('career.overallAdvice')}
+            </h3>
+            <p
+              style={{
+                fontSize: 14,
+                lineHeight: 1.8,
+                color: 'var(--ctw-text-secondary)',
+                margin: 0,
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {pc.overall_advice}
+            </p>
+          </div>
+        </FadeIn>
       )}
     </div>
   )
