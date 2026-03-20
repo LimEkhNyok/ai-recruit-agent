@@ -220,13 +220,13 @@ export default function HomePage() {
                   fontWeight: 500,
                   color: 'var(--ctw-text-primary)',
                   background: 'transparent',
-                  border: '1px solid var(--ctw-border-default)',
+                  border: '1.5px solid var(--ctw-text-tertiary)',
                   borderRadius: 8,
                   cursor: 'pointer',
                   transition: 'border-color 200ms',
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--ctw-text-secondary)'}
-                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--ctw-border-default)'}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--ctw-text-primary)'}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--ctw-text-tertiary)'}
               >
                 {t('home.learnMore')}
               </button>
@@ -422,7 +422,7 @@ export default function HomePage() {
                     fontSize: 14,
                     fontWeight: 500,
                     color: '#fff',
-                    background: 'var(--ctw-text-primary)',
+                    background: '#0066FF',
                     border: 'none',
                     borderRadius: 6,
                     cursor: 'pointer',
