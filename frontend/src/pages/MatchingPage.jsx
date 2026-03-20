@@ -129,6 +129,7 @@ function EmptyState({ text }) {
 export default function MatchingPage() {
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [rematching, setRematching] = useState(false)
   const navigate = useNavigate()
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("matching")
   const { markApiUsed } = useThemeStore()
@@ -165,6 +166,20 @@ export default function MatchingPage() {
 
   const handleInterview = (jobId) => {
     navigate(`/interview?job_id=${jobId}`)
+  }
+
+  const handleRematch = async () => {
+    setRematching(true)
+    try {
+      const res = await triggerMatch()
+      setResults(res.data.results)
+      markApiUsed()
+      message.success(t('matching.rematchSuccess') || 'OK')
+    } catch (err) {
+      message.error(err.response?.data?.detail || t('matching.matchFailed'))
+    } finally {
+      setRematching(false)
+    }
   }
 
   if (guardLoading) {
@@ -235,28 +250,52 @@ export default function MatchingPage() {
     <div className="max-w-6xl mx-auto px-4 py-6">
       {/* Page header */}
       <FadeIn>
-        <div className="mb-8">
-          <h1
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h1
+              style={{
+                fontFamily: "'Sora', 'DM Sans', sans-serif",
+                fontSize: 24,
+                fontWeight: 600,
+                color: 'var(--ctw-text-primary)',
+                margin: 0,
+                marginBottom: 4,
+              }}
+            >
+              {t('matching.title')}
+            </h1>
+            <p
+              style={{
+                fontSize: 14,
+                color: 'var(--ctw-text-secondary)',
+                margin: 0,
+              }}
+            >
+              {t('matching.subtitle')}
+            </p>
+          </div>
+          <button
+            onClick={handleRematch}
+            disabled={rematching}
             style={{
-              fontFamily: "'Sora', 'DM Sans', sans-serif",
-              fontSize: 24,
-              fontWeight: 600,
-              color: 'var(--ctw-text-primary)',
-              margin: 0,
-              marginBottom: 4,
-            }}
-          >
-            {t('matching.title')}
-          </h1>
-          <p
-            style={{
+              padding: '8px 16px',
               fontSize: 14,
-              color: 'var(--ctw-text-secondary)',
-              margin: 0,
+              fontWeight: 500,
+              fontFamily: "'DM Sans', sans-serif",
+              color: 'var(--ctw-text-primary)',
+              background: 'transparent',
+              border: '1px solid var(--ctw-border-default)',
+              borderRadius: 8,
+              cursor: rematching ? 'not-allowed' : 'pointer',
+              opacity: rematching ? 0.6 : 1,
+              transition: 'border-color 200ms',
+              whiteSpace: 'nowrap',
             }}
+            onMouseEnter={(e) => !rematching && (e.currentTarget.style.borderColor = '#0066FF')}
+            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--ctw-border-default)'}
           >
-            {t('matching.subtitle')}
-          </p>
+            {rematching ? t('common.loading') : t('matching.rematch')}
+          </button>
         </div>
       </FadeIn>
 

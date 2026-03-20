@@ -233,6 +233,7 @@
     "collapse": "Collapse",
     "analyzing": "AI is finding the best matches for you...",
     "analyzingSubtitle": "Analyzing the fit between your profile and available positions",
+    "rematch": "Re-match",
     "noResults": "No matching results",
     "matchFailed": "Matching failed, please complete the assessment first",
     "beyondCognition": "Beyond Expectations",
@@ -391,6 +392,7 @@
     "uploadSuccess": "Upload successful",
     "uploadFailed": "Upload failed",
     "analyzeFailed": "Analysis failed",
+    "reanalyze": "Re-analyze",
     "analyzing": "AI is analyzing your resume..."
   },
   "guard": {
