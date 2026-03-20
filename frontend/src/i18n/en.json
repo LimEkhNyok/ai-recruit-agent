@@ -293,7 +293,13 @@
     "codePlaceholder": "Type your code here...",
     "answerPlaceholder": "Type your answer here...",
     "true": "True",
-    "false": "False"
+    "false": "False",
+    "types": {
+      "判断题": "True/False",
+      "选择题": "Multiple Choice",
+      "简答题": "Short Answer",
+      "编程题": "Coding"
+    }
   },
   "settings": {
     "title": "Model Settings",

@@ -298,7 +298,13 @@
     "codePlaceholder": "在此输入你的代码...",
     "answerPlaceholder": "在此输入你的答案...",
     "true": "对",
-    "false": "错"
+    "false": "错",
+    "types": {
+      "判断题": "判断题",
+      "选择题": "选择题",
+      "简答题": "简答题",
+      "编程题": "编程题"
+    }
   },
   "settings": {
     "title": "模型设置",
