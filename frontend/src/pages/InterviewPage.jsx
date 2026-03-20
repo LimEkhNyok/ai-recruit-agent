@@ -20,29 +20,26 @@ function LoadingCursor({ text }) {
   return (
     <div className="flex items-center justify-center" style={{ minHeight: 400 }}>
       <div className="flex items-center gap-3">
-        <span
-          className="font-mono"
-          style={{
-            fontSize: 24,
-            fontWeight: 700,
-            color: '#0066FF',
-            animation: 'cursorBlink 1s step-end infinite',
-          }}
-        >
-          {'>_'}
-        </span>
+        <div className="flex items-center gap-1">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: '#0066FF',
+                animation: `loading-dot 1.2s ease-in-out ${i * 0.2}s infinite`,
+              }}
+            />
+          ))}
+        </div>
         {text && (
           <span className="font-body" style={{ fontSize: 14, color: 'var(--ctw-text-secondary)' }}>
             {text}
           </span>
         )}
       </div>
-      <style>{`
-        @keyframes cursorBlink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-      `}</style>
     </div>
   )
 }
@@ -583,16 +580,20 @@ export default function InterviewPage() {
 
           {streaming && messages[messages.length - 1]?.content === '' && (
             <div className="flex items-center gap-2" style={{ padding: '8px 0' }}>
-              <span
-                className="font-mono"
-                style={{
-                  fontSize: 14,
-                  color: '#0066FF',
-                  animation: 'cursorBlink 1s step-end infinite',
-                }}
-              >
-                {'>_'}
-              </span>
+              <div className="flex items-center gap-1">
+                {[0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: '#0066FF',
+                      animation: `loading-dot 1.2s ease-in-out ${i * 0.2}s infinite`,
+                    }}
+                  />
+                ))}
+              </div>
               <span className="font-body" style={{ fontSize: 13, color: 'var(--ctw-text-tertiary)' }}>
                 {t('interview.thinking')}
               </span>
@@ -691,12 +692,6 @@ export default function InterviewPage() {
         t={t}
       />
 
-      <style>{`
-        @keyframes cursorBlink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-      `}</style>
     </FadeIn>
   )
 }

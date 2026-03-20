@@ -94,17 +94,20 @@ function LoadingCursor() {
       className="flex items-center justify-center"
       style={{ minHeight: 400 }}
     >
-      <motion.span
-        style={{
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: 24,
-          color: 'var(--ctw-text-tertiary)',
-        }}
-        animate={{ opacity: [1, 0.3, 1] }}
-        transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-      >
-        {'>_'}
-      </motion.span>
+      <div className="flex items-center gap-1">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: '#0066FF',
+              animation: `loading-dot 1.2s ease-in-out ${i * 0.2}s infinite`,
+            }}
+          />
+        ))}
+      </div>
     </div>
   )
 }

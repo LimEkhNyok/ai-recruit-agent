@@ -12,29 +12,26 @@ function LoadingCursor({ text }) {
   return (
     <div className="flex items-center justify-center" style={{ minHeight: 400 }}>
       <div className="flex items-center gap-3">
-        <span
-          className="font-mono"
-          style={{
-            fontSize: 24,
-            fontWeight: 700,
-            color: '#0066FF',
-            animation: 'cursorBlink 1s step-end infinite',
-          }}
-        >
-          {'>_'}
-        </span>
+        <div className="flex items-center gap-1">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: '#0066FF',
+                animation: `loading-dot 1.2s ease-in-out ${i * 0.2}s infinite`,
+              }}
+            />
+          ))}
+        </div>
         {text && (
           <span className="font-body" style={{ fontSize: 14, color: 'var(--ctw-text-secondary)' }}>
             {text}
           </span>
         )}
       </div>
-      <style>{`
-        @keyframes cursorBlink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-      `}</style>
     </div>
   )
 }
@@ -92,6 +89,38 @@ export default function AssessmentPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  const parseOptions = (text) => {
+    if (!text) return []
+    const regex = /^([A-D])\.\s*(.+)$/gm
+    const options = []
+    let match
+    while ((match = regex.exec(text)) !== null) {
+      options.push({ label: match[1], text: match[2].trim() })
+    }
+    return options
+  }
+
+  const lastAiMessage = [...messages].reverse().find((m) => m.role === 'ai')
+  const options = !isComplete && !loading ? parseOptions(lastAiMessage?.content) : []
+
+  const handleOptionClick = (option) => {
+    if (loading) return
+    setInput(option.label)
+    setTimeout(() => {
+      const text = option.label
+      setInput('')
+      setMessages((prev) => [...prev, { role: 'user', content: `${option.label}. ${option.text}` }])
+      setLoading(true)
+      chat(assessmentId, `${option.label}. ${option.text}`)
+        .then((res) => {
+          setMessages((prev) => [...prev, { role: 'ai', content: res.data.reply }])
+          if (res.data.is_complete) setIsComplete(true)
+        })
+        .catch(() => message.error(t('assessment.sendFailed')))
+        .finally(() => setLoading(false))
+    }, 0)
+  }
 
   const handleSend = async () => {
     const text = input.trim()
@@ -218,16 +247,20 @@ export default function AssessmentPage() {
 
           {loading && (
             <div className="flex items-center gap-2" style={{ padding: '8px 0' }}>
-              <span
-                className="font-mono"
-                style={{
-                  fontSize: 14,
-                  color: '#0066FF',
-                  animation: 'cursorBlink 1s step-end infinite',
-                }}
-              >
-                {'>_'}
-              </span>
+              <div className="flex items-center gap-1">
+                {[0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: '#0066FF',
+                      animation: `loading-dot 1.2s ease-in-out ${i * 0.2}s infinite`,
+                    }}
+                  />
+                ))}
+              </div>
               <span className="font-body" style={{ fontSize: 13, color: 'var(--ctw-text-tertiary)' }}>
                 {t('assessment.thinking')}
               </span>
@@ -311,6 +344,41 @@ export default function AssessmentPage() {
               background: 'var(--ctw-surface-base)',
             }}
           >
+            {/* Options */}
+            {options.length > 0 && (
+              <div className="flex flex-wrap gap-2" style={{ marginBottom: 10 }}>
+                {options.map((opt) => (
+                  <button
+                    key={opt.label}
+                    onClick={() => handleOptionClick(opt)}
+                    className="font-body"
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: 14,
+                      border: '1px solid var(--ctw-border-default)',
+                      borderRadius: 8,
+                      background: 'var(--ctw-surface-card)',
+                      color: 'var(--ctw-text-primary)',
+                      cursor: 'pointer',
+                      transition: 'border-color 200ms, background 200ms',
+                      textAlign: 'left',
+                      lineHeight: 1.5,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#0066FF'
+                      e.currentTarget.style.background = 'var(--ctw-surface-hover)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--ctw-border-default)'
+                      e.currentTarget.style.background = 'var(--ctw-surface-card)'
+                    }}
+                  >
+                    <span style={{ color: '#0066FF', fontWeight: 600, marginRight: 6 }}>{opt.label}.</span>
+                    {opt.text}
+                  </button>
+                ))}
+              </div>
+            )}
             <div
               className="flex items-center gap-3"
               style={{
@@ -366,12 +434,6 @@ export default function AssessmentPage() {
         )}
       </div>
 
-      <style>{`
-        @keyframes cursorBlink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-      `}</style>
     </FadeIn>
   )
 }

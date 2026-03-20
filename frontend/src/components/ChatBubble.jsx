@@ -32,7 +32,7 @@ export default function ChatBubble({ role, content }) {
             marginTop: 2,
           }}
         >
-          {'>_'}
+          AI
         </div>
         {/* AI content - no background */}
         <div

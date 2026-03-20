@@ -23,15 +23,20 @@ export default function FeatureGuard({ feature, children }) {
   if (featureLoading || configLoading) {
     return (
       <div className="flex items-center justify-center" style={{ minHeight: 300 }}>
-        <span
-          style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 20,
-            color: 'var(--ctw-text-tertiary)',
-          }}
-        >
-          {'>'}_<span className="animate-cursor-blink">|</span>
-        </span>
+        <div className="flex items-center gap-1">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: '#0066FF',
+                animation: `loading-dot 1.2s ease-in-out ${i * 0.2}s infinite`,
+              }}
+            />
+          ))}
+        </div>
       </div>
     )
   }
