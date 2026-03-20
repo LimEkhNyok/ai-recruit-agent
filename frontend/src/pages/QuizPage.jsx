@@ -23,6 +23,7 @@ export default function QuizPage() {
   const [topic, setTopic] = useState(null)
   const [questionType, setQuestionType] = useState(null)
   const [question, setQuestion] = useState(null)
+  const [activeQuestionType, setActiveQuestionType] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [userAnswer, setUserAnswer] = useState('')
   const [judging, setJudging] = useState(false)
@@ -56,8 +57,10 @@ export default function QuizPage() {
     setResult(null)
     setResultAnimState('hidden')
     setUserAnswer('')
+    const currentType = questionType
+    setActiveQuestionType(currentType)
     try {
-      const res = await generateQuiz(topic, questionType)
+      const res = await generateQuiz(topic, currentType)
       setQuestion(res.data)
       questionCountRef.current += 1
       fetchWallet()
@@ -77,7 +80,7 @@ export default function QuizPage() {
     try {
       const res = await judgeQuiz({
         question: question.question,
-        question_type: questionType,
+        question_type: activeQuestionType,
         correct_answer: question.correct_answer,
         knowledge_point: question.knowledge_point,
         topic,
@@ -99,7 +102,7 @@ export default function QuizPage() {
     try {
       const res = await skipQuiz({
         question: question.question,
-        question_type: questionType,
+        question_type: activeQuestionType,
         correct_answer: question.correct_answer,
         knowledge_point: question.knowledge_point,
         topic,
@@ -139,7 +142,7 @@ export default function QuizPage() {
     if (!question) return null
     const disabled = !!result
 
-    if (questionType === '判断题') {
+    if (activeQuestionType === '判断题') {
       return (
         <div className="flex gap-3">
           {[{ value: '对', label: t('quiz.true') }, { value: '错', label: t('quiz.false') }].map((opt) => (
@@ -179,7 +182,7 @@ export default function QuizPage() {
       )
     }
 
-    if (questionType === '选择题' && question.options?.length > 0) {
+    if (activeQuestionType === '选择题' && question.options?.length > 0) {
       return (
         <div className="flex flex-col gap-2">
           {question.options.map((opt, i) => {
@@ -226,12 +229,12 @@ export default function QuizPage() {
       <TextArea
         value={userAnswer}
         onChange={(e) => setUserAnswer(e.target.value)}
-        onKeyDown={questionType === '编程题' ? handleCodeKeyDown : undefined}
-        placeholder={questionType === '编程题' ? t('quiz.codePlaceholder') : t('quiz.answerPlaceholder')}
-        autoSize={{ minRows: questionType === '编程题' ? 8 : 3, maxRows: 20 }}
+        onKeyDown={activeQuestionType === '编程题' ? handleCodeKeyDown : undefined}
+        placeholder={activeQuestionType === '编程题' ? t('quiz.codePlaceholder') : t('quiz.answerPlaceholder')}
+        autoSize={{ minRows: activeQuestionType === '编程题' ? 8 : 3, maxRows: 20 }}
         disabled={disabled}
         style={{
-          fontFamily: questionType === '编程题' ? "'JetBrains Mono', monospace" : "'DM Sans', sans-serif",
+          fontFamily: activeQuestionType === '编程题' ? "'JetBrains Mono', monospace" : "'DM Sans', sans-serif",
           fontSize: 14,
           borderRadius: 8,
           border: '1px solid var(--ctw-border-default)',
@@ -378,7 +381,7 @@ export default function QuizPage() {
                   </span>
                   <Tag color={difficultyColors[question.difficulty] || 'blue'}>{question.difficulty}</Tag>
                   <Tag>{question.knowledge_point}</Tag>
-                  <Tag color="cyan">{questionType}</Tag>
+                  <Tag color="cyan">{activeQuestionType}</Tag>
                 </div>
 
                 {/* Question text */}
