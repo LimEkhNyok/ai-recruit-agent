@@ -152,13 +152,14 @@ export default function HomePage() {
               className="text-center font-display"
               style={{ fontSize: 56, fontWeight: 700, lineHeight: 1.1, color: 'var(--ctw-text-primary)' }}
             >
+              <span className="font-mono">{t('home.heroTitleCode')}</span>
               <span
                 className="font-mono"
                 style={{ color: '#0066FF' }}
               >
-                {t('home.heroTitleCode')}
+                {t('home.heroTitleTo')}
               </span>
-              {t('home.heroTitleToWork')}
+              <span className="font-mono">{t('home.heroTitleWork')}</span>
               <span
                 className="inline-block font-mono"
                 style={{

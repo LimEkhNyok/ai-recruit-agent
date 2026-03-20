@@ -40,7 +40,8 @@
   "home": {
     "heroTitle": "AI-Powered Career Exploration",
     "heroTitleCode": "Code",
-    "heroTitleToWork": "ToWork",
+    "heroTitleTo": "To",
+    "heroTitleWork": "Work",
     "heroSubtitle": "From code to career, find the right path for you",
     "getStarted": "Start Assessment",
     "learnMore": "Learn More",
