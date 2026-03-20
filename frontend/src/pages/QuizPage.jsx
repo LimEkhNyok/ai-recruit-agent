@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { generateQuiz, judgeQuiz, skipQuiz, getQuizStats } from '../api/quiz'
 import useFeatureGuard from '../hooks/useFeatureGuard'
 import useBillingStore from '../store/useBillingStore'
+import useThemeStore from '../store/useThemeStore'
 import { useTranslation } from '../i18n'
 
 const { TextArea } = Input
@@ -33,6 +34,7 @@ export default function QuizPage() {
   const navigate = useNavigate()
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("quiz")
   const { fetchWallet } = useBillingStore()
+  const { markApiUsed } = useThemeStore()
   const { t } = useTranslation()
   const questionCountRef = useRef(0)
 
@@ -62,6 +64,7 @@ export default function QuizPage() {
     try {
       const res = await generateQuiz(topic, currentType)
       setQuestion(res.data)
+      markApiUsed()
       questionCountRef.current += 1
       fetchWallet()
     } catch (err) {

@@ -5,6 +5,7 @@ import { motion } from 'motion/react'
 import MatchCard from '../components/MatchCard'
 import { triggerMatch, getResults } from '../api/matching'
 import useFeatureGuard from '../hooks/useFeatureGuard'
+import useThemeStore from '../store/useThemeStore'
 import { useTranslation } from '../i18n'
 import FadeIn from '../components/motion/FadeIn'
 import StaggerContainer, { StaggerItem } from '../components/motion/StaggerContainer'
@@ -130,6 +131,7 @@ export default function MatchingPage() {
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("matching")
+  const { markApiUsed } = useThemeStore()
   const { t } = useTranslation()
 
   useEffect(() => {
@@ -147,7 +149,10 @@ export default function MatchingPage() {
       if (ignore) return
       try {
         const res = await triggerMatch()
-        if (!ignore) setResults(res.data.results)
+        if (!ignore) {
+          setResults(res.data.results)
+          markApiUsed()
+        }
       } catch (err) {
         if (!ignore) message.error(err.response?.data?.detail || t('matching.matchFailed'))
       } finally {

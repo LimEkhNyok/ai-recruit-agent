@@ -1,6 +1,6 @@
 from typing import AsyncGenerator
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from sqlalchemy import select
@@ -44,10 +44,14 @@ async def get_current_user(
 
 
 async def get_model_service(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ModelService:
-    return await get_model_service_for_user(current_user, db)
+    service = await get_model_service_for_user(current_user, db)
+    lang = request.headers.get("accept-language", "zh")
+    service.set_language("en" if lang.startswith("en") else "zh")
+    return service
 
 
 def require_feature(feature_name: str):

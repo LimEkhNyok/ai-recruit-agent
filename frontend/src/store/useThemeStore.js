@@ -33,6 +33,7 @@ applyTheme(initialTheme)
 const useThemeStore = create((set) => ({
   theme: initialTheme,
   language: getInitialLanguage(),
+  hasUsedApi: localStorage.getItem('ctw-has-used-api') === 'true',
 
   toggleTheme: () =>
     set((state) => {
@@ -46,6 +47,12 @@ const useThemeStore = create((set) => ({
     set(() => {
       localStorage.setItem('ctw-language', lang)
       return { language: lang }
+    }),
+
+  markApiUsed: () =>
+    set(() => {
+      localStorage.setItem('ctw-has-used-api', 'true')
+      return { hasUsedApi: true }
     }),
 }))
 

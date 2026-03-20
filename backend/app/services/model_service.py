@@ -29,6 +29,11 @@ class ModelService:
         self._mode: str = "platform"
         self._feature: str = "unknown"
         self._session_id: str | None = None
+        self._language: str = "zh"
+
+    def set_language(self, language: str):
+        self._language = language if language in ("zh", "en") else "zh"
+        return self
 
     def set_context(self, user_id: int, mode: str, feature: str):
         self._user_id = user_id
@@ -62,11 +67,13 @@ class ModelService:
         except Exception:
             pass
 
-    @staticmethod
     def _history_to_messages(
-        system_prompt: str, history: list[dict] | None, user_message: str
+        self, system_prompt: str, history: list[dict] | None, user_message: str
     ) -> list[dict]:
-        msgs = [{"role": "system", "content": system_prompt}]
+        prompt = system_prompt
+        if self._language == "en":
+            prompt += "\n\nIMPORTANT: Please respond entirely in English."
+        msgs = [{"role": "system", "content": prompt}]
         if history:
             for msg in history:
                 role = "assistant" if msg["role"] == "model" else "user"

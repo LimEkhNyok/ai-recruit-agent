@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import ChatBubble from '../components/ChatBubble'
 import { startAssessment, chat, finishAssessment, getProfile } from '../api/assessment'
 import useFeatureGuard from '../hooks/useFeatureGuard'
+import useThemeStore from '../store/useThemeStore'
 import { useTranslation } from '../i18n'
 import FadeIn from '../components/motion/FadeIn'
 
@@ -51,6 +52,7 @@ export default function AssessmentPage() {
   const [searchParams] = useSearchParams()
   const forceNew = searchParams.get('force') === '1'
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("assessment")
+  const { markApiUsed } = useThemeStore()
 
   useEffect(() => {
     let ignore = false
@@ -79,6 +81,7 @@ export default function AssessmentPage() {
       const res = await startAssessment()
       setAssessmentId(res.data.assessment_id)
       setMessages([{ role: 'ai', content: res.data.message }])
+      markApiUsed()
     } catch (err) {
       message.error(t('assessment.startFailed'))
     } finally {

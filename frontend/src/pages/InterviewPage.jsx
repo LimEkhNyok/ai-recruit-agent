@@ -5,6 +5,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import ChatBubble from '../components/ChatBubble'
 import { startInterview, chatStream, endInterview } from '../api/interview'
 import useFeatureGuard from '../hooks/useFeatureGuard'
+import useThemeStore from '../store/useThemeStore'
 import { useTranslation } from '../i18n'
 import FadeIn from '../components/motion/FadeIn'
 
@@ -339,6 +340,7 @@ export default function InterviewPage() {
   const { t } = useTranslation()
   const jobId = searchParams.get('job_id')
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("interview")
+  const { markApiUsed } = useThemeStore()
 
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -367,6 +369,7 @@ export default function InterviewPage() {
         setInterviewId(res.data.interview_id)
         setJobTitle(res.data.job_title)
         setMessages([{ role: 'ai', content: res.data.message }])
+        markApiUsed()
       } catch (err) {
         if (!ignore) message.error(t('interview.startFailed'))
       } finally {
