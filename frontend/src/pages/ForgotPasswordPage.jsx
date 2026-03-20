@@ -6,6 +6,7 @@ import { sendResetCode, resetPassword } from '../api/auth'
 import { useTranslation } from '../i18n'
 import useThemeStore from '../store/useThemeStore'
 import LogoMark from '../components/LogoMark'
+import LanguageToggle from '../components/LanguageToggle'
 import FadeIn from '../components/motion/FadeIn'
 import StaggerContainer, { StaggerItem } from '../components/motion/StaggerContainer'
 
@@ -90,6 +91,11 @@ export default function ForgotPasswordPage() {
         overflow: 'hidden',
       }}
     >
+      {/* Language toggle */}
+      <div style={{ position: 'absolute', top: 24, right: 24, zIndex: 10 }}>
+        <LanguageToggle />
+      </div>
+
       {/* Dark mode subtle radial glow */}
       {isDark && (
         <>

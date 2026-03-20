@@ -8,12 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.interview import Interview
 from app.models.job import JobPosition
 from app.services.model_service import ModelService
-from app.prompts.interview import INTERVIEW_SYSTEM_PROMPT_TEMPLATE, EVALUATION_PROMPT
+from app.prompts.interview import get_interview_prompt, get_evaluation_prompt
 
 
-def _build_system_prompt(job: JobPosition) -> str:
+def _build_system_prompt(job: JobPosition, language: str = "zh") -> str:
     requirements_str = ", ".join(job.requirements) if isinstance(job.requirements, list) else str(job.requirements)
-    return INTERVIEW_SYSTEM_PROMPT_TEMPLATE.replace(
+    return get_interview_prompt(language).replace(
         "{job_title}", job.title
     ).replace(
         "{job_category}", job.category
@@ -31,16 +31,22 @@ async def start_interview(user_id: int, job_id: int, db: AsyncSession, model_ser
     if job is None:
         raise ValueError("Job position not found")
 
-    system_prompt = _build_system_prompt(job)
+    lang = model_service.language
+    system_prompt = _build_system_prompt(job, lang)
 
+    start_msg = (
+        "Hello, I'm here for the interview."
+        if lang == "en"
+        else "你好，我来参加面试。"
+    )
     first_message = await model_service.chat(
         system_prompt=system_prompt,
         history=None,
-        user_message="你好，我来参加面试。",
+        user_message=start_msg,
     )
 
     history = [
-        {"role": "user", "parts": [{"text": "你好，我来参加面试。"}]},
+        {"role": "user", "parts": [{"text": start_msg}]},
         {"role": "model", "parts": [{"text": first_message}]},
     ]
 
@@ -69,7 +75,8 @@ async def chat_stream(
     result = await db.execute(select(JobPosition).where(JobPosition.id == interview.job_id))
     job = result.scalar_one_or_none()
 
-    system_prompt = _build_system_prompt(job)
+    lang = model_service.language
+    system_prompt = _build_system_prompt(job, lang)
     history: list[dict] = list(interview.chat_history) if interview.chat_history else []
 
     full_reply = ""
@@ -97,14 +104,18 @@ async def end_interview(interview_id: int, db: AsyncSession, model_service: Mode
     result = await db.execute(select(JobPosition).where(JobPosition.id == interview.job_id))
     job = result.scalar_one_or_none()
 
+    lang = model_service.language
     history: list[dict] = interview.chat_history or []
     dialogue_text = ""
     for msg in history:
-        role = "候选人" if msg["role"] == "user" else "面试官"
+        if lang == "en":
+            role = "Candidate" if msg["role"] == "user" else "Interviewer"
+        else:
+            role = "候选人" if msg["role"] == "user" else "面试官"
         text = msg["parts"][0]["text"]
         dialogue_text += f"{role}: {text}\n\n"
 
-    eval_prompt_content = EVALUATION_PROMPT.replace(
+    eval_prompt_content = get_evaluation_prompt(lang).replace(
         "{job_title}", job.title
     ).replace(
         "{job_category}", job.category
@@ -112,8 +123,13 @@ async def end_interview(interview_id: int, db: AsyncSession, model_service: Mode
         "{chat_history}", dialogue_text
     )
 
+    eval_system_prompt = (
+        "You are a professional interview evaluator. Please strictly output the evaluation report in the required JSON format."
+        if lang == "en"
+        else "你是一位专业的面试评估师。请严格按照要求的 JSON 格式输出评估报告。"
+    )
     evaluation = await model_service.generate_json(
-        system_prompt="你是一位专业的面试评估师。请严格按照要求的 JSON 格式输出评估报告。",
+        system_prompt=eval_system_prompt,
         content=eval_prompt_content,
     )
 

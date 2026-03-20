@@ -1,4 +1,4 @@
-QUIZ_GENERATE_PROMPT = """你是一位专业的技术面试出题官。请根据以下要求生成一道题目。
+QUIZ_GENERATE_PROMPT_ZH = """你是一位专业的技术面试出题官。请根据以下要求生成一道题目。
 
 ## 要求
 - 考察内容：{topic}
@@ -32,7 +32,41 @@ QUIZ_GENERATE_PROMPT = """你是一位专业的技术面试出题官。请根据
 - 不要出和已掌握知识点列表中重复的题目
 - 优先考察薄弱知识点列表中的内容，但要换不同的角度或题型"""
 
-QUIZ_JUDGE_PROMPT = """你是一位严谨的技术评判官。请根据题目和用户的回答判断是否正确。
+QUIZ_GENERATE_PROMPT_EN = """You are a professional technical interview question designer. Please generate one question based on the following requirements.
+
+## Requirements
+- Topic: {topic}
+- Question Type: {question_type}
+- Difficulty: Upper-intermediate, close to real interview/exam level
+
+{memory_context}
+
+## Question Type Descriptions
+- True/False: Provide a technical statement for the user to judge as true or false
+- Multiple Choice: Provide a question with A/B/C/D four options, only one correct answer
+- Short Answer: Provide an open-ended technical question requiring a written response
+- Coding: Provide a programming problem requiring code implementation (no execution needed — tests logic and coding ability)
+
+## Output JSON Format
+
+```json
+{{
+  "question": "Question text (coding questions include input/output examples)",
+  "options": ["A. Option 1", "B. Option 2", "C. Option 3", "D. Option 4"],
+  "knowledge_point": "Specific knowledge point tested (e.g., list comprehension, TCP three-way handshake, binary tree traversal)",
+  "difficulty": "Easy/Medium/Hard",
+  "correct_answer": "Correct answer (True/False for true/false questions, A/B/C/D for multiple choice, reference answer for short answer and coding)",
+  "explanation": "Detailed explanation of why this answer is correct and the core knowledge points involved"
+}}
+```
+
+Notes:
+- The options field is only needed for multiple choice questions; set to empty array [] for other types
+- knowledge_point should be specific to a sub-topic, not just a broad category
+- Do not repeat questions on already mastered knowledge points
+- Prioritize testing weak knowledge points, but use different angles or question types"""
+
+QUIZ_JUDGE_PROMPT_ZH = """你是一位严谨的技术评判官。请根据题目和用户的回答判断是否正确。
 
 ## 题目信息
 - 题型：{question_type}
@@ -57,3 +91,37 @@ QUIZ_JUDGE_PROMPT = """你是一位严谨的技术评判官。请根据题目和
   "correct_answer": "正确答案的完整内容"
 }}
 ```"""
+
+QUIZ_JUDGE_PROMPT_EN = """You are a rigorous technical judge. Please determine whether the user's answer is correct based on the question and the correct answer.
+
+## Question Information
+- Question Type: {question_type}
+- Question: {question}
+- Correct Answer: {correct_answer}
+- Knowledge Point: {knowledge_point}
+
+## User's Answer
+{user_answer}
+
+## Judging Rules
+- True/False and Multiple Choice: The answer must match exactly to be considered correct
+- Short Answer: Core points must be correct — exact wording is not required, but key concepts must not be missing
+- Coding: Code logic must be correct — does not need to match the reference answer exactly, different implementations are allowed
+
+## Output JSON Format
+
+```json
+{{
+  "is_correct": true,
+  "explanation": "Detailed analysis: explain what the correct answer is, why, and analyze the user's answer",
+  "correct_answer": "Full content of the correct answer"
+}}
+```"""
+
+
+def get_quiz_generate_prompt(language: str = "zh") -> str:
+    return QUIZ_GENERATE_PROMPT_EN if language == "en" else QUIZ_GENERATE_PROMPT_ZH
+
+
+def get_quiz_judge_prompt(language: str = "zh") -> str:
+    return QUIZ_JUDGE_PROMPT_EN if language == "en" else QUIZ_JUDGE_PROMPT_ZH
