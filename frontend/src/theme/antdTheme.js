@@ -22,6 +22,9 @@ export const lightTheme = {
   components: {
     Button: {
       borderRadius: parseInt(borderRadius.md),
+      primaryShadow: 'none',
+      defaultShadow: 'none',
+      dangerShadow: 'none',
     },
     Card: {
       borderRadiusLG: parseInt(borderRadius.lg),
@@ -69,6 +72,9 @@ export const darkTheme = {
   components: {
     Button: {
       borderRadius: parseInt(borderRadius.md),
+      primaryShadow: 'none',
+      defaultShadow: 'none',
+      dangerShadow: 'none',
     },
     Card: {
       borderRadiusLG: parseInt(borderRadius.lg),
