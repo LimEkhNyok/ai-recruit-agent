@@ -327,11 +327,11 @@ export default function QuizPage() {
                 options={TOPICS.map((tp) => ({ label: tp, value: tp }))}
               />
               <Select
-                style={{ width: 140 }}
+                style={{ width: 180 }}
                 placeholder={t('quiz.selectType')}
                 value={questionType}
                 onChange={setQuestionType}
-                options={QUESTION_TYPES.map((tp) => ({ label: tp, value: tp }))}
+                options={QUESTION_TYPES.map((tp) => ({ label: t(`quiz.types.${tp}`), value: tp }))}
               />
               <Button
                 type="primary"
@@ -381,7 +381,7 @@ export default function QuizPage() {
                   </span>
                   <Tag color={difficultyColors[question.difficulty] || 'blue'}>{question.difficulty}</Tag>
                   <Tag>{question.knowledge_point}</Tag>
-                  <Tag color="cyan">{activeQuestionType}</Tag>
+                  <Tag color="cyan">{t(`quiz.types.${activeQuestionType}`)}</Tag>
                 </div>
 
                 {/* Question text */}
