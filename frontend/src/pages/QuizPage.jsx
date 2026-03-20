@@ -244,15 +244,20 @@ export default function QuizPage() {
   if (guardLoading) {
     return (
       <div className="flex items-center justify-center" style={{ minHeight: 300 }}>
-        <span
-          style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 20,
-            color: 'var(--ctw-text-tertiary)',
-          }}
-        >
-          {'>'}_<span className="animate-cursor-blink">|</span>
-        </span>
+        <div className="flex items-center gap-1">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: '#0066FF',
+                animation: `loading-dot 1.2s ease-in-out ${i * 0.2}s infinite`,
+              }}
+            />
+          ))}
+        </div>
       </div>
     )
   }
@@ -337,15 +342,20 @@ export default function QuizPage() {
             {/* Generating state */}
             {generating && (
               <div className="flex flex-col items-center justify-center py-16">
-                <span
-                  style={{
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: 20,
-                    color: 'var(--ctw-text-tertiary)',
-                  }}
-                >
-                  {'>'}_<span className="animate-cursor-blink">|</span>
-                </span>
+                <div className="flex items-center gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: '#0066FF',
+                        animation: `loading-dot 1.2s ease-in-out ${i * 0.2}s infinite`,
+                      }}
+                    />
+                  ))}
+                </div>
                 <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-secondary)', marginTop: 16 }}>
                   {t('quiz.generating')}
                 </p>
@@ -655,15 +665,20 @@ export default function QuizPage() {
               </div>
             ) : (
               <div className="flex items-center justify-center" style={{ padding: 20 }}>
-                <span
-                  style={{
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: 16,
-                    color: 'var(--ctw-text-tertiary)',
-                  }}
-                >
-                  {'>'}_<span className="animate-cursor-blink">|</span>
-                </span>
+                <div className="flex items-center gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: '#0066FF',
+                        animation: `loading-dot 1.2s ease-in-out ${i * 0.2}s infinite`,
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </div>

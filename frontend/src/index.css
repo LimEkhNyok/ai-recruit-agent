@@ -70,18 +70,12 @@
   --font-display: 'Sora', sans-serif;
   --font-body: 'DM Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --animate-cursor-blink: cursor-blink 1.06s step-end infinite;
   --animate-fade-up: fade-up 0.5s ease-out both;
   --animate-fade-out-up: fade-out-up 0.2s ease-in both;
   --animate-shimmer: shimmer 1.5s infinite;
 }
 
 /* ===== Keyframes ===== */
-@keyframes cursor-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -95,6 +89,11 @@
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+
+@keyframes loading-dot {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
 }
 
 /* ===== Global Styles ===== */
