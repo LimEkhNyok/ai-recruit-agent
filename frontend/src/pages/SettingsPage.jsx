@@ -1,43 +1,31 @@
 import { useState, useEffect } from 'react'
-import { Card, Typography, Radio, Input, Button, Tag, Spin, message, Row, Col, Space, Alert, Divider, Statistic, Badge, Modal } from 'antd'
-import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  ApiOutlined,
-  SafetyOutlined,
-  LoadingOutlined,
-  WalletOutlined,
-  CrownOutlined,
-  ThunderboltOutlined,
-  GiftOutlined,
-} from '@ant-design/icons'
+import { Input, Button, Tag, Space, Modal, message, Row, Col } from 'antd'
 import { getConfig, saveConfig, testConfig, getFeatures } from '../api/modelConfig'
 import { getWallet, recharge, subscribe } from '../api/billing'
 import useBillingStore from '../store/useBillingStore'
-
-const { Title, Text } = Typography
+import { useTranslation } from '../i18n'
 
 const CAPABILITY_LABELS = {
-  supports_chat: 'Chat 对话',
-  supports_stream: '流式对话',
+  supports_chat: 'settings.supportsChat',
+  supports_stream: 'settings.supportsStream',
 }
 
 const FEATURE_LABELS = {
-  assessment: '职业测评',
-  matching: '岗位匹配',
-  interview: '模拟面试',
-  career: '职业规划',
-  resume: '简历分析',
-  quiz: '刷题练习',
+  assessment: 'features.assessment',
+  matching: 'features.matching',
+  interview: 'features.interview',
+  career: 'features.career',
+  resume: 'features.resume',
+  quiz: 'features.quiz',
 }
 
 const FEATURE_CREDITS = {
-  assessment: { credits: 100, yuan: 1.00, label: '一次完整测评' },
-  matching: { credits: 50, yuan: 0.50, label: '一次岗位匹配' },
-  interview: { credits: 100, yuan: 1.00, label: '一次模拟面试' },
-  career: { credits: 50, yuan: 0.50, label: '一次职业规划' },
-  resume: { credits: 50, yuan: 0.50, label: '一次简历分析' },
-  quiz: { credits: 10, yuan: 0.10, label: '一轮刷题' },
+  assessment: { credits: 100, yuan: 1.00, labelKey: 'settings.oneAssessment' },
+  matching: { credits: 50, yuan: 0.50, labelKey: 'settings.oneMatching' },
+  interview: { credits: 100, yuan: 1.00, labelKey: 'settings.oneInterview' },
+  career: { credits: 50, yuan: 0.50, labelKey: 'settings.oneCareer' },
+  resume: { credits: 50, yuan: 0.50, labelKey: 'settings.oneResume' },
+  quiz: { credits: 10, yuan: 0.10, labelKey: 'settings.oneQuiz' },
 }
 
 const RECHARGE_TIERS = [
@@ -49,158 +37,234 @@ const RECHARGE_TIERS = [
 ]
 
 function CapabilityTag({ ok, label }) {
-  return ok ? (
-    <Tag icon={<CheckCircleOutlined />} color="success">{label}</Tag>
-  ) : (
-    <Tag icon={<CloseCircleOutlined />} color="error">{label}</Tag>
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '3px 12px',
+        borderRadius: 6,
+        border: '1px solid var(--ctw-border-default)',
+        fontFamily: "'DM Sans', sans-serif",
+        fontSize: 13,
+        color: 'var(--ctw-text-secondary)',
+      }}
+    >
+      {ok ? (
+        <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--ctw-success)' }} />
+      ) : (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ctw-error)" strokeWidth="2">
+          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      )}
+      {label}
+    </span>
   )
 }
 
-function PricingPanel({ wallet, onRecharge, onSubscribe, recharging, subscribing }) {
+function PricingPanel({ wallet, onRecharge, onSubscribe, recharging, subscribing, t }) {
   return (
     <div>
+      {/* Wallet Display */}
       {wallet && (
-        <div className="mb-4 p-4 rounded-lg" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-          <Row gutter={16} align="middle">
-            <Col flex="auto">
-              <Space size="large">
-                <Statistic
-                  title={<span style={{ color: 'rgba(255,255,255,0.85)' }}>积分余额</span>}
-                  value={wallet.balance}
-                  suffix="积分"
-                  valueStyle={{ color: '#fff', fontSize: 28 }}
-                />
-                <Statistic
-                  title={<span style={{ color: 'rgba(255,255,255,0.85)' }}>免费刷题</span>}
-                  value={wallet.free_quiz_remaining}
-                  suffix="轮"
-                  valueStyle={{ color: '#fff', fontSize: 28 }}
-                />
-              </Space>
-            </Col>
+        <div
+          style={{
+            border: '1px solid var(--ctw-border-default)',
+            borderRadius: 12,
+            padding: '20px 24px',
+            marginBottom: 24,
+            background: 'var(--ctw-surface-card)',
+          }}
+        >
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex gap-8">
+              <div>
+                <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--ctw-text-tertiary)', margin: 0 }}>
+                  {t('settings.balance')}
+                </p>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 28, fontWeight: 700, color: 'var(--ctw-text-primary)' }}>
+                  {wallet.balance}
+                </span>
+              </div>
+              <div>
+                <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--ctw-text-tertiary)', margin: 0 }}>
+                  {t('settings.freeQuiz')}
+                </p>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 28, fontWeight: 700, color: 'var(--ctw-text-primary)' }}>
+                  {wallet.free_quiz_remaining}
+                </span>
+              </div>
+            </div>
             {wallet.subscription_active && (
-              <Col>
-                <Tag icon={<CrownOutlined />} color="gold" style={{ fontSize: 14, padding: '4px 12px' }}>
-                  {wallet.subscription_plan === 'weekly' ? '周卡' : '月卡'}生效中
-                </Tag>
-              </Col>
+              <Tag color="gold" style={{ fontSize: 13, padding: '4px 12px' }}>
+                {wallet.subscription_plan === 'weekly' ? t('settings.weekly') : t('settings.monthly')}
+              </Tag>
             )}
-          </Row>
+          </div>
         </div>
       )}
 
-      <Row gutter={16}>
-        <Col span={8}>
-          <Card
-            title={<><WalletOutlined className="mr-2" />按量计费</>}
-            size="small"
-            styles={{ body: { padding: '12px 16px' } }}
-          >
-            <div className="mb-3">
-              <Text type="secondary" style={{ fontSize: 12 }}>1 元 = 100 积分</Text>
-            </div>
+      {/* Three column pricing */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }} className="pricing-grid">
+        {/* Pay-as-you-go */}
+        <div
+          style={{
+            border: '1px solid var(--ctw-border-default)',
+            borderRadius: 12,
+            padding: 20,
+            background: 'var(--ctw-surface-card)',
+          }}
+        >
+          <h4 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 4px' }}>
+            {t('settings.payAsYouGo')}
+          </h4>
+          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: 'var(--ctw-text-tertiary)', margin: '0 0 16px' }}>
+            {t('settings.creditsRate')}
+          </p>
 
-            <div className="mb-3">
-              <Text strong style={{ fontSize: 13 }}>各功能参考消耗</Text>
-              <div className="mt-2" style={{ fontSize: 12 }}>
-                {Object.entries(FEATURE_CREDITS).map(([key, item]) => (
-                  <div key={key} className="flex justify-between py-1" style={{ borderBottom: '1px solid #f5f5f5' }}>
-                    <Text type="secondary">{item.label}</Text>
-                    <Text>~{item.credits}积分 <Text type="secondary">(¥{item.yuan})</Text></Text>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <Divider style={{ margin: '12px 0' }} />
-
-            <div>
-              <Text strong style={{ fontSize: 13 }}>充值档位</Text>
-              <div className="mt-2">
-                {RECHARGE_TIERS.map((tier) => (
-                  <Button
-                    key={tier.key}
-                    block
-                    className="mb-2 text-left"
-                    style={{ height: 'auto', padding: '8px 12px' }}
-                    onClick={() => onRecharge(tier.key)}
-                    loading={recharging === tier.key}
-                  >
-                    <div className="flex justify-between items-center w-full">
-                      <div>
-                        <Text strong>¥{tier.price}</Text>
-                        <Text type="secondary" className="ml-2">{tier.credits} 积分</Text>
-                      </div>
-                      {tier.bonus && (
-                        <Tag color="orange" style={{ marginRight: 0 }}><GiftOutlined /> {tier.bonus}</Tag>
-                      )}
-                    </div>
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </Card>
-        </Col>
-
-        <Col span={8}>
-          <Card
-            size="small"
-            styles={{ body: { padding: '16px', textAlign: 'center' } }}
-          >
-            <ThunderboltOutlined style={{ fontSize: 32, color: '#1677ff', marginBottom: 12 }} />
-            <Title level={5} style={{ margin: '0 0 4px' }}>周卡</Title>
-            <div className="mb-2">
-              <Text style={{ fontSize: 28, fontWeight: 700, color: '#1677ff' }}>¥9.9</Text>
-              <Text type="secondary"> / 7天</Text>
-            </div>
-            <div className="mb-4 text-left" style={{ fontSize: 13 }}>
-              <div className="py-1"><CheckCircleOutlined style={{ color: '#52c41a' }} /> 所有功能不限量</div>
-              <div className="py-1"><CheckCircleOutlined style={{ color: '#52c41a' }} /> 无需管理积分</div>
-              <div className="py-1"><CheckCircleOutlined style={{ color: '#52c41a' }} /> 短期使用首选</div>
-            </div>
-            <Button
-              type="primary"
-              block
-              onClick={() => onSubscribe('weekly')}
-              loading={subscribing === 'weekly'}
-              disabled={wallet?.subscription_active}
-            >
-              {wallet?.subscription_active ? '已订阅' : '立即订阅'}
-            </Button>
-          </Card>
-        </Col>
-
-        <Col span={8}>
-          <Badge.Ribbon text="推荐" color="volcano">
-            <Card
-              size="small"
-              styles={{ body: { padding: '16px', textAlign: 'center' } }}
-            >
-              <CrownOutlined style={{ fontSize: 32, color: '#fa8c16', marginBottom: 12 }} />
-              <Title level={5} style={{ margin: '0 0 4px' }}>月卡</Title>
-              <div className="mb-2">
-                <Text style={{ fontSize: 28, fontWeight: 700, color: '#fa8c16' }}>¥29.9</Text>
-                <Text type="secondary"> / 30天</Text>
-              </div>
-              <div className="mb-4 text-left" style={{ fontSize: 13 }}>
-                <div className="py-1"><CheckCircleOutlined style={{ color: '#52c41a' }} /> 所有功能不限量</div>
-                <div className="py-1"><CheckCircleOutlined style={{ color: '#52c41a' }} /> 无需管理积分</div>
-                <div className="py-1"><CheckCircleOutlined style={{ color: '#52c41a' }} /> 月均 ¥1/天 超划算</div>
-              </div>
-              <Button
-                type="primary"
-                block
-                style={{ background: '#fa8c16', borderColor: '#fa8c16' }}
-                onClick={() => onSubscribe('monthly')}
-                loading={subscribing === 'monthly'}
-                disabled={wallet?.subscription_active}
+          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 8px' }}>
+            {t('settings.featureCredits')}
+          </p>
+          <div style={{ marginBottom: 16 }}>
+            {Object.entries(FEATURE_CREDITS).map(([key, item]) => (
+              <div
+                key={key}
+                className="flex justify-between py-1"
+                style={{ borderBottom: '1px solid var(--ctw-border-default)', fontSize: 12 }}
               >
-                {wallet?.subscription_active ? '已订阅' : '立即订阅'}
-              </Button>
-            </Card>
-          </Badge.Ribbon>
-        </Col>
-      </Row>
+                <span style={{ color: 'var(--ctw-text-secondary)' }}>{t(item.labelKey)}</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", color: 'var(--ctw-text-primary)' }}>
+                  ~{item.credits}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 8px' }}>
+            {t('settings.rechargeTiers')}
+          </p>
+          {RECHARGE_TIERS.map((tier) => (
+            <Button
+              key={tier.key}
+              block
+              className="mb-2 text-left"
+              style={{ height: 'auto', padding: '8px 12px' }}
+              onClick={() => onRecharge(tier.key)}
+              loading={recharging === tier.key}
+            >
+              <div className="flex justify-between items-center w-full">
+                <div>
+                  <strong>¥{tier.price}</strong>
+                  <span style={{ color: 'var(--ctw-text-secondary)', marginLeft: 8 }}>{tier.credits}</span>
+                </div>
+                {tier.bonus && (
+                  <Tag color="orange" style={{ marginRight: 0 }}>{tier.bonus}</Tag>
+                )}
+              </div>
+            </Button>
+          ))}
+        </div>
+
+        {/* Weekly */}
+        <div
+          style={{
+            border: '1px solid var(--ctw-border-default)',
+            borderRadius: 12,
+            padding: 20,
+            background: 'var(--ctw-surface-card)',
+            textAlign: 'center',
+          }}
+        >
+          <h4 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 4px' }}>
+            {t('settings.weekly')}
+          </h4>
+          <div style={{ margin: '16px 0' }}>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 36, fontWeight: 700, color: 'var(--ctw-brand)' }}>
+              ¥9.9
+            </span>
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-tertiary)' }}> / 7</span>
+          </div>
+          <div style={{ textAlign: 'left', fontSize: 13, marginBottom: 24 }}>
+            <FeatureCheckItem text={t('settings.unlimited')} />
+            <FeatureCheckItem text={t('settings.noCredits')} />
+            <FeatureCheckItem text={t('settings.shortTermBest')} />
+          </div>
+          <Button
+            type="primary"
+            block
+            onClick={() => onSubscribe('weekly')}
+            loading={subscribing === 'weekly'}
+            disabled={wallet?.subscription_active}
+          >
+            {wallet?.subscription_active ? t('settings.subscribed') : t('settings.subscribe')}
+          </Button>
+        </div>
+
+        {/* Monthly - Recommended */}
+        <div
+          style={{
+            border: '2px solid var(--ctw-brand)',
+            borderRadius: 12,
+            padding: 20,
+            background: 'var(--ctw-surface-card)',
+            textAlign: 'center',
+            position: 'relative',
+          }}
+        >
+          <span
+            style={{
+              position: 'absolute',
+              top: -1,
+              right: 16,
+              background: 'var(--ctw-brand)',
+              color: '#fff',
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 10,
+              fontWeight: 700,
+              padding: '2px 10px',
+              borderRadius: '0 0 6px 6px',
+              letterSpacing: '0.05em',
+            }}
+          >
+            {t('settings.recommended')}
+          </span>
+          <h4 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 4px' }}>
+            {t('settings.monthly')}
+          </h4>
+          <div style={{ margin: '16px 0' }}>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 36, fontWeight: 700, color: 'var(--ctw-brand)' }}>
+              ¥29.9
+            </span>
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-tertiary)' }}> / 30</span>
+          </div>
+          <div style={{ textAlign: 'left', fontSize: 13, marginBottom: 24 }}>
+            <FeatureCheckItem text={t('settings.unlimited')} />
+            <FeatureCheckItem text={t('settings.noCredits')} />
+            <FeatureCheckItem text={t('settings.dailyCost')} />
+          </div>
+          <Button
+            type="primary"
+            block
+            onClick={() => onSubscribe('monthly')}
+            loading={subscribing === 'monthly'}
+            disabled={wallet?.subscription_active}
+          >
+            {wallet?.subscription_active ? t('settings.subscribed') : t('settings.subscribe')}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FeatureCheckItem({ text }) {
+  return (
+    <div className="flex items-center gap-2 py-1">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ctw-success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+      <span style={{ fontFamily: "'DM Sans', sans-serif", color: 'var(--ctw-text-primary)' }}>{text}</span>
     </div>
   )
 }
@@ -223,6 +287,7 @@ export default function SettingsPage() {
   const [subscribing, setSubscribing] = useState(null)
 
   const { fetchWallet: refreshGlobalWallet } = useBillingStore()
+  const { t } = useTranslation()
 
   useEffect(() => {
     const load = async () => {
@@ -258,7 +323,7 @@ export default function SettingsPage() {
 
   const handleTest = async () => {
     if (!baseUrl || !model || !apiKey) {
-      message.warning('请填写完整的 Base URL、Model 和 API Key')
+      message.warning(t('settings.fillRequired'))
       return
     }
     setTesting(true)
@@ -267,12 +332,12 @@ export default function SettingsPage() {
       const res = await testConfig({ base_url: baseUrl, model, api_key: apiKey })
       setTestResult(res.data)
       if (res.data.supports_chat) {
-        message.success('连接测试通过')
+        message.success(t('settings.testPassed'))
       } else {
-        message.error('Chat 能力测试失败，请检查配置')
+        message.error(t('settings.testFailed'))
       }
     } catch (err) {
-      message.error(err.response?.data?.detail || '测试失败')
+      message.error(err.response?.data?.detail || t('settings.testError'))
     } finally {
       setTesting(false)
     }
@@ -295,7 +360,7 @@ export default function SettingsPage() {
       })
       const featRes = await getFeatures()
       setFeatures(featRes.data)
-      message.success('配置已保存')
+      message.success(t('settings.saveSuccess'))
 
       if (mode === 'platform') {
         setShowPricing(true)
@@ -309,7 +374,7 @@ export default function SettingsPage() {
         refreshGlobalWallet()
       }
     } catch (err) {
-      message.error(err.response?.data?.detail || '保存失败')
+      message.error(err.response?.data?.detail || t('settings.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -319,11 +384,11 @@ export default function SettingsPage() {
     setRecharging(tier)
     try {
       const res = await recharge(tier)
-      message.success(`充值成功！获得 ${res.data.credits_gained} 积分`)
+      message.success(`${t('settings.rechargeSuccess')} +${res.data.credits_gained}`)
       setWallet((prev) => prev ? { ...prev, balance: res.data.balance } : prev)
       refreshGlobalWallet()
     } catch (err) {
-      message.error(err.response?.data?.detail || '充值失败')
+      message.error(err.response?.data?.detail || t('settings.rechargeFailed'))
     } finally {
       setRecharging(null)
     }
@@ -333,12 +398,12 @@ export default function SettingsPage() {
     setSubscribing(planType)
     try {
       await subscribe(planType)
-      message.success('订阅成功！')
+      message.success(t('settings.subscribeSuccess'))
       const walletRes = await getWallet()
       setWallet(walletRes.data)
       refreshGlobalWallet()
     } catch (err) {
-      message.error(err.response?.data?.detail || '订阅失败')
+      message.error(err.response?.data?.detail || t('settings.subscribeFailed'))
     } finally {
       setSubscribing(null)
     }
@@ -346,94 +411,189 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center" style={{ minHeight: 400 }}>
-        <Spin size="large" />
+      <div className="flex items-center justify-center" style={{ minHeight: 300 }}>
+        <span
+          style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 20,
+            color: 'var(--ctw-text-tertiary)',
+          }}
+        >
+          {'>'}_<span className="animate-cursor-blink">|</span>
+        </span>
       </div>
     )
   }
 
+  const inputStyle = {
+    width: '100%',
+    padding: '10px 14px',
+    borderRadius: 8,
+    border: '1px solid var(--ctw-border-default)',
+    background: 'var(--ctw-surface-input)',
+    color: 'var(--ctw-text-primary)',
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: 14,
+    outline: 'none',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+  }
+
   return (
     <div style={{ maxWidth: showPricing ? 900 : 720, margin: '0 auto' }}>
-      <div className="mb-4">
-        <Title level={4} style={{ margin: 0 }}>模型设置</Title>
-        <Text type="secondary">配置 AI 模型的调用方式</Text>
+      <div style={{ marginBottom: 24 }}>
+        <h2
+          style={{
+            fontFamily: "'Sora', sans-serif",
+            fontSize: 20,
+            fontWeight: 600,
+            color: 'var(--ctw-text-primary)',
+            margin: 0,
+          }}
+        >
+          {t('settings.title')}
+        </h2>
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-secondary)', margin: '4px 0 0' }}>
+          {t('settings.subtitle')}
+        </p>
       </div>
 
-      <Card className="mb-4">
-        <div className="mb-4">
-          <Text strong style={{ fontSize: 15 }}>选择模式</Text>
-        </div>
-        <Radio.Group
-          value={mode}
-          onChange={(e) => { setMode(e.target.value); setTestResult(null) }}
-          size="large"
+      {/* Mode Switch - Custom Segmented */}
+      <div
+        style={{
+          border: '1px solid var(--ctw-border-default)',
+          borderRadius: 12,
+          padding: 24,
+          background: 'var(--ctw-surface-card)',
+          marginBottom: 24,
+        }}
+      >
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 16px' }}>
+          {t('settings.selectMode')}
+        </p>
+        <div
+          style={{
+            display: 'inline-flex',
+            borderRadius: 8,
+            border: '1px solid var(--ctw-border-default)',
+            overflow: 'hidden',
+          }}
         >
-          <Space direction="vertical" className="w-full">
-            <Radio value="platform" disabled onClick={() => {
+          <button
+            onClick={() => {
               Modal.info({
-                title: '功能暂未开放',
-                content: '平台提供的服务功能正在开发中，敬请期待！目前请使用「使用自己的 API Key (BYOK)」模式。',
-                okText: '知道了',
+                title: t('settings.platformNotReady'),
+                content: t('settings.platformModeDesc'),
+                okText: t('common.confirm'),
               })
-            }}>
-              <div style={{ opacity: 0.5 }}>
-                <Text strong style={{ textDecoration: 'line-through' }}>使用平台提供的服务</Text>
-                <Tag color="warning" className="ml-2">暂未开放</Tag>
-                <br />
-                <Text type="secondary" style={{ fontSize: 13 }}>无需配置，开箱即用，按量计费或订阅不限量</Text>
-              </div>
-            </Radio>
-            <Radio value="byok">
-              <div>
-                <Text strong>使用自己的 API Key (BYOK)</Text>
-                <br />
-                <Text type="secondary" style={{ fontSize: 13 }}>填写你自己的 OpenAI 兼容接口，免费使用平台所有功能</Text>
-              </div>
-            </Radio>
-          </Space>
-        </Radio.Group>
-      </Card>
+            }}
+            style={{
+              padding: '10px 24px',
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 14,
+              fontWeight: 500,
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              background: mode === 'platform' ? 'var(--ctw-text-primary)' : 'transparent',
+              color: mode === 'platform' ? 'var(--ctw-surface-card)' : 'var(--ctw-text-secondary)',
+              opacity: 0.5,
+            }}
+          >
+            {t('settings.platformMode')}
+            <span
+              style={{
+                marginLeft: 8,
+                fontSize: 11,
+                padding: '1px 6px',
+                borderRadius: 4,
+                border: '1px solid var(--ctw-warning)',
+                color: 'var(--ctw-warning)',
+              }}
+            >
+              {t('settings.platformNotReady')}
+            </span>
+          </button>
+          <button
+            onClick={() => { setMode('byok'); setTestResult(null) }}
+            style={{
+              padding: '10px 24px',
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 14,
+              fontWeight: 500,
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              background: mode === 'byok' ? 'var(--ctw-text-primary)' : 'transparent',
+              color: mode === 'byok' ? 'var(--ctw-surface-card)' : 'var(--ctw-text-secondary)',
+            }}
+          >
+            {t('settings.byokMode')}
+          </button>
+        </div>
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--ctw-text-tertiary)', margin: '8px 0 0' }}>
+          {mode === 'byok' ? t('settings.byokModeDesc') : t('settings.platformModeDesc')}
+        </p>
+      </div>
 
+      {/* API Config */}
       {mode === 'byok' && (
-        <Card className="mb-4" title={<><ApiOutlined className="mr-2" />API 配置</>}>
-          <div className="mb-3">
-            <Text strong>Base URL</Text>
+        <div
+          style={{
+            border: '1px solid var(--ctw-border-default)',
+            borderRadius: 12,
+            padding: 24,
+            background: 'var(--ctw-surface-card)',
+            marginBottom: 24,
+          }}
+        >
+          <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 20px' }}>
+            {t('settings.apiConfig')}
+          </h3>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-primary)', display: 'block', marginBottom: 6 }}>
+              {t('settings.baseUrl')}
+            </label>
             <Input
-              className="mt-1"
               placeholder="https://api.openai.com/v1"
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
+              style={inputStyle}
             />
           </div>
-          <div className="mb-3">
-            <Text strong>Model</Text>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-primary)', display: 'block', marginBottom: 6 }}>
+              {t('settings.model')}
+            </label>
             <Input
-              className="mt-1"
               placeholder="gpt-4o / deepseek-chat / gemini-pro ..."
               value={model}
               onChange={(e) => setModel(e.target.value)}
+              style={inputStyle}
             />
           </div>
-          <div className="mb-4">
-            <Text strong>API Key</Text>
-            {apiKeyMasked && !apiKey && (
-              <Text type="secondary" className="ml-2">当前：{apiKeyMasked}</Text>
-            )}
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-primary)', display: 'block', marginBottom: 6 }}>
+              {t('settings.apiKey')}
+              {apiKeyMasked && !apiKey && (
+                <span style={{ fontWeight: 400, color: 'var(--ctw-text-tertiary)', marginLeft: 8, fontSize: 12 }}>
+                  {t('settings.currentKey')}: {apiKeyMasked}
+                </span>
+              )}
+            </label>
             <Input.Password
-              className="mt-1"
               placeholder="sk-..."
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
+              style={inputStyle}
             />
           </div>
 
           <Space>
-            <Button
-              icon={testing ? <LoadingOutlined /> : <SafetyOutlined />}
-              onClick={handleTest}
-              loading={testing}
-            >
-              测试连接
+            <Button onClick={handleTest} loading={testing}>
+              {t('settings.testConnection')}
             </Button>
             <Button
               type="primary"
@@ -441,81 +601,166 @@ export default function SettingsPage() {
               loading={saving}
               disabled={!testResult?.supports_chat && !apiKeyMasked}
             >
-              保存配置
+              {t('settings.saveConfig')}
             </Button>
           </Space>
 
+          {/* Test Result */}
           {testResult && (
-            <div className="mt-4 p-3 rounded-lg" style={{ background: '#fafafa' }}>
-              <Text strong className="mb-2 block">能力检测结果</Text>
+            <div
+              style={{
+                marginTop: 20,
+                padding: 16,
+                borderRadius: 8,
+                border: '1px solid var(--ctw-border-default)',
+                background: 'var(--ctw-surface-hover)',
+              }}
+            >
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 12px' }}>
+                {t('settings.testResult')}
+              </p>
               <div className="flex flex-wrap gap-2">
-                {Object.entries(CAPABILITY_LABELS).map(([key, label]) => (
-                  <CapabilityTag key={key} ok={testResult[key]} label={label} />
+                {Object.entries(CAPABILITY_LABELS).map(([key, labelKey]) => (
+                  <CapabilityTag key={key} ok={testResult[key]} label={t(labelKey)} />
                 ))}
               </div>
               {testResult.errors && Object.keys(testResult.errors).length > 0 && (
-                <div className="mt-2">
+                <div style={{ marginTop: 8 }}>
                   {Object.entries(testResult.errors).map(([key, err]) => (
-                    <Text key={key} type="secondary" style={{ fontSize: 12, display: 'block' }}>
-                      {CAPABILITY_LABELS['supports_' + key] || key}: {err}
-                    </Text>
+                    <p key={key} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: 'var(--ctw-text-tertiary)', margin: '2px 0' }}>
+                      {key}: {err}
+                    </p>
                   ))}
                 </div>
               )}
             </div>
           )}
-        </Card>
+        </div>
       )}
 
+      {/* Platform not ready */}
       {mode === 'platform' && !showPricing && (
-        <Card className="mb-4">
-          <Alert
-            type="warning"
-            showIcon
-            message="平台模型服务暂未开放"
-            description="请切换到「使用自己的 API Key (BYOK)」模式进行配置。"
-          />
-        </Card>
+        <div
+          style={{
+            border: '1px solid var(--ctw-warning)',
+            borderRadius: 12,
+            padding: 20,
+            background: 'var(--ctw-surface-card)',
+            marginBottom: 24,
+          }}
+        >
+          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-primary)', margin: 0 }}>
+            {t('settings.platformNotReady')}
+          </p>
+        </div>
       )}
 
+      {/* Pricing */}
       {mode === 'platform' && showPricing && (
-        <Card className="mb-4" title={<><WalletOutlined className="mr-2" />付费方案</>}>
+        <div
+          style={{
+            border: '1px solid var(--ctw-border-default)',
+            borderRadius: 12,
+            padding: 24,
+            background: 'var(--ctw-surface-card)',
+            marginBottom: 24,
+          }}
+        >
+          <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 20px' }}>
+            {t('settings.pricing')}
+          </h3>
           <PricingPanel
             wallet={wallet}
             onRecharge={handleRecharge}
             onSubscribe={handleSubscribe}
             recharging={recharging}
             subscribing={subscribing}
+            t={t}
           />
-        </Card>
+        </div>
       )}
 
+      {/* Feature Availability */}
       {features && (
-        <Card>
-          <Row gutter={[12, 12]}>
-            {Object.entries(FEATURE_LABELS).map(([key, label]) => (
-              <Col key={key} span={8}>
-                <div className="flex items-center gap-2">
-                  {features[key] ? (
-                    <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                  ) : (
-                    <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
-                  )}
-                  <Text>{label}</Text>
-                </div>
-              </Col>
+        <div
+          style={{
+            border: '1px solid var(--ctw-border-default)',
+            borderRadius: 12,
+            padding: 24,
+            background: 'var(--ctw-surface-card)',
+          }}
+        >
+          <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 16px' }}>
+            {t('settings.featureAvailability')}
+          </h3>
+          <div>
+            {Object.entries(FEATURE_LABELS).map(([key, labelKey]) => (
+              <div
+                key={key}
+                className="flex items-center justify-between"
+                style={{
+                  padding: '10px 0',
+                  borderBottom: '1px solid var(--ctw-border-default)',
+                }}
+              >
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-primary)' }}>
+                  {t(labelKey)}
+                </span>
+                {features[key] ? (
+                  <span
+                    style={{
+                      fontSize: 12,
+                      padding: '2px 10px',
+                      borderRadius: 4,
+                      border: '1px solid var(--ctw-success)',
+                      color: 'var(--ctw-success)',
+                      fontFamily: "'JetBrains Mono', monospace",
+                    }}
+                  >
+                    OK
+                  </span>
+                ) : (
+                  <span
+                    style={{
+                      fontSize: 12,
+                      padding: '2px 10px',
+                      borderRadius: 4,
+                      border: '1px solid var(--ctw-error)',
+                      color: 'var(--ctw-error)',
+                      fontFamily: "'JetBrains Mono', monospace",
+                    }}
+                  >
+                    N/A
+                  </span>
+                )}
+              </div>
             ))}
-          </Row>
+          </div>
           {!features.interview && (
-            <Alert
-              className="mt-3"
-              type="warning"
-              showIcon
-              message="模拟面试需要流式对话能力，当前模型不支持"
-            />
+            <p
+              style={{
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 13,
+                color: 'var(--ctw-warning)',
+                margin: '12px 0 0',
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--ctw-warning)',
+              }}
+            >
+              {t('settings.streamRequired')}
+            </p>
           )}
-        </Card>
+        </div>
       )}
+
+      <style>{`
+        @media (max-width: 768px) {
+          .pricing-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

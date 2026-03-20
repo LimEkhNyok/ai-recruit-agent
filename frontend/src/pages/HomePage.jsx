@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { Card, Typography, Row, Col, Button, Tag, Alert, Badge, message, Modal } from 'antd'
 import {
   FormOutlined,
   AimOutlined,
@@ -7,79 +6,36 @@ import {
   RocketOutlined,
   FileTextOutlined,
   BulbOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
   SettingOutlined,
-  ApiOutlined,
-  SafetyCertificateOutlined,
-  WalletOutlined,
-  GiftOutlined,
   LoginOutlined,
+  CloudUploadOutlined,
+  ArrowRightOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import { Modal, message } from 'antd'
 import useAuthStore from '../store/useAuthStore'
 import useBillingStore from '../store/useBillingStore'
 import { getProfile } from '../api/assessment'
 import { getResults } from '../api/matching'
 import { getConfig, getFeatures } from '../api/modelConfig'
-
-const { Title, Text, Paragraph } = Typography
+import { useTranslation } from '../i18n'
+import FadeIn from '../components/motion/FadeIn'
+import StaggerContainer, { StaggerItem } from '../components/motion/StaggerContainer'
 
 const FEATURE_META = [
-  {
-    key: 'assessment',
-    icon: <FormOutlined style={{ fontSize: 36, color: '#1677ff' }} />,
-    title: 'AI 职业测评',
-    desc: '通过自然对话，AI 全面分析你的性格、能力、兴趣和价值观，生成专属人才画像',
-    path: '/assessment',
-    color: '#e6f4ff',
-  },
-  {
-    key: 'matching',
-    icon: <AimOutlined style={{ fontSize: 36, color: '#52c41a' }} />,
-    title: '智能岗位匹配',
-    desc: '基于向量相似度 + AI 深度评分，为你推荐最匹配的岗位，还有突破认知的惊喜推荐',
-    path: '/matching',
-    color: '#f6ffed',
-  },
-  {
-    key: 'interview',
-    icon: <AudioOutlined style={{ fontSize: 36, color: '#722ed1' }} />,
-    title: 'AI 模拟面试',
-    desc: '针对目标岗位的 AI 面试官，实时对话练习，结束后获得详细评估报告和改进建议',
-    path: '/interview',
-    color: '#f9f0ff',
-  },
-  {
-    key: 'career',
-    icon: <RocketOutlined style={{ fontSize: 36, color: '#fa8c16' }} />,
-    title: '职业生涯规划',
-    desc: '结合画像和匹配结果，AI 为你定制短中长期职业目标、技能路径和简历优化建议',
-    path: '/career',
-    color: '#fff7e6',
-  },
-  {
-    key: 'resume',
-    icon: <FileTextOutlined style={{ fontSize: 36, color: '#13c2c2' }} />,
-    title: 'AI 简历分析',
-    desc: '上传 PDF/DOCX/TXT 简历，AI 生成详细分析报告，帮你发现优化空间',
-    path: '/resume',
-    color: '#e6fffb',
-  },
-  {
-    key: 'quiz',
-    icon: <BulbOutlined style={{ fontSize: 36, color: '#eb2f96' }} />,
-    title: '高效刷题练习',
-    desc: 'AI 智能出题 + 判题，结合记忆系统帮你高效巩固知识、查漏补缺',
-    path: '/quiz',
-    color: '#fff0f6',
-  },
+  { key: 'assessment', icon: FormOutlined, featured: true },
+  { key: 'interview', icon: AudioOutlined, featured: true },
+  { key: 'matching', icon: AimOutlined },
+  { key: 'career', icon: RocketOutlined },
+  { key: 'quiz', icon: BulbOutlined },
+  { key: 'resume', icon: FileTextOutlined, isUpload: true },
 ]
 
-const MODE_LABELS = { byok: '自有 API Key', platform: '平台提供模型' }
+const MODE_LABELS = { byok: 'byokLabel', platform: 'platformLabel' }
 
 export default function HomePage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)
   const token = useAuthStore((s) => s.token)
   const [hasProfile, setHasProfile] = useState(false)
@@ -115,23 +71,24 @@ export default function HomePage() {
   const handleFeatureClick = (f) => {
     if (!token) {
       Modal.confirm({
-        title: '请先登录',
-        content: '登录后即可使用该功能，体验测评、匹配、刷题等全部服务。',
-        icon: <LoginOutlined style={{ color: '#1677ff' }} />,
-        okText: '去登录',
-        cancelText: '取消',
+        title: t('home.loginRequired'),
+        content: t('home.loginRequiredDesc'),
+        icon: <LoginOutlined style={{ color: '#0066FF' }} />,
+        okText: t('common.goLogin'),
+        cancelText: t('common.cancel'),
         onOk: () => navigate('/login'),
+        width: 560,
       })
       return
     }
 
     if (!hasConfigured) {
       Modal.confirm({
-        title: '请先配置 API',
-        content: '你还没有设置 AI 模型配置，配置完成后才能使用该功能。',
+        title: t('home.configRequired'),
+        content: t('home.configRequiredDesc'),
         icon: <SettingOutlined style={{ color: '#fa8c16' }} />,
-        okText: '前往设置',
-        cancelText: '取消',
+        okText: t('common.goSettings'),
+        cancelText: t('common.cancel'),
         onOk: () => navigate('/settings'),
       })
       return
@@ -143,151 +100,516 @@ export default function HomePage() {
     if (f.key === 'interview') {
       navigate('/matching')
     } else if (f.key === 'resume') {
-      message.info('请点击右上角「导入简历」按钮上传简历')
+      message.info(t('home.uploadResumeHint'))
     } else {
-      navigate(f.path)
+      navigate(`/${f.key === 'assessment' ? 'assessment' : f.key}`)
     }
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen">
+      {/* Hero Section */}
       <div
-        className="rounded-2xl p-10 mb-8 text-center"
-        style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+        className="relative overflow-hidden"
+        style={{
+          backgroundImage: 'radial-gradient(circle, var(--ctw-border-default) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }}
       >
-        <Title style={{ color: '#fff', fontSize: 32, fontWeight: 400, marginBottom: 8 }}>
-          AI 驱动职业探索，为计算机人精准定位未来
-        </Title>
-        <Title level={3} style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 700, marginTop: 0 }}>
-          对话测评、智能匹配、模拟面试、简历分析、刷题训练、职业规划
-        </Title>
-        <Paragraph style={{ color: 'rgba(255,255,255,0.7)', fontSize: 30, maxWidth: 600, margin: '0 auto' }}>
-          一站式帮你找到真正适合的职业方向
-        </Paragraph>
+        {/* Gradient orbs */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            width: 600,
+            height: 600,
+            top: -100,
+            left: '50%',
+            transform: 'translateX(-70%)',
+            background: '#0066FF',
+            borderRadius: '50%',
+            filter: 'blur(120px)',
+            opacity: 0.15,
+          }}
+        />
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            width: 500,
+            height: 500,
+            top: 0,
+            left: '50%',
+            transform: 'translateX(20%)',
+            background: '#00D4AA',
+            borderRadius: '50%',
+            filter: 'blur(120px)',
+            opacity: 0.1,
+          }}
+        />
+
+        <div className="relative max-w-5xl mx-auto px-6" style={{ paddingTop: 120 }}>
+          <FadeIn>
+            <h1
+              className="text-center font-display"
+              style={{ fontSize: 56, fontWeight: 700, lineHeight: 1.1, color: 'var(--ctw-text-primary)' }}
+            >
+              <span
+                className="font-mono"
+                style={{ color: '#0066FF' }}
+              >
+                {t('home.heroTitleCode')}
+              </span>
+              {t('home.heroTitleToWork')}
+              <span
+                className="inline-block font-mono"
+                style={{
+                  color: '#0066FF',
+                  animation: 'blink 1s step-end infinite',
+                  marginLeft: 2,
+                }}
+              >
+                |
+              </span>
+            </h1>
+          </FadeIn>
+
+          <FadeIn delay={0.15}>
+            <p
+              className="text-center mx-auto font-body"
+              style={{
+                fontSize: 18,
+                color: 'var(--ctw-text-secondary)',
+                maxWidth: 560,
+                marginTop: 24,
+                lineHeight: 1.6,
+              }}
+            >
+              {t('home.heroSubtitle')}
+            </p>
+          </FadeIn>
+
+          <FadeIn delay={0.3}>
+            <div className="flex items-center justify-center gap-4" style={{ marginTop: 40, paddingBottom: 80 }}>
+              <button
+                onClick={() => token ? navigate('/assessment') : navigate('/login')}
+                className="font-body"
+                style={{
+                  padding: '12px 32px',
+                  fontSize: 16,
+                  fontWeight: 500,
+                  color: '#fff',
+                  background: 'var(--ctw-text-primary)',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  transition: 'opacity 200ms',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+              >
+                {t('home.getStarted')}
+              </button>
+              <button
+                onClick={() => {
+                  const el = document.getElementById('features-section')
+                  el?.scrollIntoView({ behavior: 'smooth' })
+                }}
+                className="font-body"
+                style={{
+                  padding: '12px 32px',
+                  fontSize: 16,
+                  fontWeight: 500,
+                  color: 'var(--ctw-text-primary)',
+                  background: 'transparent',
+                  border: '1px solid var(--ctw-border-default)',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  transition: 'border-color 200ms',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--ctw-text-secondary)'}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--ctw-border-default)'}
+              >
+                {t('home.learnMore')}
+              </button>
+            </div>
+          </FadeIn>
+        </div>
       </div>
 
+      {/* Config Banner */}
       {token && configLoaded && !hasConfigured && (
-        <Alert
-          type="warning"
-          showIcon
-          icon={<SettingOutlined />}
-          message="请先配置模型以使用平台功能"
-          description="你还没有设置 AI 模型配置。配置完成后才能使用测评、匹配、面试等功能。你可以选择使用自己的 API Key 或平台提供的服务。"
-          action={
-            <Button type="primary" icon={<SettingOutlined />} onClick={() => navigate('/settings')}>
-              前往设置
-            </Button>
-          }
-          style={{ marginBottom: 24 }}
-        />
-      )}
-
-      {token && configLoaded && hasConfigured && (
-        <Card size="small" style={{ marginBottom: 24 }}>
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-3">
-              <Tag icon={<SafetyCertificateOutlined />} color="blue">
-                {MODE_LABELS[modelConfig.mode] || modelConfig.mode}
-              </Tag>
-              {modelConfig.mode === 'byok' && modelConfig.model && (
-                <Tag icon={<ApiOutlined />}>{modelConfig.model}</Tag>
-              )}
-              {featureStatus && (
-                <span className="text-xs text-gray-500">
-                  可用功能：{Object.entries(featureStatus).filter(([, v]) => v).length} / {Object.keys(featureStatus).length}
+        <FadeIn>
+          <div className="max-w-5xl mx-auto px-6" style={{ marginBottom: 32 }}>
+            <div
+              className="flex items-center justify-between gap-4 px-5 py-4"
+              style={{
+                border: '1px solid var(--ctw-border-default)',
+                borderRadius: 12,
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <SettingOutlined style={{ fontSize: 16, color: 'var(--ctw-text-tertiary)' }} />
+                <span className="font-body" style={{ fontSize: 14, color: 'var(--ctw-text-secondary)' }}>
+                  {t('home.configBanner')}
                 </span>
-              )}
-              {modelConfig?.mode === 'platform' && wallet && (
-                <>
-                  <Tag icon={<WalletOutlined />} color="blue">{wallet.balance} 积分</Tag>
-                  <Tag icon={<GiftOutlined />} color="green">今日免费刷题 {wallet.free_quiz_remaining}/3</Tag>
-                </>
-              )}
+              </div>
+              <button
+                onClick={() => navigate('/settings')}
+                className="flex items-center gap-1 font-body"
+                style={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: '#0066FF',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                {t('home.configBannerAction')}
+                <ArrowRightOutlined style={{ fontSize: 12 }} />
+              </button>
             </div>
-            <Button size="small" icon={<SettingOutlined />} onClick={() => navigate('/settings')}>
-              模型设置
-            </Button>
           </div>
-        </Card>
+        </FadeIn>
       )}
 
-      <div className="mb-6">
-        {token ? (
-          <>
-            <div className="flex items-center gap-3 mb-4">
-              <Title level={5} style={{ margin: 0 }}>你好，{user?.name}</Title>
+      {/* Status Bar (configured) */}
+      {token && configLoaded && hasConfigured && (
+        <FadeIn>
+          <div className="max-w-5xl mx-auto px-6" style={{ marginBottom: 32 }}>
+            <div
+              className="flex items-center justify-between flex-wrap gap-3 px-5 py-3"
+              style={{
+                border: '1px solid var(--ctw-border-default)',
+                borderRadius: 12,
+                background: 'var(--ctw-surface-card)',
+              }}
+            >
+              <div className="flex items-center gap-3 flex-wrap">
+                <span
+                  className="font-mono"
+                  style={{
+                    fontSize: 12,
+                    padding: '2px 8px',
+                    borderRadius: 4,
+                    background: 'var(--ctw-surface-base)',
+                    border: '1px solid var(--ctw-border-default)',
+                    color: 'var(--ctw-text-secondary)',
+                  }}
+                >
+                  {t(`home.${MODE_LABELS[modelConfig.mode]}`, modelConfig.mode)}
+                </span>
+                {modelConfig.mode === 'byok' && modelConfig.model && (
+                  <span
+                    className="font-mono"
+                    style={{
+                      fontSize: 12,
+                      padding: '2px 8px',
+                      borderRadius: 4,
+                      background: 'var(--ctw-surface-base)',
+                      border: '1px solid var(--ctw-border-default)',
+                      color: 'var(--ctw-text-secondary)',
+                    }}
+                  >
+                    {modelConfig.model}
+                  </span>
+                )}
+                {featureStatus && (
+                  <span className="font-body" style={{ fontSize: 12, color: 'var(--ctw-text-tertiary)' }}>
+                    {t('home.availableFeatures')}:
+                    {' '}{Object.entries(featureStatus).filter(([, v]) => v).length} / {Object.keys(featureStatus).length}
+                  </span>
+                )}
+                {modelConfig?.mode === 'platform' && wallet && (
+                  <>
+                    <span className="font-mono" style={{ fontSize: 12, color: 'var(--ctw-text-secondary)' }}>
+                      {wallet.balance} {t('home.credits')}
+                    </span>
+                    <span className="font-body" style={{ fontSize: 12, color: 'var(--ctw-success)' }}>
+                      {t('home.freeQuizToday')} {wallet.free_quiz_remaining}/3
+                    </span>
+                  </>
+                )}
+              </div>
+              <button
+                onClick={() => navigate('/settings')}
+                className="flex items-center gap-1.5 font-body"
+                style={{
+                  fontSize: 13,
+                  color: 'var(--ctw-text-secondary)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px 0',
+                }}
+              >
+                <SettingOutlined style={{ fontSize: 14 }} />
+                {t('home.modelSettings')}
+              </button>
+            </div>
+          </div>
+        </FadeIn>
+      )}
+
+      {/* User greeting */}
+      {token && (
+        <FadeIn>
+          <div className="max-w-5xl mx-auto px-6" style={{ marginBottom: 24 }}>
+            <div className="flex items-center gap-3 mb-3">
+              <span className="font-display" style={{ fontSize: 18, fontWeight: 600, color: 'var(--ctw-text-primary)' }}>
+                {t('home.greeting')}{user?.name}
+              </span>
               <div className="flex gap-2">
                 {hasProfile ? (
-                  <Tag icon={<CheckCircleOutlined />} color="success">已完成测评</Tag>
+                  <span
+                    className="font-body"
+                    style={{
+                      fontSize: 12,
+                      padding: '2px 8px',
+                      borderRadius: 9999,
+                      background: 'rgba(0, 212, 170, 0.1)',
+                      color: 'var(--ctw-success)',
+                    }}
+                  >
+                    {t('home.assessed')}
+                  </span>
                 ) : (
-                  <Tag icon={<ClockCircleOutlined />} color="default">未测评</Tag>
+                  <span
+                    className="font-body"
+                    style={{
+                      fontSize: 12,
+                      padding: '2px 8px',
+                      borderRadius: 9999,
+                      background: 'var(--ctw-surface-base)',
+                      color: 'var(--ctw-text-tertiary)',
+                    }}
+                  >
+                    {t('home.notAssessed')}
+                  </span>
                 )}
-                {hasMatch && <Tag icon={<CheckCircleOutlined />} color="success">已匹配岗位</Tag>}
+                {hasMatch && (
+                  <span
+                    className="font-body"
+                    style={{
+                      fontSize: 12,
+                      padding: '2px 8px',
+                      borderRadius: 9999,
+                      background: 'rgba(0, 212, 170, 0.1)',
+                      color: 'var(--ctw-success)',
+                    }}
+                  >
+                    {t('home.matched')}
+                  </span>
+                )}
               </div>
             </div>
             {!hasProfile && (
-              <Card size="small" style={{ background: '#e6f4ff', border: '1px solid #91caff' }}>
-                <div className="flex items-center justify-between">
-                  <Text>完成 AI 测评，开启你的职业探索之旅</Text>
-                  <Button type="primary" onClick={() => navigate('/assessment')}>开始测评</Button>
-                </div>
-              </Card>
-            )}
-          </>
-        ) : (
-          <Card size="small" style={{ background: '#e6f4ff', border: '1px solid #91caff', marginBottom: 8 }}>
-            <div className="flex items-center justify-between">
-              <Text>登录后即可体验全部功能，开启你的职业探索之旅</Text>
-              <Button type="primary" icon={<LoginOutlined />} onClick={() => navigate('/login')}>去登录</Button>
-            </div>
-          </Card>
-        )}
-      </div>
-
-      <Row gutter={[16, 16]}>
-        {FEATURE_META.map((f) => {
-          const disabled = token && featureStatus && featureStatus[f.key] === false
-          return (
-            <Col key={f.key} xs={24} sm={12}>
-              <Badge.Ribbon
-                text="不可用"
-                color="red"
-                style={{ display: disabled ? undefined : 'none' }}
+              <div
+                className="flex items-center justify-between px-5 py-3"
+                style={{
+                  border: '1px solid var(--ctw-border-default)',
+                  borderRadius: 12,
+                  background: 'var(--ctw-surface-card)',
+                }}
               >
-                <Card
-                  hoverable={!disabled}
-                  className="h-full"
+                <span className="font-body" style={{ fontSize: 14, color: 'var(--ctw-text-secondary)' }}>
+                  {t('home.startAssessment')}
+                </span>
+                <button
+                  onClick={() => navigate('/assessment')}
+                  className="font-body"
                   style={{
-                    borderRadius: 12,
-                    opacity: disabled ? 0.6 : 1,
-                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    padding: '6px 20px',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    color: '#fff',
+                    background: 'var(--ctw-text-primary)',
+                    border: 'none',
+                    borderRadius: 6,
+                    cursor: 'pointer',
                   }}
-                  onClick={() => handleFeatureClick(f)}
                 >
-                  <div className="flex gap-4">
-                    <div
-                      className="flex items-center justify-center rounded-xl shrink-0"
-                      style={{ width: 64, height: 64, background: f.color }}
-                    >
-                      {f.icon}
-                    </div>
-                    <div>
-                      <Title level={5} style={{ marginBottom: 4 }}>{f.title}</Title>
-                      <Text type="secondary" style={{ fontSize: 13 }}>{f.desc}</Text>
-                    </div>
-                  </div>
-                </Card>
-              </Badge.Ribbon>
-            </Col>
-          )
-        })}
-      </Row>
+                  {t('home.getStarted')}
+                </button>
+              </div>
+            )}
+          </div>
+        </FadeIn>
+      )}
 
-      <div className="mt-10 text-center pb-8">
-        <Text type="secondary" style={{ fontSize: 13 }}>
-          AI Recruit Agent — 不只是匹配你已知的方向，更帮你发现从未想过但非常适合的可能
-        </Text>
+      {!token && (
+        <FadeIn>
+          <div className="max-w-5xl mx-auto px-6" style={{ marginBottom: 24 }}>
+            <div
+              className="flex items-center justify-between px-5 py-3"
+              style={{
+                border: '1px solid var(--ctw-border-default)',
+                borderRadius: 12,
+                background: 'var(--ctw-surface-card)',
+              }}
+            >
+              <span className="font-body" style={{ fontSize: 14, color: 'var(--ctw-text-secondary)' }}>
+                {t('home.loginBanner')}
+              </span>
+              <button
+                onClick={() => navigate('/login')}
+                className="flex items-center gap-1.5 font-body"
+                style={{
+                  padding: '6px 20px',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: '#fff',
+                  background: 'var(--ctw-text-primary)',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                }}
+              >
+                <LoginOutlined style={{ fontSize: 14 }} />
+                {t('common.goLogin')}
+              </button>
+            </div>
+          </div>
+        </FadeIn>
+      )}
+
+      {/* Features Section */}
+      <div id="features-section" className="max-w-5xl mx-auto px-6" style={{ paddingTop: 96, paddingBottom: 80 }}>
+        <FadeIn>
+          <div className="text-center" style={{ marginBottom: 48 }}>
+            <h2
+              className="font-display"
+              style={{ fontSize: 32, fontWeight: 600, color: 'var(--ctw-text-primary)', marginBottom: 8 }}
+            >
+              {t('home.features')}
+            </h2>
+            <p className="font-body" style={{ fontSize: 16, color: 'var(--ctw-text-secondary)' }}>
+              {t('home.featuresSubtitle')}
+            </p>
+          </div>
+        </FadeIn>
+
+        <StaggerContainer
+          className="grid gap-4"
+          style={{
+            gridTemplateColumns: 'repeat(3, 1fr)',
+          }}
+        >
+          {FEATURE_META.map((f) => {
+            const disabled = token && featureStatus && featureStatus[f.key] === false
+            const Icon = f.icon
+            const isFeatured = f.featured
+            const isUpload = f.isUpload
+
+            return (
+              <StaggerItem
+                key={f.key}
+                style={{ height: '100%' }}
+              >
+                <div
+                  onClick={() => handleFeatureClick(f)}
+                  className="group relative"
+                  style={{
+                    padding: 24,
+                    border: '1px solid var(--ctw-border-default)',
+                    borderRadius: 12,
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    opacity: disabled ? 0.5 : 1,
+                    transition: 'border-color 200ms, transform 200ms, box-shadow 200ms',
+                    background: 'var(--ctw-surface-card)',
+                    height: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (disabled) return
+                    e.currentTarget.style.borderColor = '#0066FF'
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.06)'
+                  }}
+                  onMouseLeave={(e) => {
+                    if (disabled) return
+                    e.currentTarget.style.borderColor = 'var(--ctw-border-default)'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                >
+                  {disabled && (
+                    <span
+                      className="absolute font-body"
+                      style={{
+                        top: 8,
+                        right: 12,
+                        fontSize: 11,
+                        color: 'var(--ctw-error)',
+                      }}
+                    >
+                      {t('home.unavailable')}
+                    </span>
+                  )}
+                  <Icon style={{ fontSize: 24, color: 'var(--ctw-text-tertiary)', marginBottom: 16, display: 'block' }} />
+                  <h3
+                    className="font-display"
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 600,
+                      color: 'var(--ctw-text-primary)',
+                      marginBottom: 6,
+                      marginTop: 0,
+                    }}
+                  >
+                    {t(`home.${f.key}.title`)}
+                  </h3>
+                  <p
+                    className="font-body"
+                    style={{
+                      fontSize: 13,
+                      color: 'var(--ctw-text-tertiary)',
+                      lineHeight: 1.5,
+                      margin: 0,
+                    }}
+                  >
+                    {t(`home.${f.key}.desc`)}
+                  </p>
+
+                  {/* Gradient bottom border */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: -1,
+                      right: -1,
+                      height: 2,
+                      background: 'linear-gradient(90deg, #0066FF, #00D4AA)',
+                      borderRadius: '0 0 12px 12px',
+                    }}
+                  />
+                </div>
+              </StaggerItem>
+            )
+          })}
+        </StaggerContainer>
       </div>
+
+      {/* Footer */}
+      <div className="text-center" style={{ paddingBottom: 48 }}>
+        <p className="font-body" style={{ fontSize: 13, color: 'var(--ctw-text-tertiary)' }}>
+          {t('brand.copyright')}
+        </p>
+      </div>
+
+      {/* Blink cursor keyframes */}
+      <style>{`
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        @media (max-width: 768px) {
+          .grid { grid-template-columns: repeat(2, 1fr) !important; }
+          h1 { font-size: 36px !important; }
+        }
+        @media (max-width: 480px) {
+          .grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   )
 }

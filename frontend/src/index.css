@@ -1,8 +1,124 @@
 @import "tailwindcss";
 
+/* ===== Light Mode Variables ===== */
+:root {
+  --ctw-brand: #0066FF;
+  --ctw-brand-cyan: #00D4AA;
+  --ctw-surface-base: #FAFAFA;
+  --ctw-surface-card: #FFFFFF;
+  --ctw-surface-overlay: #FFFFFF;
+  --ctw-surface-popover: #FFFFFF;
+  --ctw-surface-input: #FFFFFF;
+  --ctw-surface-hover: #F5F5F5;
+  --ctw-border-default: #E5E5E5;
+  --ctw-border-hover: #D4D4D4;
+  --ctw-border-focus: #0066FF;
+  --ctw-text-primary: #0A0A0A;
+  --ctw-text-secondary: #525252;
+  --ctw-text-tertiary: #737373;
+  --ctw-text-disabled: #A3A3A3;
+  --ctw-success: #00D4AA;
+  --ctw-warning: #F5A623;
+  --ctw-error: #EF4444;
+  --ctw-shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --ctw-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --ctw-shadow-strong: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --ctw-shadow-glow: 0 0 20px rgba(0, 102, 255, 0.3);
+}
+
+/* ===== Dark Mode Variables ===== */
+.dark {
+  --ctw-surface-base: #0A0A0A;
+  --ctw-surface-card: #141414;
+  --ctw-surface-overlay: #1C1C1C;
+  --ctw-surface-popover: #242424;
+  --ctw-surface-input: #141414;
+  --ctw-surface-hover: #1C1C1C;
+  --ctw-border-default: rgba(255, 255, 255, 0.08);
+  --ctw-border-hover: rgba(255, 255, 255, 0.15);
+  --ctw-border-focus: #0066FF;
+  --ctw-text-primary: #EDEDED;
+  --ctw-text-secondary: #A3A3A3;
+  --ctw-text-tertiary: #737373;
+  --ctw-text-disabled: #525252;
+  --ctw-shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --ctw-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --ctw-shadow-strong: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --ctw-shadow-glow: 0 0 20px rgba(0, 102, 255, 0.3);
+}
+
+/* ===== Tailwind Theme ===== */
+@theme {
+  --color-brand: var(--ctw-brand);
+  --color-brand-cyan: var(--ctw-brand-cyan);
+  --color-surface-base: var(--ctw-surface-base);
+  --color-surface-card: var(--ctw-surface-card);
+  --color-surface-overlay: var(--ctw-surface-overlay);
+  --color-surface-popover: var(--ctw-surface-popover);
+  --color-surface-input: var(--ctw-surface-input);
+  --color-surface-hover: var(--ctw-surface-hover);
+  --color-border-default: var(--ctw-border-default);
+  --color-border-hover: var(--ctw-border-hover);
+  --color-border-focus: var(--ctw-border-focus);
+  --color-fg: var(--ctw-text-primary);
+  --color-fg-secondary: var(--ctw-text-secondary);
+  --color-fg-muted: var(--ctw-text-tertiary);
+  --color-fg-disabled: var(--ctw-text-disabled);
+  --color-success: var(--ctw-success);
+  --color-warning: var(--ctw-warning);
+  --color-error: var(--ctw-error);
+  --font-display: 'Sora', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --animate-cursor-blink: cursor-blink 1.06s step-end infinite;
+  --animate-fade-up: fade-up 0.5s ease-out both;
+  --animate-fade-out-up: fade-out-up 0.2s ease-in both;
+  --animate-shimmer: shimmer 1.5s infinite;
+}
+
+/* ===== Keyframes ===== */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-out-up {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ===== Global Styles ===== */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--ctw-surface-base);
+  color: var(--ctw-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ===== Focus Visible ===== */
+*:focus-visible {
+  outline: 2px solid var(--ctw-brand);
+  outline-offset: 2px;
+}
+
+/* ===== Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

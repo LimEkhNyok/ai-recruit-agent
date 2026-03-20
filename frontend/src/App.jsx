@@ -1,4 +1,5 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion } from 'motion/react'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 import FeatureGuard from './components/FeatureGuard'
@@ -15,25 +16,136 @@ import QuizPage from './pages/QuizPage'
 import SettingsPage from './pages/SettingsPage'
 import UsagePage from './pages/UsagePage'
 
-export default function App() {
+function PageTransition({ children }) {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route element={<Layout />}>
-        <Route path="/" element={<HomePage />} />
-        <Route element={<ProtectedRoute />}>
-          <Route path="/assessment" element={<FeatureGuard feature="assessment"><AssessmentPage /></FeatureGuard>} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/matching" element={<FeatureGuard feature="matching"><MatchingPage /></FeatureGuard>} />
-          <Route path="/interview" element={<FeatureGuard feature="interview"><InterviewPage /></FeatureGuard>} />
-          <Route path="/career" element={<FeatureGuard feature="career"><CareerPlanPage /></FeatureGuard>} />
-          <Route path="/quiz" element={<FeatureGuard feature="quiz"><QuizPage /></FeatureGuard>} />
-          <Route path="/usage" element={<UsagePage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+export default function App() {
+  const location = useLocation()
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route
+          path="/login"
+          element={
+            <PageTransition>
+              <LoginPage />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PageTransition>
+              <RegisterPage />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <PageTransition>
+              <ForgotPasswordPage />
+            </PageTransition>
+          }
+        />
+        <Route element={<Layout />}>
+          <Route
+            path="/"
+            element={
+              <PageTransition>
+                <HomePage />
+              </PageTransition>
+            }
+          />
+          <Route element={<ProtectedRoute />}>
+            <Route
+              path="/assessment"
+              element={
+                <PageTransition>
+                  <FeatureGuard feature="assessment">
+                    <AssessmentPage />
+                  </FeatureGuard>
+                </PageTransition>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <PageTransition>
+                  <ProfilePage />
+                </PageTransition>
+              }
+            />
+            <Route
+              path="/matching"
+              element={
+                <PageTransition>
+                  <FeatureGuard feature="matching">
+                    <MatchingPage />
+                  </FeatureGuard>
+                </PageTransition>
+              }
+            />
+            <Route
+              path="/interview"
+              element={
+                <PageTransition>
+                  <FeatureGuard feature="interview">
+                    <InterviewPage />
+                  </FeatureGuard>
+                </PageTransition>
+              }
+            />
+            <Route
+              path="/career"
+              element={
+                <PageTransition>
+                  <FeatureGuard feature="career">
+                    <CareerPlanPage />
+                  </FeatureGuard>
+                </PageTransition>
+              }
+            />
+            <Route
+              path="/quiz"
+              element={
+                <PageTransition>
+                  <FeatureGuard feature="quiz">
+                    <QuizPage />
+                  </FeatureGuard>
+                </PageTransition>
+              }
+            />
+            <Route
+              path="/usage"
+              element={
+                <PageTransition>
+                  <UsagePage />
+                </PageTransition>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <PageTransition>
+                  <SettingsPage />
+                </PageTransition>
+              }
+            />
+          </Route>
         </Route>
-      </Route>
-    </Routes>
+      </Routes>
+    </AnimatePresence>
   )
 }
