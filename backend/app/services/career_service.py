@@ -10,6 +10,7 @@ from app.models.career import CareerPlan
 from app.models.quiz import QuizRecord
 from app.services.model_service import ModelService
 from app.prompts.career import get_career_prompt
+from app.utils.job_translation import translate_title, translate_category
 
 MASTERY_THRESHOLD = 2
 
@@ -52,14 +53,15 @@ async def generate_plan(user_id: int, db: AsyncSession, model_service: ModelServ
         "summary": profile.summary,
     }, ensure_ascii=False, indent=2)
 
+    lang = model_service.language
     top_matches_text = ""
     for m in matches:
         job = job_map.get(m.job_id)
         if not job:
             continue
         top_matches_text += json.dumps({
-            "job_title": job.title,
-            "category": job.category,
+            "job_title": translate_title(job.title, lang),
+            "category": translate_category(job.category, lang),
             "score": m.score,
             "reason": m.reason,
             "is_beyond_cognition": m.is_beyond_cognition,
@@ -100,7 +102,6 @@ async def generate_plan(user_id: int, db: AsyncSession, model_service: ModelServ
         else:
             weak_kps.append(label)
 
-    lang = model_service.language
     if total_q > 0:
         accuracy = round(total_c / total_q * 100, 1)
         if lang == "en":

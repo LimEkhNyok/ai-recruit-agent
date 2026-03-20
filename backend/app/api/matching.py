@@ -33,6 +33,7 @@ async def match(
 async def results(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    model_service: ModelService = Depends(get_model_service),
 ):
-    data = await matching_service.get_results(current_user.id, db)
+    data = await matching_service.get_results(current_user.id, db, language=model_service.language)
     return MatchListResponse(results=data)
