@@ -8,7 +8,7 @@ from app.models.job import JobPosition
 from app.models.matching import MatchResult
 from app.services.model_service import ModelService
 from app.services.vector_service import rank_by_similarity
-from app.prompts.matching import MATCHING_PROMPT_TEMPLATE
+from app.prompts.matching import get_matching_prompt
 
 TOP_N_CANDIDATES = 10
 
@@ -66,14 +66,20 @@ async def match(user_id: int, db: AsyncSession, model_service: ModelService) -> 
             "vector_similarity": round(r["similarity_score"], 4),
         }, ensure_ascii=False, indent=2) + "\n\n"
 
-    prompt_content = MATCHING_PROMPT_TEMPLATE.replace(
+    lang = model_service.language
+    prompt_content = get_matching_prompt(lang).replace(
         "{talent_profile}", profile_summary
     ).replace(
         "{job_list}", job_list_text
     )
 
+    system_prompt = (
+        "You are a professional job-matching analyst. Please strictly output in the required JSON format."
+        if lang == "en"
+        else "你是一位专业的人岗匹配分析师。请严格按照要求的 JSON 格式输出。"
+    )
     match_data = await model_service.generate_json(
-        system_prompt="你是一位专业的人岗匹配分析师。请严格按照要求的 JSON 格式输出。",
+        system_prompt=system_prompt,
         content=prompt_content,
     )
 

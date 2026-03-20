@@ -9,7 +9,7 @@ from app.models.job import JobPosition
 from app.models.career import CareerPlan
 from app.models.quiz import QuizRecord
 from app.services.model_service import ModelService
-from app.prompts.career import CAREER_PLAN_PROMPT
+from app.prompts.career import get_career_prompt
 
 MASTERY_THRESHOLD = 2
 
@@ -100,17 +100,29 @@ async def generate_plan(user_id: int, db: AsyncSession, model_service: ModelServ
         else:
             weak_kps.append(label)
 
+    lang = model_service.language
     if total_q > 0:
         accuracy = round(total_c / total_q * 100, 1)
-        quiz_stats_text = f"总做题数：{total_q}，正确率：{accuracy}%\n"
-        if mastered_kps:
-            quiz_stats_text += f"已掌握的知识点：{', '.join(mastered_kps)}\n"
-        if weak_kps:
-            quiz_stats_text += f"薄弱知识点（需重点提升）：{', '.join(weak_kps)}\n"
+        if lang == "en":
+            quiz_stats_text = f"Total questions: {total_q}, Accuracy: {accuracy}%\n"
+            if mastered_kps:
+                quiz_stats_text += f"Mastered knowledge points: {', '.join(mastered_kps)}\n"
+            if weak_kps:
+                quiz_stats_text += f"Weak knowledge points (need improvement): {', '.join(weak_kps)}\n"
+        else:
+            quiz_stats_text = f"总做题数：{total_q}，正确率：{accuracy}%\n"
+            if mastered_kps:
+                quiz_stats_text += f"已掌握的知识点：{', '.join(mastered_kps)}\n"
+            if weak_kps:
+                quiz_stats_text += f"薄弱知识点（需重点提升）：{', '.join(weak_kps)}\n"
     else:
-        quiz_stats_text = "用户暂未进行刷题练习，无刷题数据。"
+        quiz_stats_text = (
+            "The user has not practiced any quiz questions yet. No quiz data available."
+            if lang == "en"
+            else "用户暂未进行刷题练习，无刷题数据。"
+        )
 
-    prompt_content = CAREER_PLAN_PROMPT.replace(
+    prompt_content = get_career_prompt(lang).replace(
         "{talent_profile}", profile_summary
     ).replace(
         "{top_matches}", top_matches_text
@@ -119,8 +131,13 @@ async def generate_plan(user_id: int, db: AsyncSession, model_service: ModelServ
     )
 
     # 4. Call Gemini
+    system_prompt = (
+        "You are a senior career planner. Please strictly output the career plan in the required JSON format."
+        if lang == "en"
+        else "你是一位资深职业规划师。请严格按照要求的 JSON 格式输出职业规划。"
+    )
     plan_data = await model_service.generate_json(
-        system_prompt="你是一位资深职业规划师。请严格按照要求的 JSON 格式输出职业规划。",
+        system_prompt=system_prompt,
         content=prompt_content,
     )
 

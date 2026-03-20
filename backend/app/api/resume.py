@@ -8,7 +8,7 @@ from app.models.user import User
 from app.models.resume import Resume
 from app.services.model_service import ModelService
 from app.api.deps import get_db, get_current_user, get_model_service, require_feature, require_billing
-from app.prompts.resume import RESUME_ANALYSIS_PROMPT
+from app.prompts.resume import get_resume_prompt
 
 router = APIRouter(prefix="/api/resume", tags=["resume"])
 
@@ -98,9 +98,11 @@ async def analyze(
     import uuid
     model_service._feature = "resume"
     model_service.set_session(str(uuid.uuid4()))
+    lang = model_service.language
+    content_prefix = "Resume content below:" if lang == "en" else "以下是简历内容："
     analysis = await model_service.generate_json(
-        system_prompt=RESUME_ANALYSIS_PROMPT,
-        content=f"以下是简历内容：\n\n{resume.text_content}",
+        system_prompt=get_resume_prompt(lang),
+        content=f"{content_prefix}\n\n{resume.text_content}",
     )
 
     resume.analysis = analysis

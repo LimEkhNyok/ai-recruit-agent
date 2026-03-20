@@ -31,6 +31,10 @@ class ModelService:
         self._session_id: str | None = None
         self._language: str = "zh"
 
+    @property
+    def language(self) -> str:
+        return self._language
+
     def set_language(self, language: str):
         self._language = language if language in ("zh", "en") else "zh"
         return self
@@ -155,7 +159,11 @@ class ModelService:
     ) -> dict:
         lang_instruction = ""
         if self._language == "en":
-            lang_instruction = " All text values in the JSON MUST be in English."
+            lang_instruction = (
+                "\n\nCRITICAL LANGUAGE REQUIREMENT: You MUST respond ENTIRELY in English. "
+                "All text values, descriptions, analysis, and suggestions in the JSON MUST be in English. "
+                "Do NOT use any Chinese characters in your response."
+            )
         json_instruction = (
             system_prompt
             + "\n\nIMPORTANT: You MUST respond with valid JSON only. "

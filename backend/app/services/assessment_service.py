@@ -6,21 +6,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.assessment import Assessment, TalentProfile
 from app.services.model_service import ModelService
-from app.prompts.assessment import SYSTEM_PROMPT, PROFILE_GENERATION_PROMPT
+from app.prompts.assessment import get_system_prompt, get_profile_prompt
 
 COMPLETE_MARKER = "[ASSESSMENT_COMPLETE]"
 
 
 async def start_assessment(user_id: int, db: AsyncSession, model_service: ModelService) -> tuple[int, str]:
     """Create a new assessment and return (assessment_id, first_ai_message)."""
+    lang = model_service.language
+    start_msg = (
+        "Hello, I'm ready to start the assessment."
+        if lang == "en"
+        else "你好，我准备开始测评了。"
+    )
     first_message = await model_service.chat(
-        system_prompt=SYSTEM_PROMPT,
+        system_prompt=get_system_prompt(lang),
         history=None,
-        user_message="你好，我准备开始测评了。",
+        user_message=start_msg,
     )
 
     history = [
-        {"role": "user", "parts": [{"text": "你好，我准备开始测评了。"}]},
+        {"role": "user", "parts": [{"text": start_msg}]},
         {"role": "model", "parts": [{"text": first_message}]},
     ]
 
@@ -45,8 +51,9 @@ async def chat(assessment_id: int, user_message: str, db: AsyncSession, model_se
 
     history: list[dict] = list(assessment.chat_history) if assessment.chat_history else []
 
+    lang = model_service.language
     reply = await model_service.chat(
-        system_prompt=SYSTEM_PROMPT,
+        system_prompt=get_system_prompt(lang),
         history=history,
         user_message=user_message,
     )
@@ -76,14 +83,18 @@ async def finish_assessment(assessment_id: int, db: AsyncSession, model_service:
 
     history: list[dict] = assessment.chat_history or []
 
+    lang = model_service.language
     dialogue_text = ""
     for msg in history:
-        role = "用户" if msg["role"] == "user" else "AI测评师"
+        if lang == "en":
+            role = "User" if msg["role"] == "user" else "AI Assessor"
+        else:
+            role = "用户" if msg["role"] == "user" else "AI测评师"
         text = msg["parts"][0]["text"]
         dialogue_text += f"{role}: {text}\n\n"
 
     profile_data = await model_service.generate_json(
-        system_prompt=PROFILE_GENERATION_PROMPT,
+        system_prompt=get_profile_prompt(lang),
         content=dialogue_text,
     )
 
