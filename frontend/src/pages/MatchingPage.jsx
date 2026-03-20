@@ -174,7 +174,7 @@ export default function MatchingPage() {
       const res = await triggerMatch()
       setResults(res.data.results)
       markApiUsed()
-      message.success(t('matching.rematchSuccess') || 'OK')
+      message.success(t('matching.rematchSuccess'))
     } catch (err) {
       message.error(err.response?.data?.detail || t('matching.matchFailed'))
     } finally {

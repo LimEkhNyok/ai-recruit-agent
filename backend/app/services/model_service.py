@@ -153,10 +153,14 @@ class ModelService:
         content: str,
         response_schema: dict | None = None,
     ) -> dict:
+        lang_instruction = ""
+        if self._language == "en":
+            lang_instruction = " All text values in the JSON MUST be in English."
         json_instruction = (
             system_prompt
             + "\n\nIMPORTANT: You MUST respond with valid JSON only. "
             "No markdown, no code fences, no explanation. Pure JSON."
+            + lang_instruction
         )
         messages = [
             {"role": "system", "content": json_instruction},

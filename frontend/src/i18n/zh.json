@@ -239,6 +239,7 @@
     "analyzing": "AI 正在为你匹配最佳岗位...",
     "analyzingSubtitle": "正在分析你的画像与岗位的契合度",
     "rematch": "重新匹配",
+    "rematchSuccess": "重新匹配完成",
     "noResults": "暂无匹配结果",
     "matchFailed": "匹配失败，请先完成测评",
     "beyondCognition": "突破认知",
