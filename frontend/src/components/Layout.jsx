@@ -58,8 +58,8 @@ export default function Layout() {
         title: '切换语言 / Switch Language',
         content: (
           <div>
-            <p style={{ marginBottom: 8 }}>切换语言后，AI 已生成的内容（测评、匹配、规划等）需要重新生成才能显示为新语言。</p>
-            <p style={{ margin: 0, color: 'var(--ctw-text-secondary)' }}>Switching language requires regenerating AI-generated content (assessment, matching, career plan, etc.) to display in the new language.</p>
+            <p style={{ marginBottom: 8 }}>切换语言后，AI 已生成的内容（测评、匹配、规划等）需要重新生成才能显示为新语言，可能带来 tokens 的浪费。</p>
+            <p style={{ margin: 0, color: 'var(--ctw-text-secondary)' }}>Switching language requires regenerating AI-generated content (assessment, matching, career plan, etc.) to display in the new language, which may result in wasted tokens.</p>
           </div>
         ),
         okText: '确认切换 / Confirm',
