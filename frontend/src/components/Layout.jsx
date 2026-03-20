@@ -49,7 +49,28 @@ export default function Layout() {
   const { wallet, fetchWallet } = useBillingStore()
   const fileInputRef = useRef(null)
   const { t } = useTranslation()
-  const { theme, toggleTheme, language, setLanguage } = useThemeStore()
+  const { theme, toggleTheme, language, setLanguage, hasUsedApi, markApiUsed } = useThemeStore()
+
+  const handleLanguageSwitch = (lang) => {
+    if (lang === language) return
+    if (hasUsedApi) {
+      Modal.confirm({
+        title: '切换语言 / Switch Language',
+        content: (
+          <div>
+            <p style={{ marginBottom: 8 }}>切换语言后，AI 已生成的内容（测评、匹配、规划等）需要重新生成才能显示为新语言。</p>
+            <p style={{ margin: 0, color: 'var(--ctw-text-secondary)' }}>Switching language requires regenerating AI-generated content (assessment, matching, career plan, etc.) to display in the new language.</p>
+          </div>
+        ),
+        okText: '确认切换 / Confirm',
+        cancelText: '取消 / Cancel',
+        onOk: () => setLanguage(lang),
+        width: 520,
+      })
+    } else {
+      setLanguage(lang)
+    }
+  }
 
   const [resumeId, setResumeId] = useState(null)
   const [resumeFilename, setResumeFilename] = useState('')
@@ -132,6 +153,7 @@ export default function Layout() {
     try {
       const res = await analyzeResume(resumeId)
       setAnalysis(res.data.analysis)
+      markApiUsed()
       setShowReport(true)
     } catch (err) {
       message.error(err.response?.data?.detail || t('resume.analyzeFailed'))
@@ -260,7 +282,7 @@ export default function Layout() {
               }}
             >
               <button
-                onClick={() => setLanguage('zh')}
+                onClick={() => handleLanguageSwitch('zh')}
                 aria-label="Chinese"
                 className="px-2.5 text-xs font-medium transition-colors duration-200"
                 style={{
@@ -274,7 +296,7 @@ export default function Layout() {
                 ZH
               </button>
               <button
-                onClick={() => setLanguage('en')}
+                onClick={() => handleLanguageSwitch('en')}
                 aria-label="English"
                 className="px-2.5 text-xs font-medium transition-colors duration-200"
                 style={{
@@ -488,7 +510,7 @@ export default function Layout() {
                 <GlobalOutlined style={{ color: 'var(--ctw-text-tertiary)' }} />
                 <div className="flex items-center" style={{ borderRadius: 6, border: '1px solid var(--ctw-border-default)', overflow: 'hidden' }}>
                   <button
-                    onClick={() => setLanguage('zh')}
+                    onClick={() => handleLanguageSwitch('zh')}
                     className="px-3 py-1 text-xs font-medium"
                     style={{
                       border: 'none',
@@ -500,7 +522,7 @@ export default function Layout() {
                     ZH
                   </button>
                   <button
-                    onClick={() => setLanguage('en')}
+                    onClick={() => handleLanguageSwitch('en')}
                     className="px-3 py-1 text-xs font-medium"
                     style={{
                       border: 'none',

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { generatePlan, getPlan } from '../api/career'
 import useFeatureGuard from '../hooks/useFeatureGuard'
+import useThemeStore from '../store/useThemeStore'
 import { useTranslation } from '../i18n'
 import FadeIn from '../components/motion/FadeIn'
 import StaggerContainer, { StaggerItem } from '../components/motion/StaggerContainer'
@@ -362,6 +363,7 @@ export default function CareerPlanPage() {
   const [regenerating, setRegenerating] = useState(false)
   const navigate = useNavigate()
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("career")
+  const { markApiUsed } = useThemeStore()
   const { t } = useTranslation()
 
   useEffect(() => {
@@ -375,7 +377,10 @@ export default function CareerPlanPage() {
         if (!ignore) setGenerating(true)
         try {
           const res = await generatePlan()
-          if (!ignore) setPlan(res.data)
+          if (!ignore) {
+            setPlan(res.data)
+            markApiUsed()
+          }
         } catch (err) {
           if (!ignore) message.error(err.response?.data?.detail || t('career.generateFailed'))
         } finally {
@@ -394,6 +399,7 @@ export default function CareerPlanPage() {
     try {
       const res = await generatePlan()
       setPlan(res.data)
+      markApiUsed()
       message.success(t('career.regenerateSuccess'))
     } catch (err) {
       message.error(err.response?.data?.detail || t('career.regenerateFailed'))

@@ -10,6 +10,7 @@ client.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  config.headers['Accept-Language'] = localStorage.getItem('ctw-language') || 'zh'
   return config
 })
 
