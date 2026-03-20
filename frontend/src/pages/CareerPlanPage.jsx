@@ -506,13 +506,27 @@ export default function CareerPlanPage() {
               {t('career.subtitle')}
             </p>
           </div>
-          <Button
-            ghost
+          <button
             onClick={handleRegenerate}
-            loading={regenerating}
+            disabled={regenerating}
+            style={{
+              padding: '8px 16px',
+              fontSize: 14,
+              fontWeight: 500,
+              fontFamily: "'DM Sans', sans-serif",
+              color: 'var(--ctw-text-primary)',
+              background: 'transparent',
+              border: '1px solid var(--ctw-border-default)',
+              borderRadius: 8,
+              cursor: regenerating ? 'not-allowed' : 'pointer',
+              opacity: regenerating ? 0.6 : 1,
+              transition: 'border-color 200ms',
+            }}
+            onMouseEnter={(e) => !regenerating && (e.currentTarget.style.borderColor = '#0066FF')}
+            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--ctw-border-default)'}
           >
-            {t('career.regenerate')}
-          </Button>
+            {regenerating ? t('common.loading') : t('career.regenerate')}
+          </button>
         </div>
       </FadeIn>
 

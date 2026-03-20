@@ -239,12 +239,44 @@ export default function ProfilePage() {
             </p>
           </div>
           <div className="flex gap-2 shrink-0">
-            <Button ghost onClick={handleReassess}>
+            <button
+              onClick={handleReassess}
+              style={{
+                padding: '8px 16px',
+                fontSize: 14,
+                fontWeight: 500,
+                fontFamily: "'DM Sans', sans-serif",
+                color: 'var(--ctw-text-primary)',
+                background: 'transparent',
+                border: '1px solid var(--ctw-border-default)',
+                borderRadius: 8,
+                cursor: 'pointer',
+                transition: 'border-color 200ms',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = '#0066FF'}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--ctw-border-default)'}
+            >
               {t('profile.reassess')}
-            </Button>
-            <Button ghost onClick={() => navigate('/matching')}>
+            </button>
+            <button
+              onClick={() => navigate('/matching')}
+              style={{
+                padding: '8px 16px',
+                fontSize: 14,
+                fontWeight: 500,
+                fontFamily: "'DM Sans', sans-serif",
+                color: '#fff',
+                background: '#0066FF',
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'pointer',
+                transition: 'opacity 200ms',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+            >
               {t('profile.startMatching')}
-            </Button>
+            </button>
           </div>
         </div>
       </FadeIn>

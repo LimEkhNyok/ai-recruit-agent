@@ -619,18 +619,34 @@ export default function Layout() {
         open={showReport}
         onCancel={() => setShowReport(false)}
         footer={
-          <Button
-            onClick={() => setShowReport(false)}
-            style={{
-              borderRadius: 8,
-              background: isDark ? '#EDEDED' : '#0A0A0A',
-              color: isDark ? '#0A0A0A' : '#EDEDED',
-              border: 'none',
-              fontWeight: 500,
-            }}
-          >
-            {t('common.close')}
-          </Button>
+          <div className="flex justify-end gap-2">
+            <Button
+              onClick={() => {
+                setAnalysis(null)
+                handleAnalyze()
+              }}
+              loading={analyzing}
+              style={{
+                borderRadius: 8,
+                border: '1px solid var(--ctw-border-default)',
+                fontWeight: 500,
+              }}
+            >
+              {t('resume.reanalyze')}
+            </Button>
+            <Button
+              onClick={() => setShowReport(false)}
+              style={{
+                borderRadius: 8,
+                background: isDark ? '#EDEDED' : '#0A0A0A',
+                color: isDark ? '#0A0A0A' : '#EDEDED',
+                border: 'none',
+                fontWeight: 500,
+              }}
+            >
+              {t('common.close')}
+            </Button>
+          </div>
         }
         width={640}
         styles={{

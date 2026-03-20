@@ -238,6 +238,7 @@
     "collapse": "收起",
     "analyzing": "AI 正在为你匹配最佳岗位...",
     "analyzingSubtitle": "正在分析你的画像与岗位的契合度",
+    "rematch": "重新匹配",
     "noResults": "暂无匹配结果",
     "matchFailed": "匹配失败，请先完成测评",
     "beyondCognition": "突破认知",
@@ -396,6 +397,7 @@
     "uploadSuccess": "上传成功",
     "uploadFailed": "上传失败",
     "analyzeFailed": "分析失败",
+    "reanalyze": "重新分析",
     "analyzing": "AI 正在分析你的简历..."
   },
   "guard": {
