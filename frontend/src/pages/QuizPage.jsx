@@ -340,6 +340,7 @@ export default function QuizPage() {
                 type="primary"
                 onClick={handleGenerate}
                 loading={generating}
+                style={{ boxShadow: 'none' }}
               >
                 {question ? t('quiz.change') : t('quiz.start')}
               </Button>
