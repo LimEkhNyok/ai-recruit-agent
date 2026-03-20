@@ -40,7 +40,8 @@
   "home": {
     "heroTitle": "AI 驱动职业探索",
     "heroTitleCode": "Code",
-    "heroTitleToWork": "ToWork",
+    "heroTitleTo": "To",
+    "heroTitleWork": "Work",
     "heroSubtitle": "码到工成，让每个人找到真正适合的职业方向",
     "getStarted": "开始测评",
     "learnMore": "了解更多",
