@@ -9,6 +9,7 @@ from app.models.matching import MatchResult
 from app.services.model_service import ModelService
 from app.services.vector_service import rank_by_similarity
 from app.prompts.matching import get_matching_prompt
+from app.utils.job_translation import translate_title, translate_category
 
 TOP_N_CANDIDATES = 10
 
@@ -108,8 +109,8 @@ async def match(user_id: int, db: AsyncSession, model_service: ModelService) -> 
         db.add(mr)
         output.append({
             "job_id": job_id,
-            "job_title": job.title,
-            "job_category": job.category,
+            "job_title": translate_title(job.title, lang),
+            "job_category": translate_category(job.category, lang),
             "score": mr.score,
             "breakdown": mr.breakdown,
             "reason": mr.reason,
@@ -132,8 +133,8 @@ async def match(user_id: int, db: AsyncSession, model_service: ModelService) -> 
         final.append({
             "id": mr.id,
             "job_id": mr.job_id,
-            "job_title": job.title if job else "",
-            "job_category": job.category if job else "",
+            "job_title": translate_title(job.title, lang) if job else "",
+            "job_category": translate_category(job.category, lang) if job else "",
             "score": mr.score,
             "breakdown": mr.breakdown,
             "reason": mr.reason,
@@ -143,7 +144,7 @@ async def match(user_id: int, db: AsyncSession, model_service: ModelService) -> 
     return final
 
 
-async def get_results(user_id: int, db: AsyncSession) -> list[dict]:
+async def get_results(user_id: int, db: AsyncSession, language: str = "zh") -> list[dict]:
     """Return the user's most recent match results."""
     result = await db.execute(
         select(MatchResult)
@@ -162,8 +163,8 @@ async def get_results(user_id: int, db: AsyncSession) -> list[dict]:
         {
             "id": m.id,
             "job_id": m.job_id,
-            "job_title": job_map[m.job_id].title if m.job_id in job_map else "",
-            "job_category": job_map[m.job_id].category if m.job_id in job_map else "",
+            "job_title": translate_title(job_map[m.job_id].title, language) if m.job_id in job_map else "",
+            "job_category": translate_category(job_map[m.job_id].category, language) if m.job_id in job_map else "",
             "score": m.score,
             "breakdown": m.breakdown,
             "reason": m.reason,

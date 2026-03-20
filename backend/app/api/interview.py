@@ -93,6 +93,7 @@ async def end(
 async def history(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    model_service: ModelService = Depends(get_model_service),
 ):
-    data = await interview_service.get_history(current_user.id, db)
+    data = await interview_service.get_history(current_user.id, db, language=model_service.language)
     return InterviewHistoryResponse(interviews=data)

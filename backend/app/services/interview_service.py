@@ -9,6 +9,7 @@ from app.models.interview import Interview
 from app.models.job import JobPosition
 from app.services.model_service import ModelService
 from app.prompts.interview import get_interview_prompt, get_evaluation_prompt
+from app.utils.job_translation import translate_title, translate_category
 
 
 def _build_system_prompt(job: JobPosition, language: str = "zh") -> str:
@@ -60,7 +61,7 @@ async def start_interview(user_id: int, job_id: int, db: AsyncSession, model_ser
     await db.commit()
     await db.refresh(interview)
 
-    return interview.id, job.title, first_message
+    return interview.id, translate_title(job.title, lang), first_message
 
 
 async def chat_stream(
@@ -138,10 +139,10 @@ async def end_interview(interview_id: int, db: AsyncSession, model_service: Mode
     interview.completed_at = datetime.now(timezone.utc)
     await db.commit()
 
-    return job.title, evaluation
+    return translate_title(job.title, lang), evaluation
 
 
-async def get_history(user_id: int, db: AsyncSession) -> list[dict]:
+async def get_history(user_id: int, db: AsyncSession, language: str = "zh") -> list[dict]:
     """Return the user's interview records."""
     result = await db.execute(
         select(Interview)
@@ -160,7 +161,7 @@ async def get_history(user_id: int, db: AsyncSession) -> list[dict]:
         {
             "id": iv.id,
             "job_id": iv.job_id,
-            "job_title": job_map[iv.job_id].title if iv.job_id in job_map else "",
+            "job_title": translate_title(job_map[iv.job_id].title, language) if iv.job_id in job_map else "",
             "status": iv.status,
             "created_at": iv.created_at.isoformat() if iv.created_at else "",
             "evaluation": iv.evaluation,
