@@ -152,7 +152,7 @@ export default function ForgotPasswordPage() {
               </h1>
               <p
                 className="text-sm"
-                style={{ color: 'var(--ctw-text-secondary)', whiteSpace: 'nowrap' }}
+                style={{ color: 'var(--ctw-text-secondary)', whiteSpace: 'nowrap', textAlign: 'center' }}
               >
                 {t('auth.forgotSubtitle')}
               </p>
