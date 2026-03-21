@@ -96,6 +96,66 @@
   40% { opacity: 1; transform: scale(1); }
 }
 
+@keyframes speech-pulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* ===== Mic Button ===== */
+.mic-btn {
+  position: relative;
+}
+
+.mic-btn:not(:disabled):hover {
+  background: var(--ctw-surface-hover) !important;
+  color: var(--ctw-text-secondary) !important;
+}
+
+.mic-btn-recording {
+  background: var(--ctw-error) !important;
+  color: #fff !important;
+}
+
+.mic-btn-recording:not(:disabled):hover {
+  background: var(--ctw-error) !important;
+  color: #fff !important;
+  opacity: 0.9;
+}
+
+.mic-btn-recording::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--ctw-error);
+  animation: speech-pulse 1.5s ease-out infinite;
+  pointer-events: none;
+}
+
+/* ===== Recording Indicator ===== */
+.recording-indicator-interim {
+  font-style: italic;
+  opacity: 0.7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: min(300px, 40vw);
+}
+
+.recording-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ctw-error);
+  flex-shrink: 0;
+  animation: recording-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes recording-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
 /* ===== Global Styles ===== */
 body {
   margin: 0;

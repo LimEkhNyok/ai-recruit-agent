@@ -165,6 +165,11 @@
     "endFailed": "Failed to generate evaluation report",
     "missingJob": "Missing job information, please select a position from matching results",
     "preparing": "Preparing interview...",
+    "recording": "Recording...",
+    "speechUnavailable": "Speech recognition unavailable, please use text input",
+    "micDenied": "Microphone permission denied, please allow in browser settings",
+    "voiceInput": "Voice input",
+    "stopRecording": "Stop recording",
     "report": {
       "title": "Interview Evaluation Report",
       "overallScore": "Overall Score",
