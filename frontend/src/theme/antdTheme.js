@@ -84,6 +84,10 @@ export const darkTheme = {
       borderRadius: parseInt(borderRadius.md),
       activeShadow: '0 0 0 3px rgba(0, 102, 255, 0.15)',
     },
+    Select: {
+      colorBorder: 'rgba(255, 255, 255, 0.25)',
+      colorTextPlaceholder: 'rgba(255, 255, 255, 0.45)',
+    },
     Table: {
       borderColor: colors.dark.border.default,
       headerBg: 'transparent',
