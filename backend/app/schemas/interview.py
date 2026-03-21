@@ -4,7 +4,8 @@ from pydantic import BaseModel
 
 
 class InterviewStartRequest(BaseModel):
-    job_id: int
+    job_id: int | None = None
+    jd_context: dict[str, Any] | None = None
 
 
 class InterviewStartResponse(BaseModel):
@@ -32,7 +33,7 @@ class InterviewEndRequest(BaseModel):
 
 class InterviewHistoryItem(BaseModel):
     id: int
-    job_id: int
+    job_id: int | None = None
     job_title: str
     status: str
     created_at: str

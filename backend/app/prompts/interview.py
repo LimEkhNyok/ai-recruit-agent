@@ -145,3 +145,35 @@ def get_interview_prompt(language: str = "zh") -> str:
 
 def get_evaluation_prompt(language: str = "zh") -> str:
     return EVALUATION_PROMPT_EN if language == "en" else EVALUATION_PROMPT_ZH
+
+
+def build_jd_interview_prompt(jd_context: dict, language: str = "zh") -> str:
+    title = jd_context.get("title", "")
+    tech_stack = ", ".join(jd_context.get("tech_stack", []))
+    key_points = ", ".join(jd_context.get("key_points", []))
+    requirements = ", ".join(jd_context.get("requirements", []))
+    bonus = ", ".join(jd_context.get("bonus", []))
+    responsibilities = jd_context.get("responsibilities", "")
+
+    template = get_interview_prompt(language)
+    return template.replace(
+        "{job_title}", title
+    ).replace(
+        "{job_category}", "JD 定向面试" if language == "zh" else "JD-targeted Interview"
+    ).replace(
+        "{job_description}", responsibilities
+    ).replace(
+        "{job_requirements}", f"{tech_stack}; {key_points}; {requirements}" + (f"; (加分项: {bonus})" if bonus else "")
+    )
+
+
+def build_jd_evaluation_prompt(jd_context: dict, chat_history_text: str, language: str = "zh") -> str:
+    title = jd_context.get("title", "")
+    category = "JD 定向面试" if language == "zh" else "JD-targeted Interview"
+    return get_evaluation_prompt(language).replace(
+        "{job_title}", title
+    ).replace(
+        "{job_category}", category
+    ).replace(
+        "{chat_history}", chat_history_text
+    )

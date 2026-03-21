@@ -36,9 +36,11 @@ async def start(
     _interview_sessions[current_user.id] = sid
     model_service._feature = "interview"
     model_service.set_session(sid)
+    if not req.job_id and not req.jd_context:
+        raise HTTPException(status_code=400, detail="job_id or jd_context is required")
     try:
         interview_id, job_title, message = await interview_service.start_interview(
-            current_user.id, req.job_id, db, model_service
+            current_user.id, req.job_id, db, model_service, jd_context=req.jd_context
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

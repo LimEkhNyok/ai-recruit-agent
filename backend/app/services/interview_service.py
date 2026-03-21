@@ -8,7 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.interview import Interview
 from app.models.job import JobPosition
 from app.services.model_service import ModelService
-from app.prompts.interview import get_interview_prompt, get_evaluation_prompt
+from app.prompts.interview import (
+    get_interview_prompt,
+    get_evaluation_prompt,
+    build_jd_interview_prompt,
+    build_jd_evaluation_prompt,
+)
 from app.utils.job_translation import translate_title, translate_category
 
 
@@ -25,15 +30,26 @@ def _build_system_prompt(job: JobPosition, language: str = "zh") -> str:
     )
 
 
-async def start_interview(user_id: int, job_id: int, db: AsyncSession, model_service: ModelService) -> tuple[int, str, str]:
+async def start_interview(
+    user_id: int,
+    job_id: int | None,
+    db: AsyncSession,
+    model_service: ModelService,
+    jd_context: dict | None = None,
+) -> tuple[int, str, str]:
     """Create interview, return (interview_id, job_title, first_ai_message)."""
-    result = await db.execute(select(JobPosition).where(JobPosition.id == job_id))
-    job = result.scalar_one_or_none()
-    if job is None:
-        raise ValueError("Job position not found")
-
     lang = model_service.language
-    system_prompt = _build_system_prompt(job, lang)
+
+    if jd_context:
+        system_prompt = build_jd_interview_prompt(jd_context, lang)
+        job_title = jd_context.get("title", "JD Interview")
+    else:
+        result = await db.execute(select(JobPosition).where(JobPosition.id == job_id))
+        job = result.scalar_one_or_none()
+        if job is None:
+            raise ValueError("Job position not found")
+        system_prompt = _build_system_prompt(job, lang)
+        job_title = translate_title(job.title, lang)
 
     start_msg = (
         "Hello, I'm here for the interview."
@@ -54,6 +70,7 @@ async def start_interview(user_id: int, job_id: int, db: AsyncSession, model_ser
     interview = Interview(
         user_id=user_id,
         job_id=job_id,
+        jd_context=jd_context,
         status="in_progress",
         chat_history=history,
     )
@@ -61,7 +78,7 @@ async def start_interview(user_id: int, job_id: int, db: AsyncSession, model_ser
     await db.commit()
     await db.refresh(interview)
 
-    return interview.id, translate_title(job.title, lang), first_message
+    return interview.id, job_title, first_message
 
 
 async def chat_stream(
@@ -73,11 +90,15 @@ async def chat_stream(
     if interview is None:
         raise ValueError("Interview not found")
 
-    result = await db.execute(select(JobPosition).where(JobPosition.id == interview.job_id))
-    job = result.scalar_one_or_none()
-
     lang = model_service.language
-    system_prompt = _build_system_prompt(job, lang)
+
+    if interview.jd_context:
+        system_prompt = build_jd_interview_prompt(interview.jd_context, lang)
+    else:
+        result = await db.execute(select(JobPosition).where(JobPosition.id == interview.job_id))
+        job = result.scalar_one_or_none()
+        system_prompt = _build_system_prompt(job, lang)
+
     history: list[dict] = list(interview.chat_history) if interview.chat_history else []
 
     full_reply = ""
@@ -102,9 +123,6 @@ async def end_interview(interview_id: int, db: AsyncSession, model_service: Mode
     if interview is None:
         raise ValueError("Interview not found")
 
-    result = await db.execute(select(JobPosition).where(JobPosition.id == interview.job_id))
-    job = result.scalar_one_or_none()
-
     lang = model_service.language
     history: list[dict] = interview.chat_history or []
     dialogue_text = ""
@@ -116,13 +134,20 @@ async def end_interview(interview_id: int, db: AsyncSession, model_service: Mode
         text = msg["parts"][0]["text"]
         dialogue_text += f"{role}: {text}\n\n"
 
-    eval_prompt_content = get_evaluation_prompt(lang).replace(
-        "{job_title}", job.title
-    ).replace(
-        "{job_category}", job.category
-    ).replace(
-        "{chat_history}", dialogue_text
-    )
+    if interview.jd_context:
+        job_title = interview.jd_context.get("title", "JD Interview")
+        eval_prompt_content = build_jd_evaluation_prompt(interview.jd_context, dialogue_text, lang)
+    else:
+        result = await db.execute(select(JobPosition).where(JobPosition.id == interview.job_id))
+        job = result.scalar_one_or_none()
+        job_title = translate_title(job.title, lang)
+        eval_prompt_content = get_evaluation_prompt(lang).replace(
+            "{job_title}", job.title
+        ).replace(
+            "{job_category}", job.category
+        ).replace(
+            "{chat_history}", dialogue_text
+        )
 
     eval_system_prompt = (
         "You are a professional interview evaluator. Please strictly output the evaluation report in the required JSON format."
@@ -139,7 +164,7 @@ async def end_interview(interview_id: int, db: AsyncSession, model_service: Mode
     interview.completed_at = datetime.now(timezone.utc)
     await db.commit()
 
-    return translate_title(job.title, lang), evaluation
+    return job_title, evaluation
 
 
 async def get_history(user_id: int, db: AsyncSession, language: str = "zh") -> list[dict]:
@@ -153,18 +178,27 @@ async def get_history(user_id: int, db: AsyncSession, language: str = "zh") -> l
     if not interviews:
         return []
 
-    job_ids = list({i.job_id for i in interviews})
-    result = await db.execute(select(JobPosition).where(JobPosition.id.in_(job_ids)))
-    job_map = {j.id: j for j in result.scalars().all()}
+    job_ids = list({i.job_id for i in interviews if i.job_id is not None})
+    job_map = {}
+    if job_ids:
+        result = await db.execute(select(JobPosition).where(JobPosition.id.in_(job_ids)))
+        job_map = {j.id: j for j in result.scalars().all()}
 
-    return [
-        {
+    items = []
+    for iv in interviews:
+        if iv.jd_context:
+            title = iv.jd_context.get("title", "JD Interview")
+        elif iv.job_id and iv.job_id in job_map:
+            title = translate_title(job_map[iv.job_id].title, language)
+        else:
+            title = ""
+        items.append({
             "id": iv.id,
             "job_id": iv.job_id,
-            "job_title": translate_title(job_map[iv.job_id].title, language) if iv.job_id in job_map else "",
+            "job_title": title,
             "status": iv.status,
             "created_at": iv.created_at.isoformat() if iv.created_at else "",
             "evaluation": iv.evaluation,
-        }
-        for iv in interviews
-    ]
+        })
+
+    return items

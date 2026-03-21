@@ -11,7 +11,8 @@ class Interview(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    job_id: Mapped[int] = mapped_column(Integer, ForeignKey("job_positions.id"), nullable=False)
+    job_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("job_positions.id"), nullable=True)
+    jd_context: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="in_progress")
     chat_history: Mapped[dict | list] = mapped_column(JSON, nullable=False, default=list)
     evaluation: Mapped[dict | None] = mapped_column(JSON, nullable=True)

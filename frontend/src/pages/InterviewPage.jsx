@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { message, Tooltip } from 'antd'
 import { ArrowUpOutlined, ArrowLeftOutlined, FileTextOutlined, AudioOutlined } from '@ant-design/icons'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import ChatBubble from '../components/ChatBubble'
 import { startInterview, chatStream, endInterview } from '../api/interview'
 import useFeatureGuard from '../hooks/useFeatureGuard'
@@ -338,8 +338,10 @@ function EvaluationModal({ open, onClose, evaluation, jobTitle, onBack, t }) {
 export default function InterviewPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useTranslation()
   const jobId = searchParams.get('job_id')
+  const jdContext = location.state?.jd_context || null
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("interview")
   const { markApiUsed } = useThemeStore()
 
@@ -410,7 +412,7 @@ export default function InterviewPage() {
   }
 
   useEffect(() => {
-    if (!jobId) {
+    if (!jobId && !jdContext) {
       message.error(t('interview.missingJob'))
       navigate('/matching', { replace: true })
       return
@@ -419,7 +421,9 @@ export default function InterviewPage() {
     let ignore = false
     const init = async () => {
       try {
-        const res = await startInterview(Number(jobId))
+        const res = jdContext
+          ? await startInterview(null, jdContext)
+          : await startInterview(Number(jobId))
         if (ignore) return
         setInterviewId(res.data.interview_id)
         setJobTitle(res.data.job_title)
@@ -433,7 +437,7 @@ export default function InterviewPage() {
     }
     init()
     return () => { ignore = true }
-  }, [jobId, navigate])
+  }, [jobId, jdContext, navigate])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -553,7 +557,7 @@ export default function InterviewPage() {
               className="font-display"
               style={{ fontSize: 20, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: 0 }}
             >
-              {t('interview.title')}
+              {jdContext ? t('matching.jdDirected') : t('interview.title')}
             </h1>
             <p className="font-body" style={{ fontSize: 14, color: 'var(--ctw-text-secondary)', margin: '4px 0 0' }}>
               {t('interview.position')}: {jobTitle}
