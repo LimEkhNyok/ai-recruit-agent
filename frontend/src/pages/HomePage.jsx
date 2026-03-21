@@ -24,8 +24,8 @@ import StaggerContainer, { StaggerItem } from '../components/motion/StaggerConta
 
 const FEATURE_META = [
   { key: 'assessment', icon: FormOutlined, featured: true },
-  { key: 'interview', icon: AudioOutlined, featured: true },
   { key: 'matching', icon: AimOutlined },
+  { key: 'interview', icon: AudioOutlined, featured: true },
   { key: 'career', icon: RocketOutlined },
   { key: 'quiz', icon: BulbOutlined },
   { key: 'resume', icon: FileTextOutlined, isUpload: true },
