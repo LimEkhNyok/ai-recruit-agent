@@ -6,6 +6,9 @@ INTERVIEW_SYSTEM_PROMPT_TEMPLATE_ZH = """你是一位专业的面试官，正在
 - 岗位描述：{job_description}
 - 岗位要求：{job_requirements}
 
+## 输入说明
+候选人可能使用语音输入或手动打字，回答中可能包含语音识别错误（如同音字、漏字）或打字笔误，请根据上下文理解候选人的真实意图，不要因输入方式导致的文字错误影响你的提问和判断。
+
 ## 面试策略
 1. 先用一个轻松的开场白让候选人放松，然后逐步深入
 2. 结合行为面试法（STAR法则）提问，要求候选人用具体案例回答
@@ -26,6 +29,9 @@ INTERVIEW_SYSTEM_PROMPT_TEMPLATE_EN = """You are a professional interviewer, cur
 - Job Category: {job_category}
 - Job Description: {job_description}
 - Job Requirements: {job_requirements}
+
+## Input Note
+The candidate may use voice input or manual typing. Their responses may contain speech recognition errors (e.g., homophones, missing words) or typos. Please interpret the candidate's true intent based on context, and do not let input-method errors affect your questioning or judgment.
 
 ## Interview Strategy
 1. Start with a relaxed opening to put the candidate at ease, then gradually go deeper
@@ -83,7 +89,8 @@ EVALUATION_PROMPT_ZH = """你是一位专业的面试评估师。根据以下面
 }
 ```
 
-评分范围 0-100，请根据面试表现客观评估，评分要有区分度。"""
+评分范围 0-100，请根据面试表现客观评估，评分要有区分度。
+注意：候选人可能使用语音输入或打字，对话中的同音字错误或笔误不应影响沟通表达等维度的评分，请关注候选人表达的实际内容和逻辑。"""
 
 EVALUATION_PROMPT_EN = """You are a professional interview evaluator. Based on the following interview conversation records, generate a detailed interview evaluation report.
 
@@ -128,7 +135,8 @@ EVALUATION_PROMPT_EN = """You are a professional interview evaluator. Based on t
 }
 ```
 
-Score range 0-100. Please evaluate objectively based on interview performance, with differentiated scores."""
+Score range 0-100. Please evaluate objectively based on interview performance, with differentiated scores.
+Note: The candidate may have used voice input or typing. Speech recognition errors (homophones) or typos in the conversation should not affect scores for dimensions like communication — focus on the actual content and logic of the candidate's responses."""
 
 
 def get_interview_prompt(language: str = "zh") -> str:
