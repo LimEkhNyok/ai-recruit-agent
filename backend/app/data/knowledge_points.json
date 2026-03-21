@@ -1,0 +1,1548 @@
+{
+  "domains": [
+    {
+      "id": "dsa",
+      "name": "数据结构与算法",
+      "type": "general",
+      "icon": "CodeOutlined",
+      "topics": [
+        {
+          "id": "array",
+          "name": "数组",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["双指针", "滑动窗口", "排序"],
+          "description": "连续内存空间存储同类型元素，支持 O(1) 随机访问，插入删除需要移动元素",
+          "typical_approach": "索引操作 → 遍历技巧 → 原地修改 → 前缀和 → 差分数组"
+        },
+        {
+          "id": "linked_list",
+          "name": "链表",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["双指针", "递归"],
+          "description": "通过指针连接的节点序列，支持 O(1) 插入删除，不支持随机访问",
+          "typical_approach": "虚拟头节点 → 快慢指针 → 反转链表 → 合并链表 → 环检测"
+        },
+        {
+          "id": "stack",
+          "name": "栈",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["递归", "队列"],
+          "description": "后进先出（LIFO）的线性数据结构，常用于括号匹配、表达式求值、单调栈等场景",
+          "typical_approach": "基本操作 → 括号匹配 → 单调栈 → 表达式求值 → 栈模拟递归"
+        },
+        {
+          "id": "queue",
+          "name": "队列",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["BFS", "栈"],
+          "description": "先进先出（FIFO）的线性数据结构，包括普通队列、双端队列、优先队列等",
+          "typical_approach": "基本操作 → BFS 应用 → 双端队列 → 循环队列 → 优先队列"
+        },
+        {
+          "id": "hash_table",
+          "name": "哈希表",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["数组", "字符串"],
+          "description": "通过哈希函数将键映射到存储位置，支持 O(1) 平均查找、插入和删除",
+          "typical_approach": "哈希函数 → 冲突解决（链地址/开放寻址）→ 两数之和类问题 → 字符频率统计"
+        },
+        {
+          "id": "tree",
+          "name": "树",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["递归", "BFS", "DFS"],
+          "description": "非线性层次结构，包括二叉树、二叉搜索树、AVL 树、红黑树等",
+          "typical_approach": "前/中/后序遍历 → 层序遍历 → BST 操作 → 平衡树 → LCA 最近公共祖先"
+        },
+        {
+          "id": "graph",
+          "name": "图",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["BFS", "DFS", "并查集"],
+          "description": "由顶点和边组成的非线性数据结构，分为有向图、无向图、加权图等",
+          "typical_approach": "邻接表/矩阵表示 → DFS/BFS 遍历 → 最短路径 → 最小生成树 → 拓扑排序"
+        },
+        {
+          "id": "heap",
+          "name": "堆",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["树", "排序"],
+          "description": "完全二叉树结构的优先队列，支持 O(log n) 插入和 O(1) 取最值",
+          "typical_approach": "堆的构建 → 上浮/下沉操作 → Top K 问题 → 堆排序 → 合并 K 个有序链表"
+        },
+        {
+          "id": "trie",
+          "name": "字典树",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["树", "字符串"],
+          "description": "多叉树结构，用于高效存储和检索字符串集合中的键，常用于自动补全、拼写检查",
+          "typical_approach": "节点定义 → 插入操作 → 查找操作 → 前缀搜索 → 词频统计"
+        },
+        {
+          "id": "union_find",
+          "name": "并查集",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["图", "树"],
+          "description": "处理不相交集合的合并与查询问题，支持路径压缩和按秩合并优化",
+          "typical_approach": "初始化 → Find（路径压缩）→ Union（按秩合并）→ 连通分量 → 冗余连接检测"
+        },
+        {
+          "id": "sorting",
+          "name": "排序",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["数组", "分治"],
+          "description": "将元素按特定顺序排列的算法，包括比较排序和非比较排序",
+          "typical_approach": "冒泡/选择/插入排序 → 快速排序 → 归并排序 → 堆排序 → 计数/基数/桶排序"
+        },
+        {
+          "id": "binary_search",
+          "name": "二分查找",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["数组", "排序"],
+          "description": "在有序序列中通过每次排除一半的方式查找目标，时间复杂度 O(log n)",
+          "typical_approach": "基本模板 → 左/右边界查找 → 旋转数组 → 搜索插入位置 → 浮点二分"
+        },
+        {
+          "id": "two_pointers",
+          "name": "双指针",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["数组", "链表", "滑动窗口"],
+          "description": "使用两个指针以不同策略遍历数据结构，减少时间复杂度",
+          "typical_approach": "对撞指针 → 快慢指针 → 同向指针 → 三数之和 → 链表环检测"
+        },
+        {
+          "id": "sliding_window",
+          "name": "滑动窗口",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["双指针", "哈希表", "字符串"],
+          "description": "维护一个可变大小的窗口在数组/字符串上滑动，用于求解子串/子数组问题",
+          "typical_approach": "固定窗口 → 可变窗口 → 窗口扩展条件 → 窗口收缩条件 → 记录最优解"
+        },
+        {
+          "id": "recursion",
+          "name": "递归",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["树", "分治", "回溯"],
+          "description": "函数调用自身来解决可分解为相同子问题的问题，需要明确递归终止条件",
+          "typical_approach": "递归三要素（终止条件、递归关系、返回值）→ 递归树 → 尾递归优化 → 记忆化"
+        },
+        {
+          "id": "backtracking",
+          "name": "回溯",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["递归", "DFS"],
+          "description": "系统性地搜索所有可能的解，通过剪枝减少搜索空间",
+          "typical_approach": "选择列表 → 路径记录 → 结束条件 → 做选择 → 撤销选择（回溯）→ 剪枝优化"
+        },
+        {
+          "id": "greedy",
+          "name": "贪心",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["排序", "动态规划"],
+          "description": "每一步选择当前最优解，期望通过局部最优达到全局最优",
+          "typical_approach": "问题分析 → 贪心策略选择 → 证明贪心正确性 → 排序预处理 → 模拟贪心过程"
+        },
+        {
+          "id": "dp",
+          "name": "动态规划",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["递归", "贪心"],
+          "description": "将问题分解为重叠子问题，通过记忆化或自底向上的方式避免重复计算",
+          "typical_approach": "状态定义 → 转移方程 → 初始化 → 遍历顺序 → 空间优化"
+        },
+        {
+          "id": "divide_conquer",
+          "name": "分治",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["递归", "排序"],
+          "description": "将问题分解为多个独立子问题，分别求解后合并结果",
+          "typical_approach": "分解问题 → 递归求解子问题 → 合并结果 → 归并排序 → 快速幂"
+        },
+        {
+          "id": "bit_manipulation",
+          "name": "位运算",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["数学"],
+          "description": "利用二进制位的与、或、异或、移位等操作高效解决特定问题",
+          "typical_approach": "基本位操作 → 判断奇偶 → 交换变量 → 找唯一数 → 位掩码 → 状态压缩"
+        },
+        {
+          "id": "dfs",
+          "name": "深度优先搜索",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["递归", "回溯", "图", "树"],
+          "description": "沿着一条路径尽可能深入搜索，直到无法继续再回退",
+          "typical_approach": "递归实现 → 栈实现 → 树的遍历 → 图的遍历 → 连通分量 → 路径搜索"
+        },
+        {
+          "id": "bfs",
+          "name": "广度优先搜索",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["队列", "图", "树"],
+          "description": "从起点出发逐层扩展搜索，用于求最短路径或层序遍历",
+          "typical_approach": "队列实现 → 层序遍历 → 最短路径 → 多源 BFS → 双向 BFS"
+        },
+        {
+          "id": "string",
+          "name": "字符串",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["数组", "哈希表", "双指针"],
+          "description": "字符序列的处理与匹配，包括模式匹配、子串搜索、字符串变换等",
+          "typical_approach": "遍历与比较 → 反转 → KMP 匹配 → 正则表达式 → 回文判断"
+        }
+      ]
+    },
+    {
+      "id": "frontend",
+      "name": "前端",
+      "type": "general",
+      "icon": "LayoutOutlined",
+      "topics": [
+        {
+          "id": "fe_html_css",
+          "name": "HTML/CSS 布局",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["浏览器渲染", "性能优化"],
+          "description": "HTML 语义化标签与 CSS 布局模型，包括 Flex、Grid、定位、响应式设计等",
+          "typical_approach": "盒模型 → 浮动/定位 → Flexbox → Grid → 响应式设计 → CSS 变量"
+        },
+        {
+          "id": "fe_dom",
+          "name": "DOM 操作",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["事件机制", "浏览器渲染"],
+          "description": "文档对象模型的查询、修改、创建和删除，以及 DOM 性能优化",
+          "typical_approach": "节点查询 → 增删改 → 属性操作 → 虚拟 DOM → DocumentFragment 优化"
+        },
+        {
+          "id": "fe_event",
+          "name": "事件机制",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["DOM 操作", "浏览器渲染"],
+          "description": "浏览器事件模型，包括事件捕获、冒泡、委托、自定义事件等",
+          "typical_approach": "事件流（捕获→目标→冒泡）→ 事件委托 → addEventListener → 自定义事件 → 事件循环"
+        },
+        {
+          "id": "fe_browser",
+          "name": "浏览器渲染",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["HTML/CSS 布局", "性能优化"],
+          "description": "浏览器从接收 HTML 到渲染页面的完整流程，包括解析、构建树、布局、绘制等",
+          "typical_approach": "URL 输入到页面展示 → DOM/CSSOM 构建 → 渲染树 → 布局与绘制 → 回流与重绘 → 合成层"
+        },
+        {
+          "id": "fe_performance",
+          "name": "性能优化",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["浏览器渲染", "Webpack/Vite 构建工具"],
+          "description": "前端性能优化策略，包括加载优化、渲染优化、资源优化等",
+          "typical_approach": "性能指标（LCP/FID/CLS）→ 资源压缩/懒加载 → 代码分割 → 缓存策略 → CDN → 预渲染"
+        },
+        {
+          "id": "fe_build_tools",
+          "name": "Webpack/Vite 构建工具",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["性能优化"],
+          "description": "前端构建工具的配置与优化，包括模块打包、代码转译、热更新等",
+          "typical_approach": "基本配置 → Loader/Plugin → 代码分割 → Tree Shaking → HMR → Vite 原理（ESM）"
+        }
+      ]
+    },
+    {
+      "id": "backend",
+      "name": "后端",
+      "type": "general",
+      "icon": "CloudServerOutlined",
+      "topics": [
+        {
+          "id": "be_restful",
+          "name": "RESTful API 设计",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["认证授权", "微服务"],
+          "description": "基于 REST 架构风格的 API 设计规范，包括资源命名、HTTP 方法、状态码、版本控制等",
+          "typical_approach": "资源抽象 → URI 设计 → HTTP 方法语义 → 状态码规范 → 分页/过滤 → HATEOAS"
+        },
+        {
+          "id": "be_db_design",
+          "name": "数据库设计与SQL优化",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["缓存策略"],
+          "description": "关系型数据库的表设计、范式理论、索引优化、慢查询分析等",
+          "typical_approach": "需求分析 → ER 图 → 范式化 → 反范式化 → 索引设计 → 慢查询优化 → EXPLAIN 分析"
+        },
+        {
+          "id": "be_cache",
+          "name": "缓存策略",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["数据库设计与SQL优化", "消息队列"],
+          "description": "多级缓存设计与一致性保障，包括本地缓存、分布式缓存、缓存穿透/击穿/雪崩等",
+          "typical_approach": "缓存类型选择 → 过期策略 → 缓存穿透（布隆过滤器）→ 缓存击穿（互斥锁）→ 缓存雪崩（随机过期）→ 双写一致性"
+        },
+        {
+          "id": "be_mq",
+          "name": "消息队列",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["微服务", "并发处理"],
+          "description": "异步通信中间件，用于系统解耦、流量削峰、异步处理，如 Kafka、RabbitMQ、RocketMQ",
+          "typical_approach": "消息模型（点对点/发布订阅）→ 可靠投递 → 消息幂等 → 顺序消息 → 延迟消息 → 死信队列"
+        },
+        {
+          "id": "be_microservice",
+          "name": "微服务",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["RESTful API 设计", "消息队列"],
+          "description": "将单体应用拆分为独立部署的小型服务，涉及服务发现、负载均衡、熔断降级等",
+          "typical_approach": "服务拆分原则 → 服务注册与发现 → API 网关 → 负载均衡 → 熔断降级 → 分布式事务"
+        },
+        {
+          "id": "be_auth",
+          "name": "认证授权",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["RESTful API 设计"],
+          "description": "身份认证与权限控制机制，包括 Session、JWT、OAuth2.0、RBAC 等",
+          "typical_approach": "Cookie/Session → JWT Token → OAuth2.0 → SSO 单点登录 → RBAC 权限模型 → ABAC"
+        },
+        {
+          "id": "be_concurrency",
+          "name": "并发处理",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["消息队列", "缓存策略"],
+          "description": "高并发场景下的系统设计，包括线程池、锁机制、异步编程、限流等",
+          "typical_approach": "线程与进程 → 锁机制 → 线程池 → 异步编程 → 限流算法（令牌桶/漏桶）→ 无锁编程"
+        }
+      ]
+    },
+    {
+      "id": "cs_fundamentals",
+      "name": "计算机基础",
+      "type": "general",
+      "icon": "DesktopOutlined",
+      "topics": [
+        {
+          "id": "cs_process_thread",
+          "name": "进程与线程",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["内存管理", "并发处理"],
+          "description": "操作系统中进程和线程的概念、区别、调度算法、进程间通信（IPC）等",
+          "typical_approach": "进程 vs 线程 → 进程状态转换 → 调度算法（FCFS/SJF/RR）→ IPC（管道/信号/共享内存）→ 死锁"
+        },
+        {
+          "id": "cs_memory",
+          "name": "内存管理",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["进程与线程", "文件系统"],
+          "description": "操作系统的内存分配、虚拟内存、分页分段、页面置换算法等",
+          "typical_approach": "内存分区 → 虚拟内存 → 分页/分段 → 页面置换（LRU/FIFO/OPT）→ 内存映射 → 内存泄漏"
+        },
+        {
+          "id": "cs_filesystem",
+          "name": "文件系统",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["内存管理"],
+          "description": "文件的组织、存储、管理方式，包括文件系统结构、磁盘调度等",
+          "typical_approach": "文件系统结构 → inode → 目录管理 → 磁盘调度（SCAN/C-SCAN）→ 文件系统类型（ext4/NTFS）"
+        },
+        {
+          "id": "cs_tcp_ip",
+          "name": "TCP/IP 协议",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["HTTP/HTTPS", "DNS"],
+          "description": "TCP/IP 协议栈，包括三次握手、四次挥手、拥塞控制、UDP 等",
+          "typical_approach": "OSI/TCP-IP 模型 → 三次握手/四次挥手 → 滑动窗口 → 拥塞控制 → TCP vs UDP → Socket 编程"
+        },
+        {
+          "id": "cs_http",
+          "name": "HTTP/HTTPS",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["TCP/IP 协议", "浏览器渲染"],
+          "description": "HTTP 协议版本演进、请求方法、状态码、HTTPS 加密原理、HTTP/2/3 特性",
+          "typical_approach": "请求/响应结构 → 方法与状态码 → Cookie/Session → HTTPS（TLS 握手）→ HTTP/2 多路复用 → HTTP/3 QUIC"
+        },
+        {
+          "id": "cs_dns",
+          "name": "DNS",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["TCP/IP 协议", "HTTP/HTTPS"],
+          "description": "域名系统的解析流程、记录类型、缓存机制、DNS 安全等",
+          "typical_approach": "域名层次结构 → 递归/迭代查询 → 记录类型（A/CNAME/MX）→ DNS 缓存 → DNS 劫持防护"
+        },
+        {
+          "id": "cs_design_patterns",
+          "name": "设计模式",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["面向对象编程"],
+          "description": "软件设计中常见问题的通用解决方案，分为创建型、结构型和行为型三大类",
+          "typical_approach": "设计原则（SOLID）→ 创建型（单例/工厂/建造者）→ 结构型（代理/装饰器/适配器）→ 行为型（观察者/策略/模板方法）"
+        }
+      ]
+    },
+    {
+      "id": "devops",
+      "name": "DevOps / 云计算",
+      "type": "general",
+      "icon": "CloudOutlined",
+      "topics": [
+        {
+          "id": "devops_docker",
+          "name": "Docker 容器化",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["Kubernetes 编排", "CI/CD 流水线"],
+          "description": "容器化技术，通过镜像打包应用及其依赖，实现环境一致性和快速部署",
+          "typical_approach": "镜像与容器 → Dockerfile 编写 → 镜像构建优化 → Docker Compose → 网络与数据卷 → 安全最佳实践"
+        },
+        {
+          "id": "devops_k8s",
+          "name": "Kubernetes 编排",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["Docker 容器化", "服务网格"],
+          "description": "容器编排平台，管理容器化应用的部署、扩缩容和运维",
+          "typical_approach": "核心概念（Pod/Service/Deployment）→ 配置管理（ConfigMap/Secret）→ 存储（PV/PVC）→ 网络策略 → HPA 自动伸缩 → Helm"
+        },
+        {
+          "id": "devops_cicd",
+          "name": "CI/CD 流水线",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["Docker 容器化", "Git 工作流"],
+          "description": "持续集成与持续部署/交付，自动化构建、测试和部署流程",
+          "typical_approach": "CI/CD 概念 → Jenkins/GitHub Actions/GitLab CI → Pipeline 编写 → 自动化测试集成 → 蓝绿/金丝雀部署"
+        },
+        {
+          "id": "devops_cloud",
+          "name": "云服务",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["Docker 容器化", "基础设施即代码"],
+          "description": "AWS/阿里云等云平台的核心服务，包括计算、存储、网络、数据库等",
+          "typical_approach": "IaaS/PaaS/SaaS → 计算（EC2/ECS）→ 存储（S3/OSS）→ 数据库（RDS）→ 网络（VPC）→ Serverless"
+        },
+        {
+          "id": "devops_iac",
+          "name": "基础设施即代码",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["云服务", "CI/CD 流水线"],
+          "description": "通过代码定义和管理基础设施，实现版本控制和自动化部署",
+          "typical_approach": "IaC 概念 → Terraform 基础 → 资源定义 → 状态管理 → 模块化 → Ansible 配置管理"
+        },
+        {
+          "id": "devops_monitoring",
+          "name": "监控与日志",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["云服务", "Kubernetes 编排"],
+          "description": "系统可观测性三支柱：指标监控、日志聚合、分布式链路追踪",
+          "typical_approach": "Prometheus 指标采集 → Grafana 可视化 → ELK 日志聚合 → 分布式追踪（Jaeger）→ 告警策略"
+        },
+        {
+          "id": "devops_service_mesh",
+          "name": "服务网格",
+          "difficulty_levels": ["困难"],
+          "related_topics": ["Kubernetes 编排", "微服务"],
+          "description": "处理服务间通信的基础设施层，提供流量管理、安全、可观测性等功能",
+          "typical_approach": "Sidecar 模式 → Istio 架构 → 流量管理 → mTLS 安全 → 可观测性 → 服务治理"
+        }
+      ]
+    },
+    {
+      "id": "ai_ml",
+      "name": "人工智能 / 机器学习",
+      "type": "general",
+      "icon": "RobotOutlined",
+      "topics": [
+        {
+          "id": "ml_supervised",
+          "name": "监督学习",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["模型评估", "特征工程"],
+          "description": "从标注数据学习映射关系，包括回归和分类任务（线性回归、逻辑回归、SVM、决策树、随机森林等）",
+          "typical_approach": "问题定义 → 数据准备 → 模型选择 → 训练与调参 → 交叉验证 → 模型评估"
+        },
+        {
+          "id": "ml_unsupervised",
+          "name": "无监督学习",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["监督学习", "特征工程"],
+          "description": "从无标注数据中发现结构和模式，包括聚类、降维、异常检测等",
+          "typical_approach": "K-Means 聚类 → 层次聚类 → DBSCAN → PCA 降维 → t-SNE 可视化 → 异常检测"
+        },
+        {
+          "id": "ml_neural_network",
+          "name": "神经网络基础",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["损失函数与优化器", "监督学习"],
+          "description": "人工神经网络的基本原理，包括感知机、激活函数、前向传播、反向传播等",
+          "typical_approach": "感知机 → 激活函数（ReLU/Sigmoid）→ 前向传播 → 反向传播 → 梯度消失/爆炸 → 正则化（Dropout/BN）"
+        },
+        {
+          "id": "ml_cnn_rnn_transformer",
+          "name": "CNN/RNN/Transformer",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["神经网络基础", "NLP 基础", "计算机视觉基础"],
+          "description": "主流深度学习架构：卷积神经网络处理图像，循环神经网络处理序列，Transformer 统一架构",
+          "typical_approach": "CNN（卷积/池化/经典网络）→ RNN/LSTM/GRU → Attention 机制 → Transformer 架构 → 预训练模型"
+        },
+        {
+          "id": "ml_loss_optimizer",
+          "name": "损失函数与优化器",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["神经网络基础"],
+          "description": "衡量模型预测与真实值差异的损失函数，以及最小化损失的优化算法",
+          "typical_approach": "MSE/交叉熵 → 梯度下降（BGD/SGD/Mini-batch）→ 动量法 → Adam/AdamW → 学习率调度"
+        },
+        {
+          "id": "ml_feature_engineering",
+          "name": "特征工程",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["监督学习", "无监督学习"],
+          "description": "从原始数据中提取、选择和构造有效特征的过程，直接影响模型性能",
+          "typical_approach": "数据清洗 → 特征缩放（标准化/归一化）→ 特征编码（One-Hot/Label）→ 特征选择 → 特征构造"
+        },
+        {
+          "id": "ml_evaluation",
+          "name": "模型评估",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["监督学习", "特征工程"],
+          "description": "评估模型性能的指标和方法，包括分类/回归评估指标、过拟合/欠拟合判断",
+          "typical_approach": "混淆矩阵 → 精确率/召回率/F1 → ROC/AUC → 交叉验证 → 偏差-方差分析 → 过拟合应对策略"
+        },
+        {
+          "id": "ml_nlp",
+          "name": "NLP 基础",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["CNN/RNN/Transformer", "特征工程"],
+          "description": "自然语言处理基础，包括文本预处理、词向量、语言模型、常见 NLP 任务",
+          "typical_approach": "分词/词性标注 → 词袋/TF-IDF → Word2Vec/GloVe → 语言模型 → 文本分类/NER/机器翻译 → 预训练模型（BERT/GPT）"
+        },
+        {
+          "id": "ml_cv",
+          "name": "计算机视觉基础",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["CNN/RNN/Transformer", "神经网络基础"],
+          "description": "计算机视觉基础任务，包括图像分类、目标检测、图像分割等",
+          "typical_approach": "图像预处理 → CNN 特征提取 → 图像分类 → 目标检测（YOLO/R-CNN）→ 语义分割 → 数据增强"
+        }
+      ]
+    },
+    {
+      "id": "software_engineering",
+      "name": "软件工程",
+      "type": "general",
+      "icon": "ProjectOutlined",
+      "topics": [
+        {
+          "id": "se_agile",
+          "name": "敏捷开发/Scrum",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["需求分析", "CI/CD 实践"],
+          "description": "敏捷开发方法论，包括 Scrum 框架、看板、Sprint 计划、每日站会等",
+          "typical_approach": "敏捷宣言 → Scrum 角色（PO/SM/Team）→ Sprint 流程 → 看板方法 → 用户故事 → 回顾会议"
+        },
+        {
+          "id": "se_git",
+          "name": "Git 工作流",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["CI/CD 实践", "代码审查"],
+          "description": "Git 版本控制的分支策略和团队协作流程",
+          "typical_approach": "基本操作（add/commit/push）→ 分支管理 → Git Flow / GitHub Flow → Rebase vs Merge → 冲突解决 → Cherry-pick"
+        },
+        {
+          "id": "se_code_review",
+          "name": "代码审查",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["Git 工作流", "单元测试/集成测试"],
+          "description": "代码审查的最佳实践，关注点包括代码质量、安全性、可维护性等",
+          "typical_approach": "审查清单 → 常见问题（命名/复杂度/安全）→ PR 规范 → 审查工具 → 建设性反馈"
+        },
+        {
+          "id": "se_testing",
+          "name": "单元测试/集成测试",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["CI/CD 实践", "代码审查"],
+          "description": "软件测试的层次和方法，包括单元测试、集成测试、E2E 测试、TDD 等",
+          "typical_approach": "测试金字塔 → 单元测试（AAA 模式）→ Mock/Stub → 集成测试 → E2E 测试 → 测试覆盖率 → TDD"
+        },
+        {
+          "id": "se_requirements",
+          "name": "需求分析",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["敏捷开发/Scrum", "UML 建模"],
+          "description": "软件需求的获取、分析、规格化和验证过程",
+          "typical_approach": "需求获取 → 功能/非功能需求 → 用户故事 → 用例分析 → 需求文档 → 需求变更管理"
+        },
+        {
+          "id": "se_uml",
+          "name": "UML 建模",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["需求分析", "设计模式"],
+          "description": "统一建模语言，用于可视化软件系统的结构和行为",
+          "typical_approach": "类图 → 用例图 → 时序图 → 活动图 → 状态图 → 组件图 → 部署图"
+        },
+        {
+          "id": "se_cicd",
+          "name": "CI/CD 实践",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["Git 工作流", "单元测试/集成测试"],
+          "description": "持续集成与持续交付在软件工程中的实践应用",
+          "typical_approach": "CI 流水线设计 → 自动化构建 → 自动化测试 → 制品管理 → CD 部署策略 → 环境管理"
+        },
+        {
+          "id": "se_documentation",
+          "name": "技术文档编写",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["需求分析", "代码审查"],
+          "description": "技术文档的类型、规范和编写方法，包括 API 文档、架构文档、操作手册等",
+          "typical_approach": "文档类型划分 → API 文档（OpenAPI/Swagger）→ 架构决策记录（ADR）→ README 规范 → 文档即代码"
+        }
+      ]
+    },
+    {
+      "id": "cs_math",
+      "name": "计算机数学",
+      "type": "general",
+      "icon": "FunctionOutlined",
+      "topics": [
+        {
+          "id": "math_discrete",
+          "name": "离散数学",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["图论", "概率统计"],
+          "description": "研究离散量的数学分支，包括集合论、图论、逻辑、组合数学等",
+          "typical_approach": "命题逻辑 → 集合与关系 → 图论基础 → 组合计数 → 递推关系 → 群论初步"
+        },
+        {
+          "id": "math_linear_algebra",
+          "name": "线性代数",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["数值计算"],
+          "description": "研究向量空间和线性映射的数学分支，是机器学习和计算机图形学的基础",
+          "typical_approach": "矩阵运算 → 行列式 → 线性方程组 → 向量空间 → 特征值/特征向量 → SVD 分解"
+        },
+        {
+          "id": "math_probability",
+          "name": "概率统计",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["离散数学", "信息论基础"],
+          "description": "概率论与数理统计，包括概率分布、贝叶斯定理、假设检验等",
+          "typical_approach": "基本概率 → 条件概率/贝叶斯 → 常见分布（正态/泊松/二项）→ 期望与方差 → 假设检验 → 最大似然估计"
+        },
+        {
+          "id": "math_numerical",
+          "name": "数值计算",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["线性代数"],
+          "description": "用数值方法近似求解数学问题，包括插值、数值积分、方程求根等",
+          "typical_approach": "浮点数表示 → 误差分析 → 插值法 → 数值积分 → 方程求根（牛顿法）→ 数值线性代数"
+        },
+        {
+          "id": "math_information_theory",
+          "name": "信息论基础",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["概率统计", "离散数学"],
+          "description": "信息的量化、存储和传输理论，包括信息熵、互信息、编码理论等",
+          "typical_approach": "信息量 → 信息熵 → 条件熵 → 互信息 → KL 散度 → 交叉熵 → 信道编码"
+        }
+      ]
+    },
+    {
+      "id": "python",
+      "name": "Python",
+      "type": "language",
+      "icon": "CodeOutlined",
+      "topics": [
+        {
+          "id": "py_decorator",
+          "name": "装饰器",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["闭包", "函数式编程"],
+          "description": "使用 @ 语法在不修改函数代码的前提下扩展函数功能",
+          "typical_approach": "理解闭包 → 函数作为参数 → @语法糖 → 带参数装饰器 → functools.wraps → 类装饰器"
+        },
+        {
+          "id": "py_generator",
+          "name": "生成器/迭代器",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["装饰器", "协程/asyncio"],
+          "description": "延迟计算的序列生成方式，使用 yield 关键字实现惰性求值，节省内存",
+          "typical_approach": "迭代器协议（__iter__/__next__）→ yield 生成器 → 生成器表达式 → send/throw → yield from"
+        },
+        {
+          "id": "py_gil",
+          "name": "GIL",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["协程/asyncio", "多线程"],
+          "description": "全局解释器锁（Global Interpreter Lock），限制 CPython 中同一时刻只有一个线程执行字节码",
+          "typical_approach": "GIL 是什么 → 为什么存在 → 对多线程的影响 → CPU 密集 vs IO 密集 → 替代方案（多进程/C扩展）"
+        },
+        {
+          "id": "py_comprehension",
+          "name": "列表推导式",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["生成器/迭代器"],
+          "description": "Python 特有的简洁语法，用于创建列表、字典、集合等数据结构",
+          "typical_approach": "列表推导式 → 条件过滤 → 嵌套推导式 → 字典推导式 → 集合推导式 → 性能对比"
+        },
+        {
+          "id": "py_context_manager",
+          "name": "上下文管理器",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["装饰器"],
+          "description": "使用 with 语句自动管理资源的获取和释放，确保异常时也能正确清理",
+          "typical_approach": "__enter__/__exit__ → with 语句 → contextlib.contextmanager → 异步上下文管理器 → 嵌套上下文"
+        },
+        {
+          "id": "py_metaclass",
+          "name": "元类",
+          "difficulty_levels": ["困难"],
+          "related_topics": ["装饰器", "数据模型"],
+          "description": "创建类的类，用于控制类的创建过程，实现 ORM、API 框架等高级功能",
+          "typical_approach": "type() 创建类 → __metaclass__ → __new__ vs __init__ → 元类继承 → 实际应用（ORM/注册模式）"
+        },
+        {
+          "id": "py_asyncio",
+          "name": "协程/asyncio",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["生成器/迭代器", "GIL"],
+          "description": "Python 异步编程框架，基于事件循环和协程实现高效 IO 并发",
+          "typical_approach": "async/await 语法 → 事件循环 → Task/Future → 异步 IO → aiohttp → asyncio.gather 并发"
+        },
+        {
+          "id": "py_type_hints",
+          "name": "类型提示",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["数据模型"],
+          "description": "Python 3.5+ 的类型注解系统，提升代码可读性和 IDE 支持",
+          "typical_approach": "基本类型注解 → typing 模块 → 泛型 → Protocol → TypeVar → dataclass → mypy 检查"
+        },
+        {
+          "id": "py_packaging",
+          "name": "包管理",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["虚拟环境"],
+          "description": "Python 包的创建、分发和依赖管理，包括 pip、virtualenv、poetry 等工具",
+          "typical_approach": "pip 基础 → requirements.txt → virtualenv/venv → setup.py/pyproject.toml → poetry → 发布到 PyPI"
+        },
+        {
+          "id": "py_data_model",
+          "name": "数据模型（魔术方法）",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["元类", "装饰器"],
+          "description": "Python 数据模型和特殊方法（__init__、__repr__、__getattr__ 等），定义对象行为",
+          "typical_approach": "__init__/__repr__/__str__ → __eq__/__hash__ → __getattr__/__setattr__ → __call__ → 描述符协议 → __slots__"
+        }
+      ]
+    },
+    {
+      "id": "java",
+      "name": "Java",
+      "type": "language",
+      "icon": "CodeOutlined",
+      "topics": [
+        {
+          "id": "java_jvm",
+          "name": "JVM 内存模型",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["垃圾回收", "多线程/并发"],
+          "description": "JVM 运行时数据区域划分，包括堆、栈、方法区、程序计数器等",
+          "typical_approach": "运行时数据区 → 堆内存（新生代/老年代）→ 栈帧结构 → 方法区/元空间 → 内存溢出分析（OOM）"
+        },
+        {
+          "id": "java_gc",
+          "name": "垃圾回收",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["JVM 内存模型"],
+          "description": "JVM 自动内存管理机制，包括垃圾回收算法和垃圾收集器",
+          "typical_approach": "引用计数/可达性分析 → 标记-清除/复制/整理算法 → 分代收集 → CMS/G1/ZGC → GC 调优"
+        },
+        {
+          "id": "java_concurrency",
+          "name": "多线程/并发",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["JVM 内存模型", "集合框架"],
+          "description": "Java 并发编程，包括线程创建、同步机制、并发工具类、线程池等",
+          "typical_approach": "Thread/Runnable → synchronized/Lock → volatile → 线程池（ThreadPoolExecutor）→ 并发工具（CountDownLatch/CyclicBarrier）→ CAS/AQS"
+        },
+        {
+          "id": "java_collections",
+          "name": "集合框架",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["泛型", "多线程/并发"],
+          "description": "Java Collections Framework，包括 List、Set、Map 等接口和实现类",
+          "typical_approach": "Collection 体系 → ArrayList vs LinkedList → HashMap 原理（数组+链表+红黑树）→ ConcurrentHashMap → TreeMap"
+        },
+        {
+          "id": "java_generics",
+          "name": "泛型",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["集合框架", "反射"],
+          "description": "参数化类型机制，在编译时提供类型安全检查，减少强制类型转换",
+          "typical_approach": "泛型类/接口/方法 → 类型擦除 → 通配符（? extends/super）→ 泛型约束 → 类型推断"
+        },
+        {
+          "id": "java_reflection",
+          "name": "反射",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["泛型", "Spring IoC/AOP"],
+          "description": "运行时动态获取类信息和操作对象的机制，是框架实现的基础",
+          "typical_approach": "Class 对象获取 → 构造器/方法/字段反射 → 动态代理（JDK/CGLIB）→ 注解处理 → 性能考量"
+        },
+        {
+          "id": "java_spring",
+          "name": "Spring IoC/AOP",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["反射", "设计模式实践"],
+          "description": "Spring 框架核心：控制反转实现依赖注入，面向切面编程实现横切关注点分离",
+          "typical_approach": "IoC 容器 → Bean 生命周期 → 依赖注入（构造器/Setter/@Autowired）→ AOP 概念 → 切面/切点/通知 → 动态代理实现"
+        },
+        {
+          "id": "java_stream",
+          "name": "Stream API",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["集合框架", "Lambda 表达式"],
+          "description": "Java 8 引入的函数式数据处理 API，支持声明式的集合操作",
+          "typical_approach": "流的创建 → 中间操作（filter/map/sorted）→ 终端操作（collect/reduce/forEach）→ 并行流 → 自定义 Collector"
+        },
+        {
+          "id": "java_exception",
+          "name": "异常处理",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["JVM 内存模型"],
+          "description": "Java 异常体系和处理机制，包括检查异常、运行时异常、自定义异常等",
+          "typical_approach": "异常层次（Throwable/Exception/Error）→ try-catch-finally → throws → 自定义异常 → try-with-resources → 最佳实践"
+        },
+        {
+          "id": "java_design_patterns",
+          "name": "设计模式实践",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["Spring IoC/AOP", "反射"],
+          "description": "设计模式在 Java 中的具体实现和应用场景",
+          "typical_approach": "单例模式（双重检查锁）→ 工厂模式 → 代理模式 → 观察者模式 → 建造者模式 → 模板方法模式"
+        }
+      ]
+    },
+    {
+      "id": "javascript",
+      "name": "JavaScript",
+      "type": "language",
+      "icon": "CodeOutlined",
+      "topics": [
+        {
+          "id": "js_closure",
+          "name": "闭包/作用域",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["this 指向", "原型链"],
+          "description": "函数与其词法环境的组合，闭包可以访问外部函数的变量，即使外部函数已执行完毕",
+          "typical_approach": "作用域链 → 词法作用域 → 闭包定义 → 闭包应用（模块/柯里化/防抖节流）→ 内存泄漏"
+        },
+        {
+          "id": "js_prototype",
+          "name": "原型链",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["闭包/作用域", "this 指向"],
+          "description": "JavaScript 基于原型的继承机制，每个对象都有一个原型对象，形成原型链",
+          "typical_approach": "prototype/__proto__ → 原型链查找 → 构造函数 → new 操作符 → Object.create → class 语法糖 → 继承实现"
+        },
+        {
+          "id": "js_this",
+          "name": "this 指向",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["闭包/作用域", "原型链"],
+          "description": "JavaScript 中 this 的动态绑定规则，取决于函数的调用方式",
+          "typical_approach": "默认绑定 → 隐式绑定 → 显式绑定（call/apply/bind）→ new 绑定 → 箭头函数 → 优先级规则"
+        },
+        {
+          "id": "js_async",
+          "name": "异步编程",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["事件循环", "闭包/作用域"],
+          "description": "JavaScript 异步编程范式，从回调到 Promise 到 async/await 的演进",
+          "typical_approach": "回调函数 → Promise（then/catch/finally）→ Promise 组合（all/race/allSettled）→ async/await → 错误处理 → 并发控制"
+        },
+        {
+          "id": "js_event_loop",
+          "name": "事件循环",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["异步编程"],
+          "description": "JavaScript 单线程运行时模型，通过事件循环机制处理异步操作",
+          "typical_approach": "调用栈 → 任务队列 → 微任务（Promise/MutationObserver）→ 宏任务（setTimeout/setInterval）→ 执行顺序分析"
+        },
+        {
+          "id": "js_es6",
+          "name": "ES6+ 新特性",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["异步编程", "模块系统"],
+          "description": "ES2015 及后续版本引入的新语法和特性",
+          "typical_approach": "let/const → 解构赋值 → 模板字符串 → 箭头函数 → 展开运算符 → Symbol → Proxy/Reflect → 可选链"
+        },
+        {
+          "id": "js_module",
+          "name": "模块系统",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["ES6+ 新特性"],
+          "description": "JavaScript 的模块化方案，包括 CommonJS、ES Module、AMD 等",
+          "typical_approach": "IIFE → CommonJS（require/exports）→ AMD → ES Module（import/export）→ 动态导入 → Tree Shaking"
+        },
+        {
+          "id": "js_type_coercion",
+          "name": "类型转换",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["原型链"],
+          "description": "JavaScript 中隐式和显式类型转换的规则和陷阱",
+          "typical_approach": "原始类型 → 隐式转换规则 → == vs === → ToPrimitive → Boolean 转换 → 常见陷阱"
+        },
+        {
+          "id": "js_memory",
+          "name": "内存管理",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["闭包/作用域", "事件循环"],
+          "description": "JavaScript 引擎的内存分配、垃圾回收机制和内存泄漏排查",
+          "typical_approach": "内存生命周期 → 栈/堆内存 → 引用计数 → 标记清除 → 常见内存泄漏 → Chrome DevTools 内存分析"
+        }
+      ]
+    },
+    {
+      "id": "typescript",
+      "name": "TypeScript",
+      "type": "language",
+      "icon": "CodeOutlined",
+      "topics": [
+        {
+          "id": "ts_type_system",
+          "name": "类型系统",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["泛型", "类型推断"],
+          "description": "TypeScript 的静态类型系统，包括基础类型、对象类型、枚举等",
+          "typical_approach": "基础类型 → 对象类型 → 数组/元组 → 枚举 → any/unknown/never → 类型断言 → 字面量类型"
+        },
+        {
+          "id": "ts_generics",
+          "name": "泛型",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["类型系统", "工具类型"],
+          "description": "参数化类型，允许编写可重用的类型安全代码",
+          "typical_approach": "泛型函数 → 泛型接口/类 → 泛型约束（extends）→ 泛型默认值 → 条件类型 → infer 关键字"
+        },
+        {
+          "id": "ts_type_inference",
+          "name": "类型推断",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["类型系统"],
+          "description": "TypeScript 编译器自动推导表达式类型的能力",
+          "typical_approach": "变量推断 → 函数返回值推断 → 上下文类型 → 最佳通用类型 → as const 断言"
+        },
+        {
+          "id": "ts_decorators",
+          "name": "装饰器",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["类型系统"],
+          "description": "TypeScript 装饰器，用于类、方法、属性和参数的元编程",
+          "typical_approach": "类装饰器 → 方法装饰器 → 属性装饰器 → 参数装饰器 → 装饰器工厂 → 装饰器组合 → 元数据反射"
+        },
+        {
+          "id": "ts_interface_type",
+          "name": "接口与类型别名",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["类型系统", "泛型"],
+          "description": "interface 和 type 的定义、区别和使用场景",
+          "typical_approach": "interface 定义 → type 定义 → 区别对比 → 声明合并 → 扩展与实现 → 索引签名"
+        },
+        {
+          "id": "ts_union_intersection",
+          "name": "联合/交叉类型",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["类型系统", "类型守卫"],
+          "description": "组合类型的方式：联合类型（A | B）表示「或」，交叉类型（A & B）表示「且」",
+          "typical_approach": "联合类型 → 交叉类型 → 类型收窄 → 可辨识联合 → 类型兼容性"
+        },
+        {
+          "id": "ts_type_guard",
+          "name": "类型守卫",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["联合/交叉类型", "类型系统"],
+          "description": "在运行时收窄类型的技术，使 TypeScript 能更精确地推断类型",
+          "typical_approach": "typeof 守卫 → instanceof 守卫 → in 操作符 → 自定义类型谓词（is）→ 断言函数（asserts）"
+        },
+        {
+          "id": "ts_utility_types",
+          "name": "工具类型",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["泛型", "类型系统"],
+          "description": "TypeScript 内置的类型工具，用于类型变换和构造",
+          "typical_approach": "Partial/Required/Readonly → Pick/Omit → Record → Exclude/Extract → ReturnType/Parameters → 自定义工具类型"
+        }
+      ]
+    },
+    {
+      "id": "cpp",
+      "name": "C/C++",
+      "type": "language",
+      "icon": "CodeOutlined",
+      "topics": [
+        {
+          "id": "cpp_pointer",
+          "name": "指针/内存管理",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["智能指针", "RAII"],
+          "description": "C/C++ 中指针的概念和内存手动管理，包括指针运算、动态内存分配等",
+          "typical_approach": "指针基础 → 指针运算 → 动态内存（malloc/new）→ 内存泄漏 → 悬空指针 → 内存对齐"
+        },
+        {
+          "id": "cpp_class",
+          "name": "结构体/类",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["模板", "指针/内存管理"],
+          "description": "C 的结构体和 C++ 的面向对象编程，包括封装、继承、多态等",
+          "typical_approach": "struct vs class → 访问控制 → 构造/析构函数 → 继承（虚继承）→ 虚函数/多态 → 运算符重载"
+        },
+        {
+          "id": "cpp_template",
+          "name": "模板",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["STL 容器", "结构体/类"],
+          "description": "C++ 泛型编程机制，包括函数模板、类模板、模板特化等",
+          "typical_approach": "函数模板 → 类模板 → 模板特化/偏特化 → 模板元编程 → SFINAE → 可变参数模板"
+        },
+        {
+          "id": "cpp_stl",
+          "name": "STL 容器",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["模板", "智能指针"],
+          "description": "标准模板库的容器类，包括 vector、map、set、unordered_map 等",
+          "typical_approach": "序列容器（vector/deque/list）→ 关联容器（map/set）→ 无序容器 → 迭代器 → 算法库 → 容器适配器"
+        },
+        {
+          "id": "cpp_smart_pointer",
+          "name": "智能指针",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["指针/内存管理", "RAII"],
+          "description": "C++11 引入的自动内存管理工具，避免手动管理内存的复杂性",
+          "typical_approach": "unique_ptr → shared_ptr → weak_ptr → make_shared/make_unique → 循环引用解决 → 自定义删除器"
+        },
+        {
+          "id": "cpp_multithreading",
+          "name": "多线程",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["指针/内存管理", "STL 容器"],
+          "description": "C++11 多线程编程，包括线程创建、同步原语、原子操作等",
+          "typical_approach": "std::thread → mutex/lock_guard → condition_variable → atomic → future/promise → 线程池 → 内存序"
+        },
+        {
+          "id": "cpp_compile_link",
+          "name": "编译链接",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["预处理器"],
+          "description": "C/C++ 程序的编译过程：预处理、编译、汇编、链接",
+          "typical_approach": "预处理 → 编译（语法分析/语义分析）→ 汇编 → 链接（静态/动态链接）→ Makefile/CMake → 编译优化"
+        },
+        {
+          "id": "cpp_preprocessor",
+          "name": "预处理器",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["编译链接"],
+          "description": "C/C++ 预处理指令，包括宏定义、条件编译、头文件包含等",
+          "typical_approach": "#include → #define 宏 → 条件编译（#ifdef/#ifndef）→ 宏函数 → #pragma → 头文件保护"
+        },
+        {
+          "id": "cpp_raii",
+          "name": "RAII",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["智能指针", "指针/内存管理"],
+          "description": "资源获取即初始化，通过对象生命周期自动管理资源（内存、文件句柄、锁等）",
+          "typical_approach": "RAII 原则 → 构造获取/析构释放 → 智能指针实现 → lock_guard → 文件流 → 自定义 RAII 包装"
+        }
+      ]
+    },
+    {
+      "id": "go",
+      "name": "Go",
+      "type": "language",
+      "icon": "CodeOutlined",
+      "topics": [
+        {
+          "id": "go_goroutine",
+          "name": "goroutine/channel",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["context", "内存模型"],
+          "description": "Go 的轻量级并发原语：goroutine 实现并发执行，channel 实现 goroutine 间通信",
+          "typical_approach": "goroutine 基础 → channel（有缓冲/无缓冲）→ select 多路复用 → sync 包 → WaitGroup → 并发模式"
+        },
+        {
+          "id": "go_interface",
+          "name": "接口",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["反射", "错误处理"],
+          "description": "Go 的隐式接口实现，通过方法集定义行为契约",
+          "typical_approach": "接口定义 → 隐式实现 → 空接口 interface{} → 类型断言 → 类型开关 → 接口组合 → 常用接口（io.Reader/Writer）"
+        },
+        {
+          "id": "go_slice_map",
+          "name": "切片/map",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["内存模型"],
+          "description": "Go 的核心数据结构：切片是动态数组的抽象，map 是哈希表实现",
+          "typical_approach": "数组 vs 切片 → 切片底层结构 → append 扩容 → 切片陷阱 → map 用法 → map 并发安全（sync.Map）"
+        },
+        {
+          "id": "go_error",
+          "name": "错误处理",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["接口"],
+          "description": "Go 独特的错误处理方式，使用返回值传递错误而非异常机制",
+          "typical_approach": "error 接口 → 自定义错误 → errors.Is/As → 错误包装（%w）→ panic/recover → 错误处理最佳实践"
+        },
+        {
+          "id": "go_context",
+          "name": "context",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["goroutine/channel"],
+          "description": "Go 的上下文包，用于跨 goroutine 传递截止时间、取消信号和请求范围值",
+          "typical_approach": "context.Background/TODO → WithCancel → WithTimeout/WithDeadline → WithValue → 传播规则 → 最佳实践"
+        },
+        {
+          "id": "go_reflect",
+          "name": "反射",
+          "difficulty_levels": ["困难"],
+          "related_topics": ["接口"],
+          "description": "Go 的反射机制，运行时检查和操作类型信息",
+          "typical_approach": "reflect.Type/Value → Kind 判断 → 字段遍历 → 方法调用 → 结构体标签 → 性能考量"
+        },
+        {
+          "id": "go_module",
+          "name": "包管理(go mod)",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["Go 工具链"],
+          "description": "Go Modules 依赖管理系统，管理项目依赖和版本",
+          "typical_approach": "go mod init → go.mod/go.sum → 依赖管理 → 版本选择（MVS）→ 私有模块 → workspace"
+        },
+        {
+          "id": "go_memory_model",
+          "name": "内存模型",
+          "difficulty_levels": ["困难"],
+          "related_topics": ["goroutine/channel", "切片/map"],
+          "description": "Go 的内存模型定义了 goroutine 间变量可见性的规则",
+          "typical_approach": "happens-before 关系 → channel 通信保证 → sync 包保证 → atomic 操作 → 数据竞争检测（-race）"
+        },
+        {
+          "id": "go_gc",
+          "name": "垃圾回收",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["内存模型"],
+          "description": "Go 的三色标记并发垃圾回收器，实现低延迟的自动内存管理",
+          "typical_approach": "三色标记 → 写屏障 → 并发回收 → GC 触发条件 → GOGC 调优 → 内存分配器（tcmalloc）→ 逃逸分析"
+        }
+      ]
+    },
+    {
+      "id": "react",
+      "name": "React",
+      "type": "language",
+      "icon": "CodeOutlined",
+      "topics": [
+        {
+          "id": "react_lifecycle",
+          "name": "组件生命周期",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["Hooks 原理", "虚拟 DOM/Diff 算法"],
+          "description": "React 组件从创建到销毁的生命周期方法和执行顺序",
+          "typical_approach": "挂载阶段 → 更新阶段 → 卸载阶段 → 类组件生命周期方法 → 函数组件 useEffect 对应 → 错误边界"
+        },
+        {
+          "id": "react_hooks",
+          "name": "Hooks 原理",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["组件生命周期", "状态管理"],
+          "description": "React 16.8 引入的 Hooks 机制，让函数组件拥有状态和副作用能力",
+          "typical_approach": "useState → useEffect → useContext → useRef → useReducer → useMemo/useCallback → 自定义 Hook → Hooks 规则与原理"
+        },
+        {
+          "id": "react_vdom",
+          "name": "虚拟 DOM/Diff 算法",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["组件生命周期", "性能优化"],
+          "description": "React 通过虚拟 DOM 树的差异比较来最小化真实 DOM 操作",
+          "typical_approach": "虚拟 DOM 概念 → createElement → Diff 算法（tree/component/element）→ key 的作用 → Fiber 架构 → 协调过程"
+        },
+        {
+          "id": "react_state",
+          "name": "状态管理",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["Hooks 原理"],
+          "description": "React 应用中状态的管理方案，从组件状态到全局状态管理",
+          "typical_approach": "组件 state → props 传递 → Context API → useReducer → Redux/Toolkit → Zustand/Jotai → 状态设计原则"
+        },
+        {
+          "id": "react_performance",
+          "name": "性能优化",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["虚拟 DOM/Diff 算法", "Hooks 原理"],
+          "description": "React 应用的渲染性能优化策略和工具",
+          "typical_approach": "React.memo → useMemo/useCallback → 避免不必要渲染 → 代码分割（lazy/Suspense）→ 虚拟列表 → Profiler 分析"
+        },
+        {
+          "id": "react_router",
+          "name": "路由",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["状态管理"],
+          "description": "React 应用的客户端路由方案，实现 SPA 的页面导航",
+          "typical_approach": "BrowserRouter/HashRouter → Route/Routes → 路由参数 → 嵌套路由 → 路由守卫 → 编程式导航"
+        },
+        {
+          "id": "react_ssr",
+          "name": "服务端渲染",
+          "difficulty_levels": ["困难"],
+          "related_topics": ["性能优化", "路由"],
+          "description": "在服务器端渲染 React 组件为 HTML，提升首屏加载速度和 SEO",
+          "typical_approach": "CSR vs SSR vs SSG → renderToString → hydration → Next.js 框架 → 数据预取 → 流式渲染"
+        }
+      ]
+    },
+    {
+      "id": "vue",
+      "name": "Vue",
+      "type": "language",
+      "icon": "CodeOutlined",
+      "topics": [
+        {
+          "id": "vue_reactivity",
+          "name": "响应式原理",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["组合式 API", "虚拟 DOM"],
+          "description": "Vue 的响应式系统，自动追踪依赖并在数据变化时更新视图",
+          "typical_approach": "Vue 2（Object.defineProperty）→ Vue 3（Proxy）→ 依赖收集 → 派发更新 → ref/reactive → computed/watch"
+        },
+        {
+          "id": "vue_composition",
+          "name": "组合式 API",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["响应式原理", "生命周期"],
+          "description": "Vue 3 引入的组合式 API，通过函数组合的方式组织组件逻辑",
+          "typical_approach": "setup 函数 → ref/reactive → computed → watch/watchEffect → 生命周期钩子 → 自定义组合函数 → script setup"
+        },
+        {
+          "id": "vue_vdom",
+          "name": "虚拟 DOM",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["响应式原理"],
+          "description": "Vue 的虚拟 DOM 实现和 Diff 算法优化",
+          "typical_approach": "VNode 结构 → 渲染函数 h() → Diff 算法 → 静态标记优化 → Block Tree → PatchFlags"
+        },
+        {
+          "id": "vue_component_comm",
+          "name": "组件通信",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["组合式 API", "Vuex/Pinia"],
+          "description": "Vue 中父子、兄弟、跨层级组件间的数据通信方式",
+          "typical_approach": "props/emit → provide/inject → v-model → $attrs/$listeners → EventBus → Vuex/Pinia"
+        },
+        {
+          "id": "vue_store",
+          "name": "Vuex/Pinia",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["组件通信", "组合式 API"],
+          "description": "Vue 的状态管理方案，集中管理应用的共享状态",
+          "typical_approach": "Vuex（state/getters/mutations/actions）→ modules → Pinia（defineStore）→ 组合式 store → 持久化 → DevTools"
+        },
+        {
+          "id": "vue_router",
+          "name": "Vue Router",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["组件通信"],
+          "description": "Vue 官方路由管理器，实现 SPA 的页面导航和路由配置",
+          "typical_approach": "路由配置 → 动态路由 → 嵌套路由 → 导航守卫 → 路由懒加载 → 滚动行为"
+        },
+        {
+          "id": "vue_lifecycle",
+          "name": "生命周期",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["组合式 API", "响应式原理"],
+          "description": "Vue 组件实例从创建到销毁的完整生命周期和钩子函数",
+          "typical_approach": "beforeCreate/created → beforeMount/mounted → beforeUpdate/updated → beforeUnmount/unmounted → 组合式 API 钩子"
+        },
+        {
+          "id": "vue_directive",
+          "name": "指令系统",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["虚拟 DOM"],
+          "description": "Vue 的指令系统，包括内置指令和自定义指令",
+          "typical_approach": "v-if/v-show → v-for → v-bind/v-on → v-model → 自定义指令（钩子函数）→ 指令参数/修饰符"
+        }
+      ]
+    },
+    {
+      "id": "sql_database",
+      "name": "SQL/数据库",
+      "type": "language",
+      "icon": "DatabaseOutlined",
+      "topics": [
+        {
+          "id": "sql_syntax",
+          "name": "SQL 语法",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["查询优化", "索引原理与优化"],
+          "description": "SQL 语言的核心语法，包括 DDL、DML、DQL 等操作",
+          "typical_approach": "SELECT 基础 → WHERE/JOIN → 聚合函数/GROUP BY → 子查询 → 窗口函数 → CTE（公共表表达式）"
+        },
+        {
+          "id": "sql_index",
+          "name": "索引原理与优化",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["SQL 语法", "查询优化"],
+          "description": "数据库索引的数据结构（B+树/哈希）和索引优化策略",
+          "typical_approach": "B+ 树结构 → 聚簇/非聚簇索引 → 覆盖索引 → 联合索引（最左前缀）→ 索引失效场景 → 索引设计原则"
+        },
+        {
+          "id": "sql_transaction",
+          "name": "事务/ACID",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["锁机制"],
+          "description": "数据库事务的四大特性和隔离级别，保证数据一致性和完整性",
+          "typical_approach": "ACID 特性 → 隔离级别（读未提交/已提交/可重复读/串行化）→ MVCC → 脏读/不可重复读/幻读 → 分布式事务"
+        },
+        {
+          "id": "sql_lock",
+          "name": "锁机制",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["事务/ACID"],
+          "description": "数据库的锁类型和并发控制机制",
+          "typical_approach": "共享锁/排他锁 → 行锁/表锁 → 意向锁 → 间隙锁/临键锁 → 死锁检测与预防 → 乐观锁/悲观锁"
+        },
+        {
+          "id": "sql_design",
+          "name": "表设计/范式",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["SQL 语法"],
+          "description": "数据库表的设计规范，包括范式理论和反范式设计",
+          "typical_approach": "ER 模型 → 第一范式(1NF) → 第二范式(2NF) → 第三范式(3NF) → BCNF → 反范式化 → 分表策略"
+        },
+        {
+          "id": "sql_query_optimization",
+          "name": "查询优化",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["索引原理与优化", "SQL 语法"],
+          "description": "SQL 查询性能优化方法，包括执行计划分析和查询重写",
+          "typical_approach": "EXPLAIN 分析 → 慢查询日志 → 查询重写 → JOIN 优化 → 分页优化 → 批量操作优化"
+        },
+        {
+          "id": "sql_engine",
+          "name": "存储引擎",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["索引原理与优化", "事务/ACID"],
+          "description": "数据库存储引擎的特性对比，如 InnoDB vs MyISAM",
+          "typical_approach": "InnoDB 特性（事务/行锁/外键）→ MyISAM 特性 → 存储结构对比 → 选型策略 → Buffer Pool → Redo/Undo Log"
+        },
+        {
+          "id": "sql_sharding",
+          "name": "分库分表",
+          "difficulty_levels": ["困难"],
+          "related_topics": ["查询优化", "事务/ACID"],
+          "description": "当单库单表无法满足性能需求时的水平/垂直拆分策略",
+          "typical_approach": "垂直分库/分表 → 水平分库/分表 → 分片键选择 → 分布式 ID → 跨库查询 → 数据迁移 → ShardingSphere"
+        }
+      ]
+    },
+    {
+      "id": "shell",
+      "name": "Shell/Bash",
+      "type": "language",
+      "icon": "CodeOutlined",
+      "topics": [
+        {
+          "id": "shell_pipe",
+          "name": "管道与重定向",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["sed/awk 文本处理"],
+          "description": "Shell 的管道机制和输入输出重定向，实现命令间的数据流转",
+          "typical_approach": "标准输入/输出/错误 → 输出重定向（>/>>）→ 输入重定向（<）→ 管道（|）→ tee → Here Document → 文件描述符"
+        },
+        {
+          "id": "shell_regex",
+          "name": "正则表达式",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["sed/awk 文本处理"],
+          "description": "Shell 中正则表达式的语法和应用，用于文本模式匹配",
+          "typical_approach": "基本正则（BRE）→ 扩展正则（ERE）→ 字符类 → 量词 → 分组与反向引用 → grep/egrep 应用"
+        },
+        {
+          "id": "shell_sed_awk",
+          "name": "sed/awk 文本处理",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["正则表达式", "管道与重定向"],
+          "description": "Linux 下强大的文本处理工具，sed 用于流编辑，awk 用于列处理",
+          "typical_approach": "sed 替换/删除/插入 → sed 地址范围 → awk 基本语法 → awk 内置变量 → awk 模式匹配 → 综合应用"
+        },
+        {
+          "id": "shell_scripting",
+          "name": "脚本编写",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["管道与重定向", "进程管理"],
+          "description": "Shell 脚本编程，包括变量、条件判断、循环、函数等",
+          "typical_approach": "变量与引用 → 条件判断（if/case）→ 循环（for/while）→ 函数 → 数组 → 信号处理 → 脚本调试"
+        },
+        {
+          "id": "shell_process",
+          "name": "进程管理",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["脚本编写", "cron 定时任务"],
+          "description": "Shell 中进程的创建、监控和控制",
+          "typical_approach": "前台/后台进程 → jobs/fg/bg → nohup/disown → 进程替换 → 子 Shell → 信号（kill/trap）"
+        },
+        {
+          "id": "shell_cron",
+          "name": "cron 定时任务",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["脚本编写", "进程管理"],
+          "description": "Linux 定时任务调度工具，用于自动化执行周期性任务",
+          "typical_approach": "crontab 语法 → 时间字段 → crontab -e/-l → 常用时间表达式 → 日志记录 → anacron"
+        },
+        {
+          "id": "shell_env",
+          "name": "环境变量",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["脚本编写"],
+          "description": "Shell 环境变量的设置、导出和管理，影响程序运行行为",
+          "typical_approach": "查看环境变量 → export 设置 → PATH 管理 → .bashrc/.profile → source → 变量作用域"
+        }
+      ]
+    },
+    {
+      "id": "linux",
+      "name": "Linux",
+      "type": "language",
+      "icon": "CodeOutlined",
+      "topics": [
+        {
+          "id": "linux_filesystem",
+          "name": "文件系统与权限",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["用户与权限管理", "磁盘与存储"],
+          "description": "Linux 文件系统的目录结构、文件类型和权限管理",
+          "typical_approach": "FHS 目录结构 → 文件类型 → rwx 权限 → chmod/chown → umask → ACL → 特殊权限（SUID/SGID/Sticky）"
+        },
+        {
+          "id": "linux_process",
+          "name": "进程管理",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["systemd 服务管理"],
+          "description": "Linux 进程的查看、管理和信号控制",
+          "typical_approach": "ps/top/htop → 进程状态 → kill/killall → nice/renice → /proc 文件系统 → strace → 僵尸进程处理"
+        },
+        {
+          "id": "linux_network",
+          "name": "网络配置",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["进程管理"],
+          "description": "Linux 网络配置与诊断工具，包括防火墙、端口管理等",
+          "typical_approach": "ip/ifconfig → ss/netstat → iptables/nftables → route → DNS 配置 → tcpdump → 网络故障排查"
+        },
+        {
+          "id": "linux_user",
+          "name": "用户与权限管理",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["文件系统与权限"],
+          "description": "Linux 用户和用户组的管理，sudo 权限配置等",
+          "typical_approach": "useradd/userdel → groupadd → passwd → /etc/passwd 和 /etc/shadow → sudo 配置 → PAM 模块"
+        },
+        {
+          "id": "linux_disk",
+          "name": "磁盘与存储",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["文件系统与权限"],
+          "description": "磁盘分区、文件系统创建、挂载和存储管理",
+          "typical_approach": "df/du → fdisk/parted → mkfs → mount/fstab → LVM 逻辑卷 → RAID → 磁盘 I/O 监控（iostat）"
+        },
+        {
+          "id": "linux_log",
+          "name": "系统日志",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["systemd 服务管理"],
+          "description": "Linux 系统日志的查看、管理和分析",
+          "typical_approach": "journalctl → /var/log 目录 → syslog/rsyslog → logrotate → dmesg → 日志分析工具"
+        },
+        {
+          "id": "linux_package",
+          "name": "包管理",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["systemd 服务管理"],
+          "description": "Linux 软件包的安装、更新、卸载和依赖管理",
+          "typical_approach": "apt（Debian/Ubuntu）→ yum/dnf（CentOS/RHEL）→ 源码编译安装 → 软件源配置 → 依赖管理"
+        },
+        {
+          "id": "linux_systemd",
+          "name": "systemd 服务管理",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["进程管理", "系统日志"],
+          "description": "systemd 初始化系统和服务管理器",
+          "typical_approach": "systemctl 基本操作 → service 文件编写 → Unit 类型 → 依赖管理 → Timer → 日志管理"
+        }
+      ]
+    },
+    {
+      "id": "nginx",
+      "name": "Nginx",
+      "type": "language",
+      "icon": "CodeOutlined",
+      "topics": [
+        {
+          "id": "nginx_reverse_proxy",
+          "name": "反向代理配置",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["负载均衡策略", "upstream 配置"],
+          "description": "Nginx 作为反向代理服务器，将客户端请求转发到后端服务器",
+          "typical_approach": "proxy_pass 基础 → 请求头传递 → WebSocket 代理 → 超时配置 → 错误处理 → 透明代理"
+        },
+        {
+          "id": "nginx_load_balance",
+          "name": "负载均衡策略",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["反向代理配置", "upstream 配置"],
+          "description": "Nginx 的负载均衡算法和配置，将请求分发到多个后端服务器",
+          "typical_approach": "轮询（Round Robin）→ 加权轮询 → IP Hash → Least Connections → 健康检查 → 会话保持"
+        },
+        {
+          "id": "nginx_location",
+          "name": "location 匹配规则",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["反向代理配置"],
+          "description": "Nginx location 指令的匹配优先级和规则",
+          "typical_approach": "精确匹配（=）→ 前缀匹配（^~）→ 正则匹配（~）→ 普通前缀 → 匹配优先级 → 常见配置示例"
+        },
+        {
+          "id": "nginx_ssl",
+          "name": "HTTPS/SSL 配置",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["反向代理配置"],
+          "description": "Nginx 的 HTTPS 配置，包括证书部署、协议优化和安全加固",
+          "typical_approach": "证书申请（Let's Encrypt）→ ssl_certificate 配置 → 协议版本 → 加密套件 → HSTS → OCSP Stapling"
+        },
+        {
+          "id": "nginx_performance",
+          "name": "性能调优",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["缓存策略", "负载均衡策略"],
+          "description": "Nginx 的性能优化配置，包括工作进程、连接处理、缓冲区等",
+          "typical_approach": "worker_processes → worker_connections → keepalive → gzip 压缩 → sendfile → 缓冲区配置 → 限流"
+        },
+        {
+          "id": "nginx_log",
+          "name": "日志分析",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["性能调优"],
+          "description": "Nginx 访问日志和错误日志的配置与分析",
+          "typical_approach": "access_log 格式 → error_log 级别 → 自定义日志格式 → 日志切割 → GoAccess/ELK 分析"
+        },
+        {
+          "id": "nginx_upstream",
+          "name": "upstream 配置",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["负载均衡策略", "反向代理配置"],
+          "description": "Nginx upstream 模块的高级配置，定义后端服务器组",
+          "typical_approach": "server 定义 → weight 权重 → max_fails/fail_timeout → backup 备份 → keepalive 连接池 → 动态 upstream"
+        },
+        {
+          "id": "nginx_cache",
+          "name": "缓存策略",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["性能调优", "反向代理配置"],
+          "description": "Nginx 的代理缓存和静态资源缓存配置",
+          "typical_approach": "proxy_cache 配置 → 缓存路径/大小 → 缓存有效期 → 缓存键 → 缓存清除 → 静态资源 expires"
+        }
+      ]
+    }
+  ]
+}
