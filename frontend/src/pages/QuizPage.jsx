@@ -1,7 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
-import { Select, Button, Input, Tag, Space, message } from 'antd'
+import { Select, Button, Input, Tag, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { generateQuiz, judgeQuiz, skipQuiz, getQuizStats } from '../api/quiz'
+import {
+  generateByKnowledge,
+  generateVariant,
+  judgeQuiz,
+  skipQuiz,
+  getQuizStats,
+  getKnowledgePoints,
+  getKnowledgeStats,
+} from '../api/quiz'
 import useFeatureGuard from '../hooks/useFeatureGuard'
 import useBillingStore from '../store/useBillingStore'
 import useThemeStore from '../store/useThemeStore'
@@ -9,27 +17,34 @@ import { useTranslation } from '../i18n'
 
 const { TextArea } = Input
 
-const TOPICS = [
-  'Python', 'Java', 'JavaScript', 'C语言', 'C++',
-  '数据结构与算法', '操作系统', '计算机组成原理', '计算机网络',
-  '数据库', '计算机八股文', '设计模式', 'Linux',
-  'Git', '前端基础', '后端基础', '系统设计',
-]
-
 const QUESTION_TYPES = ['判断题', '选择题', '简答题', '编程题']
+const DIFFICULTIES = ['简单', '中等', '困难']
 
 const difficultyColors = { '简单': 'green', '中等': 'blue', '困难': 'red' }
 
 export default function QuizPage() {
-  const [topic, setTopic] = useState(null)
+  // Domain & knowledge point selection
+  const [domains, setDomains] = useState([])
+  const [selectedDomain, setSelectedDomain] = useState(null)
+  const [selectedTopic, setSelectedTopic] = useState(null)
+  const [difficulty, setDifficulty] = useState('中等')
   const [questionType, setQuestionType] = useState(null)
+
+  // Quiz state
   const [question, setQuestion] = useState(null)
   const [activeQuestionType, setActiveQuestionType] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [userAnswer, setUserAnswer] = useState('')
   const [judging, setJudging] = useState(false)
   const [result, setResult] = useState(null)
+  const [isVariant, setIsVariant] = useState(false)
+  const [variantGenerating, setVariantGenerating] = useState(false)
+
+  // Stats
   const [stats, setStats] = useState(null)
+  const [knowledgeStats, setKnowledgeStats] = useState(null)
+
+  // UI
   const [resultAnimState, setResultAnimState] = useState('hidden')
   const navigate = useNavigate()
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("quiz")
@@ -40,7 +55,14 @@ export default function QuizPage() {
 
   useEffect(() => {
     loadStats()
+    loadKnowledgePoints()
   }, [])
+
+  useEffect(() => {
+    if (selectedDomain) {
+      loadKnowledgeStats()
+    }
+  }, [selectedDomain])
 
   const loadStats = async () => {
     try {
@@ -49,8 +71,69 @@ export default function QuizPage() {
     } catch {}
   }
 
+  const loadKnowledgePoints = async () => {
+    try {
+      const res = await getKnowledgePoints()
+      setDomains(res.data.domains || [])
+    } catch {}
+  }
+
+  const loadKnowledgeStats = async () => {
+    try {
+      const res = await getKnowledgeStats()
+      setKnowledgeStats(res.data)
+    } catch {}
+  }
+
+  const currentDomainMeta = domains.find((d) => d.id === selectedDomain)
+  const currentTopicMeta = currentDomainMeta?.topics?.find((tp) => tp.id === selectedTopic)
+
+  const getTopicStatus = (topicName) => {
+    if (!knowledgeStats?.domains || !currentDomainMeta) return 'not_started'
+    const domainStat = knowledgeStats.domains.find((d) => d.domain === currentDomainMeta.name)
+    if (!domainStat) return 'not_started'
+    const topicStat = domainStat.topics?.find((t) => t.knowledge_point === topicName)
+    if (!topicStat) return 'not_started'
+    return topicStat.status
+  }
+
+  const getTopicAccuracy = (topicName) => {
+    if (!knowledgeStats?.domains || !currentDomainMeta) return null
+    const domainStat = knowledgeStats.domains.find((d) => d.domain === currentDomainMeta.name)
+    if (!domainStat) return null
+    const topicStat = domainStat.topics?.find((t) => t.knowledge_point === topicName)
+    if (!topicStat) return null
+    return topicStat
+  }
+
+  const handleSelectDomain = (domainId) => {
+    setSelectedDomain(domainId)
+    setSelectedTopic(null)
+    setQuestion(null)
+    setResult(null)
+    setResultAnimState('hidden')
+    setIsVariant(false)
+  }
+
+  const handleSelectTopic = (topicId) => {
+    setSelectedTopic(topicId)
+    setQuestion(null)
+    setResult(null)
+    setResultAnimState('hidden')
+    setIsVariant(false)
+  }
+
+  const handleBackToDomains = () => {
+    setSelectedDomain(null)
+    setSelectedTopic(null)
+    setQuestion(null)
+    setResult(null)
+    setResultAnimState('hidden')
+    setIsVariant(false)
+  }
+
   const handleGenerate = async () => {
-    if (!topic || !questionType) {
+    if (!selectedDomain || !selectedTopic || !questionType) {
       message.warning(t('quiz.topicRequired'))
       return
     }
@@ -59,10 +142,11 @@ export default function QuizPage() {
     setResult(null)
     setResultAnimState('hidden')
     setUserAnswer('')
+    setIsVariant(false)
     const currentType = questionType
     setActiveQuestionType(currentType)
     try {
-      const res = await generateQuiz(topic, currentType)
+      const res = await generateByKnowledge(selectedDomain, selectedTopic, currentType, difficulty)
       setQuestion(res.data)
       markApiUsed()
       questionCountRef.current += 1
@@ -86,13 +170,14 @@ export default function QuizPage() {
         question_type: activeQuestionType,
         correct_answer: question.correct_answer,
         knowledge_point: question.knowledge_point,
-        topic,
+        topic: currentDomainMeta?.name || '',
         user_answer: userAnswer,
       })
       setResult(res.data)
       setResultAnimState('entering')
       setTimeout(() => setResultAnimState('visible'), 50)
       loadStats()
+      loadKnowledgeStats()
     } catch (err) {
       message.error(t('quiz.judgeFailed'))
     } finally {
@@ -108,13 +193,14 @@ export default function QuizPage() {
         question_type: activeQuestionType,
         correct_answer: question.correct_answer,
         knowledge_point: question.knowledge_point,
-        topic,
+        topic: currentDomainMeta?.name || '',
         explanation: question.explanation,
       })
       setResult(res.data)
       setResultAnimState('entering')
       setTimeout(() => setResultAnimState('visible'), 50)
       loadStats()
+      loadKnowledgeStats()
     } catch (err) {
       message.error(t('quiz.judgeFailed'))
     } finally {
@@ -124,6 +210,32 @@ export default function QuizPage() {
 
   const handleNext = () => {
     handleGenerate()
+  }
+
+  const handleVariant = async (isCorrect) => {
+    if (!question) return
+    setVariantGenerating(true)
+    try {
+      const res = await generateVariant({
+        question: question.question,
+        question_type: activeQuestionType,
+        knowledge_point: question.knowledge_point,
+        user_answer: userAnswer || '',
+        is_correct: isCorrect,
+      })
+      setQuestion(res.data)
+      setResult(null)
+      setResultAnimState('hidden')
+      setUserAnswer('')
+      setIsVariant(true)
+      markApiUsed()
+      questionCountRef.current += 1
+      fetchWallet()
+    } catch (err) {
+      message.error(err.response?.data?.detail || t('quiz.variantFailed'))
+    } finally {
+      setVariantGenerating(false)
+    }
   }
 
   const handleCodeKeyDown = (e) => {
@@ -247,6 +359,7 @@ export default function QuizPage() {
     )
   }
 
+  // Loading guard
   if (guardLoading) {
     return (
       <div className="flex items-center justify-center" style={{ minHeight: 300 }}>
@@ -268,6 +381,7 @@ export default function QuizPage() {
     )
   }
 
+  // Feature unavailable
   if (available === false) {
     return (
       <div className="flex flex-col items-center justify-center" style={{ minHeight: 400 }}>
@@ -289,7 +403,15 @@ export default function QuizPage() {
     )
   }
 
+  const generalDomains = domains.filter((d) => d.type === 'general')
+  const languageDomains = domains.filter((d) => d.type === 'language')
   const questionNumber = String(questionCountRef.current).padStart(3, '0')
+
+  const statusColors = {
+    mastered: 'var(--ctw-success, #00D4AA)',
+    weak: 'var(--ctw-warning, #F59E0B)',
+    not_started: 'var(--ctw-text-tertiary, #9CA3AF)',
+  }
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -319,31 +441,226 @@ export default function QuizPage() {
               </h2>
             </div>
 
-            {/* Controls */}
-            <div className="flex gap-3 mb-5 flex-wrap">
-              <Select
-                style={{ width: 200 }}
-                placeholder={t('quiz.selectTopic')}
-                value={topic}
-                onChange={(val) => setTopic(Array.isArray(val) ? val[val.length - 1] : val)}
-                showSearch
-                options={TOPICS.map((tp) => ({ label: tp, value: tp }))}
-              />
-              <Select
-                style={{ width: 180 }}
-                placeholder={t('quiz.selectType')}
-                value={questionType}
-                onChange={setQuestionType}
-                options={QUESTION_TYPES.map((tp) => ({ label: t(`quiz.types.${tp}`), value: tp }))}
-              />
-              <Button
-                type="primary"
-                onClick={handleGenerate}
-                loading={generating}
-              >
-                {question ? t('quiz.change') : t('quiz.start')}
-              </Button>
-            </div>
+            {/* Domain Selection */}
+            {!selectedDomain && (
+              <div>
+                {/* General Domains */}
+                <div style={{ marginBottom: 20 }}>
+                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-secondary)', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                    {t('quiz.generalDomains')}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {generalDomains.map((domain) => (
+                      <button
+                        key={domain.id}
+                        onClick={() => handleSelectDomain(domain.id)}
+                        style={{
+                          padding: '10px 18px',
+                          borderRadius: 8,
+                          border: '1px solid var(--ctw-border-default)',
+                          background: 'var(--ctw-surface-card)',
+                          color: 'var(--ctw-text-primary)',
+                          fontFamily: "'DM Sans', sans-serif",
+                          fontSize: 14,
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = '#0066FF'
+                          e.currentTarget.style.color = '#0066FF'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = 'var(--ctw-border-default)'
+                          e.currentTarget.style.color = 'var(--ctw-text-primary)'
+                        }}
+                      >
+                        {domain.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Language Domains */}
+                <div style={{ marginBottom: 20 }}>
+                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-secondary)', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                    {t('quiz.languageDomains')}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {languageDomains.map((domain) => (
+                      <button
+                        key={domain.id}
+                        onClick={() => handleSelectDomain(domain.id)}
+                        style={{
+                          padding: '10px 18px',
+                          borderRadius: 8,
+                          border: '1px solid var(--ctw-border-default)',
+                          background: 'var(--ctw-surface-card)',
+                          color: 'var(--ctw-text-primary)',
+                          fontFamily: "'DM Sans', sans-serif",
+                          fontSize: 14,
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = '#0066FF'
+                          e.currentTarget.style.color = '#0066FF'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = 'var(--ctw-border-default)'
+                          e.currentTarget.style.color = 'var(--ctw-text-primary)'
+                        }}
+                      >
+                        {domain.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Empty hint */}
+                <div className="flex flex-col items-center justify-center py-8">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ctw-text-tertiary)' }}>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                  <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 18, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '16px 0 0' }}>
+                    {t('quiz.emptyTitle')}
+                  </h3>
+                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-secondary)', margin: '8px 0 0' }}>
+                    {t('quiz.emptySubtitle')}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Knowledge Point Selection (domain selected, no question yet or browsing) */}
+            {selectedDomain && !question && !generating && (
+              <div>
+                {/* Back + Domain name */}
+                <div className="flex items-center gap-3 mb-4">
+                  <button
+                    onClick={handleBackToDomains}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: 6,
+                      border: '1px solid var(--ctw-border-default)',
+                      background: 'transparent',
+                      color: 'var(--ctw-text-secondary)',
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontSize: 13,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#0066FF'; e.currentTarget.style.color = '#0066FF' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--ctw-border-default)'; e.currentTarget.style.color = 'var(--ctw-text-secondary)' }}
+                  >
+                    ← {t('quiz.backToDomains')}
+                  </button>
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, fontWeight: 600, color: 'var(--ctw-text-primary)' }}>
+                    {currentDomainMeta?.name}
+                  </span>
+                </div>
+
+                {/* Knowledge points grid */}
+                <div style={{ marginBottom: 20 }}>
+                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-secondary)', margin: '0 0 10px' }}>
+                    {t('quiz.selectKnowledge')}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {currentDomainMeta?.topics?.map((tp) => {
+                      const status = getTopicStatus(tp.name)
+                      const isActive = selectedTopic === tp.id
+                      const borderColor = isActive ? '#0066FF' : 'var(--ctw-border-default)'
+                      const statusDotColor = statusColors[status]
+                      return (
+                        <button
+                          key={tp.id}
+                          onClick={() => handleSelectTopic(tp.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            padding: '8px 14px',
+                            borderRadius: 8,
+                            border: `1px solid ${borderColor}`,
+                            background: isActive ? 'rgba(0,102,255,0.06)' : 'var(--ctw-surface-card)',
+                            color: isActive ? '#0066FF' : 'var(--ctw-text-primary)',
+                            fontFamily: "'DM Sans', sans-serif",
+                            fontSize: 13,
+                            fontWeight: isActive ? 600 : 400,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isActive) e.currentTarget.style.borderColor = '#0066FF'
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isActive) e.currentTarget.style.borderColor = 'var(--ctw-border-default)'
+                          }}
+                        >
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusDotColor, flexShrink: 0 }} />
+                          {tp.name}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Selected knowledge point detail + controls */}
+                {currentTopicMeta && (
+                  <div
+                    style={{
+                      padding: 16,
+                      borderRadius: 8,
+                      border: '1px solid var(--ctw-border-default)',
+                      background: 'var(--ctw-surface-default, var(--ctw-surface-card))',
+                      marginBottom: 16,
+                    }}
+                  >
+                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-secondary)', margin: '0 0 4px' }}>
+                      {t('quiz.knowledgeDesc')}
+                    </p>
+                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-primary)', margin: '0 0 12px', lineHeight: 1.6 }}>
+                      {currentTopicMeta.description}
+                    </p>
+                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-secondary)', margin: '0 0 4px' }}>
+                      {t('quiz.typicalApproach')}
+                    </p>
+                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-primary)', margin: '0 0 16px', lineHeight: 1.6 }}>
+                      {currentTopicMeta.typical_approach}
+                    </p>
+
+                    {/* Difficulty + Type + Start */}
+                    <div className="flex gap-3 flex-wrap items-center">
+                      <Select
+                        style={{ width: 120 }}
+                        placeholder={t('quiz.selectDifficulty')}
+                        value={difficulty}
+                        onChange={setDifficulty}
+                        options={DIFFICULTIES.map((d) => ({ label: t(`quiz.difficulty.${d}`), value: d }))}
+                      />
+                      <Select
+                        style={{ width: 140 }}
+                        placeholder={t('quiz.selectType')}
+                        value={questionType}
+                        onChange={setQuestionType}
+                        options={QUESTION_TYPES.map((tp) => ({ label: t(`quiz.types.${tp}`), value: tp }))}
+                      />
+                      <Button
+                        type="primary"
+                        onClick={handleGenerate}
+                        loading={generating}
+                        disabled={!questionType}
+                      >
+                        {t('quiz.start')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Generating state */}
             {generating && (
@@ -371,8 +688,35 @@ export default function QuizPage() {
             {/* Question display */}
             {question && !generating && (
               <div>
+                {/* Back button when question is showing */}
+                {selectedDomain && (
+                  <div className="flex items-center gap-3 mb-3">
+                    <button
+                      onClick={handleBackToDomains}
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: 6,
+                        border: '1px solid var(--ctw-border-default)',
+                        background: 'transparent',
+                        color: 'var(--ctw-text-secondary)',
+                        fontFamily: "'DM Sans', sans-serif",
+                        fontSize: 13,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#0066FF'; e.currentTarget.style.color = '#0066FF' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--ctw-border-default)'; e.currentTarget.style.color = 'var(--ctw-text-secondary)' }}
+                    >
+                      ← {t('quiz.backToDomains')}
+                    </button>
+                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-tertiary)' }}>
+                      {currentDomainMeta?.name}
+                    </span>
+                  </div>
+                )}
+
                 {/* Question number + tags */}
-                <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
                   <span
                     style={{
                       fontFamily: "'JetBrains Mono', monospace",
@@ -385,6 +729,7 @@ export default function QuizPage() {
                   <Tag color={difficultyColors[question.difficulty] || 'blue'}>{question.difficulty}</Tag>
                   <Tag>{question.knowledge_point}</Tag>
                   <Tag color="cyan">{t(`quiz.types.${activeQuestionType}`)}</Tag>
+                  {isVariant && <Tag color="purple">{t('quiz.variantTag')}</Tag>}
                 </div>
 
                 {/* Question text */}
@@ -491,36 +836,30 @@ export default function QuizPage() {
                       </p>
                     </div>
 
-                    <Button type="primary" onClick={handleNext}>
-                      {t('quiz.next')}
-                    </Button>
+                    {/* Action buttons: Next + Variant */}
+                    <div className="flex gap-2 flex-wrap">
+                      <Button type="primary" onClick={handleNext}>
+                        {t('quiz.next')}
+                      </Button>
+                      {!result.is_correct && (
+                        <Button
+                          onClick={() => handleVariant(false)}
+                          loading={variantGenerating}
+                        >
+                          {t('quiz.variant')}
+                        </Button>
+                      )}
+                      {result.is_correct && (
+                        <Button
+                          onClick={() => handleVariant(true)}
+                          loading={variantGenerating}
+                        >
+                          {t('quiz.variantDeepen')}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Empty state */}
-            {!question && !generating && (
-              <div className="flex flex-col items-center justify-center py-12">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ctw-text-tertiary)' }}>
-                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-                <h3
-                  style={{
-                    fontFamily: "'Sora', sans-serif",
-                    fontSize: 18,
-                    fontWeight: 600,
-                    color: 'var(--ctw-text-primary)',
-                    margin: '16px 0 0',
-                  }}
-                >
-                  {t('quiz.emptyTitle')}
-                </h3>
-                <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-secondary)', margin: '8px 0 0' }}>
-                  {t('quiz.emptySubtitle')}
-                </p>
               </div>
             )}
           </div>
@@ -611,56 +950,99 @@ export default function QuizPage() {
                   </div>
                 </div>
 
-                {/* Mastered tags */}
-                {stats.mastered?.length > 0 && (
-                  <div style={{ marginBottom: 12 }}>
-                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 6px' }}>
-                      {t('quiz.mastered')}
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {stats.mastered.map((k, i) => (
-                        <span
-                          key={i}
-                          style={{
-                            fontFamily: "'DM Sans', sans-serif",
-                            fontSize: 11,
-                            padding: '2px 8px',
-                            borderRadius: 4,
-                            border: '1px solid var(--ctw-success)',
-                            color: 'var(--ctw-success)',
-                          }}
-                        >
-                          {k}
-                        </span>
-                      ))}
+                {/* Knowledge point mastery for current domain */}
+                {selectedDomain && currentDomainMeta && (
+                  <div>
+                    <h4 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 10px' }}>
+                      {t('quiz.domainStats')}
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {currentDomainMeta.topics.map((tp) => {
+                        const status = getTopicStatus(tp.name)
+                        const topicStat = getTopicAccuracy(tp.name)
+                        const accuracy = topicStat?.accuracy ?? 0
+                        const barColor = statusColors[status]
+                        return (
+                          <div key={tp.id}>
+                            <div className="flex justify-between items-center" style={{ marginBottom: 3 }}>
+                              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: 'var(--ctw-text-secondary)', maxWidth: '70%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {tp.name}
+                              </span>
+                              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: barColor, fontWeight: 600 }}>
+                                {topicStat ? `${accuracy}%` : '-'}
+                              </span>
+                            </div>
+                            <div style={{ height: 4, borderRadius: 2, background: 'var(--ctw-border-default)', overflow: 'hidden' }}>
+                              <div
+                                style={{
+                                  height: '100%',
+                                  width: topicStat ? `${Math.max(accuracy, 3)}%` : '0%',
+                                  background: barColor,
+                                  borderRadius: 2,
+                                  transition: 'width 0.3s ease',
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 )}
 
-                {/* Weak tags */}
-                {stats.weak?.length > 0 && (
-                  <div>
-                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 6px' }}>
-                      {t('quiz.weak')}
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {stats.weak.map((k, i) => (
-                        <span
-                          key={i}
-                          style={{
-                            fontFamily: "'DM Sans', sans-serif",
-                            fontSize: 11,
-                            padding: '2px 8px',
-                            borderRadius: 4,
-                            border: '1px solid var(--ctw-warning)',
-                            color: 'var(--ctw-warning)',
-                          }}
-                        >
-                          {k}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                {/* Fallback: global mastered/weak when no domain selected */}
+                {!selectedDomain && (
+                  <>
+                    {stats.mastered?.length > 0 && (
+                      <div style={{ marginBottom: 12 }}>
+                        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 6px' }}>
+                          {t('quiz.mastered')}
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {stats.mastered.map((k, i) => (
+                            <span
+                              key={i}
+                              style={{
+                                fontFamily: "'DM Sans', sans-serif",
+                                fontSize: 11,
+                                padding: '2px 8px',
+                                borderRadius: 4,
+                                border: '1px solid var(--ctw-success)',
+                                color: 'var(--ctw-success)',
+                              }}
+                            >
+                              {k}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {stats.weak?.length > 0 && (
+                      <div>
+                        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '0 0 6px' }}>
+                          {t('quiz.weak')}
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {stats.weak.map((k, i) => (
+                            <span
+                              key={i}
+                              style={{
+                                fontFamily: "'DM Sans', sans-serif",
+                                fontSize: 11,
+                                padding: '2px 8px',
+                                borderRadius: 4,
+                                border: '1px solid var(--ctw-warning)',
+                                color: 'var(--ctw-warning)',
+                              }}
+                            >
+                              {k}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {stats.total === 0 && (
