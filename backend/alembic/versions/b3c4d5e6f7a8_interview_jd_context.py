@@ -1,7 +1,7 @@
 """interview_jd_context
 
-Revision ID: a7b8c9d0e1f2
-Revises: f3a1b2c4d5e6
+Revision ID: b3c4d5e6f7a8
+Revises: a7b8c9d0e1f2
 Create Date: 2026-03-22 12:00:00.000000
 
 """
@@ -11,8 +11,8 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision: str = 'a7b8c9d0e1f2'
-down_revision: Union[str, Sequence[str], None] = 'f3a1b2c4d5e6'
+revision: str = 'b3c4d5e6f7a8'
+down_revision: Union[str, Sequence[str], None] = 'a7b8c9d0e1f2'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
