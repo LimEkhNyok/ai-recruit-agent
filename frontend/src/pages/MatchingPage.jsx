@@ -3,7 +3,7 @@ import { message, Button } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
 import MatchCard from '../components/MatchCard'
-import { triggerMatch, getResults } from '../api/matching'
+import { triggerMatch, getResults, analyzeJD } from '../api/matching'
 import useFeatureGuard from '../hooks/useFeatureGuard'
 import useThemeStore from '../store/useThemeStore'
 import { useTranslation } from '../i18n'
@@ -130,6 +130,10 @@ export default function MatchingPage() {
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(true)
   const [rematching, setRematching] = useState(false)
+  const [jdText, setJdText] = useState('')
+  const [jdAnalyzing, setJdAnalyzing] = useState(false)
+  const [jdResult, setJdResult] = useState(null)
+  const [jdExpanded, setJdExpanded] = useState(false)
   const navigate = useNavigate()
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("matching")
   const { markApiUsed } = useThemeStore()
@@ -180,6 +184,24 @@ export default function MatchingPage() {
     } finally {
       setRematching(false)
     }
+  }
+
+  const handleAnalyzeJD = async () => {
+    if (!jdText.trim()) return
+    setJdAnalyzing(true)
+    try {
+      const res = await analyzeJD(jdText.trim())
+      setJdResult(res.data)
+      markApiUsed()
+    } catch (err) {
+      message.error(err.response?.data?.detail || t('matching.jdAnalyzeFailed'))
+    } finally {
+      setJdAnalyzing(false)
+    }
+  }
+
+  const handleJdInterview = () => {
+    navigate('/interview', { state: { jd_context: jdResult } })
   }
 
   if (guardLoading) {
@@ -296,6 +318,216 @@ export default function MatchingPage() {
           >
             {rematching ? t('common.loading') : t('matching.rematch')}
           </button>
+        </div>
+      </FadeIn>
+
+      {/* JD Analysis Section */}
+      <FadeIn delay={0.05}>
+        <div
+          style={{
+            marginBottom: 32,
+            border: '1px solid var(--ctw-border-default)',
+            borderRadius: 12,
+            background: 'var(--ctw-surface-card)',
+            overflow: 'hidden',
+          }}
+        >
+          <button
+            onClick={() => setJdExpanded(!jdExpanded)}
+            className="flex items-center justify-between w-full"
+            style={{
+              padding: '16px 20px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--ctw-text-primary)',
+            }}
+          >
+            <span
+              className="font-display"
+              style={{ fontSize: 15, fontWeight: 600 }}
+            >
+              {t('matching.jdSection')}
+            </span>
+            <span
+              style={{
+                fontSize: 12,
+                color: 'var(--ctw-text-tertiary)',
+                transition: 'transform 200ms',
+                transform: jdExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+              }}
+            >
+              ▼
+            </span>
+          </button>
+
+          {jdExpanded && (
+            <div style={{ padding: '0 20px 20px' }}>
+              <textarea
+                value={jdText}
+                onChange={(e) => setJdText(e.target.value)}
+                placeholder={t('matching.jdPlaceholder')}
+                className="font-body"
+                style={{
+                  width: '100%',
+                  minHeight: 120,
+                  padding: 12,
+                  fontSize: 13,
+                  lineHeight: 1.6,
+                  border: '1px solid var(--ctw-border-default)',
+                  borderRadius: 8,
+                  background: 'var(--ctw-surface-input)',
+                  color: 'var(--ctw-text-primary)',
+                  resize: 'vertical',
+                  outline: 'none',
+                }}
+              />
+              <div className="flex justify-end" style={{ marginTop: 12 }}>
+                <button
+                  onClick={handleAnalyzeJD}
+                  disabled={!jdText.trim() || jdAnalyzing}
+                  className="font-body"
+                  style={{
+                    padding: '8px 20px',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: '#fff',
+                    background: !jdText.trim() || jdAnalyzing ? 'var(--ctw-text-disabled)' : 'var(--ctw-text-primary)',
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: !jdText.trim() || jdAnalyzing ? 'not-allowed' : 'pointer',
+                    transition: 'background 200ms',
+                  }}
+                >
+                  {jdAnalyzing ? t('matching.analyzingJD') : t('matching.analyzeJD')}
+                </button>
+              </div>
+
+              {jdResult && (
+                <div style={{ marginTop: 20 }}>
+                  <h3
+                    className="font-display"
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 600,
+                      color: 'var(--ctw-text-primary)',
+                      marginBottom: 16,
+                    }}
+                  >
+                    {jdResult.title}
+                  </h3>
+
+                  {jdResult.tech_stack?.length > 0 && (
+                    <div style={{ marginBottom: 14 }}>
+                      <span className="font-body" style={{ fontSize: 12, color: 'var(--ctw-text-tertiary)', display: 'block', marginBottom: 6 }}>
+                        {t('matching.jdTechStack')}
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {jdResult.tech_stack.map((s, i) => (
+                          <span
+                            key={i}
+                            className="font-mono"
+                            style={{
+                              fontSize: 12,
+                              padding: '2px 8px',
+                              borderRadius: 4,
+                              background: 'rgba(0, 102, 255, 0.08)',
+                              color: 'var(--ctw-brand)',
+                            }}
+                          >
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {jdResult.key_points?.length > 0 && (
+                    <div style={{ marginBottom: 14 }}>
+                      <span className="font-body" style={{ fontSize: 12, color: 'var(--ctw-text-tertiary)', display: 'block', marginBottom: 6 }}>
+                        {t('matching.jdKeyPoints')}
+                      </span>
+                      <ul style={{ margin: 0, paddingLeft: 18 }}>
+                        {jdResult.key_points.map((s, i) => (
+                          <li key={i} className="font-body" style={{ fontSize: 13, color: 'var(--ctw-text-secondary)', lineHeight: 1.8 }}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {jdResult.requirements?.length > 0 && (
+                    <div style={{ marginBottom: 14 }}>
+                      <span className="font-body" style={{ fontSize: 12, color: 'var(--ctw-text-tertiary)', display: 'block', marginBottom: 6 }}>
+                        {t('matching.jdRequirements')}
+                      </span>
+                      <ul style={{ margin: 0, paddingLeft: 18 }}>
+                        {jdResult.requirements.map((s, i) => (
+                          <li key={i} className="font-body" style={{ fontSize: 13, color: 'var(--ctw-text-secondary)', lineHeight: 1.8 }}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {jdResult.bonus?.length > 0 && (
+                    <div style={{ marginBottom: 14 }}>
+                      <span className="font-body" style={{ fontSize: 12, color: 'var(--ctw-text-tertiary)', display: 'block', marginBottom: 6 }}>
+                        {t('matching.jdBonus')}
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {jdResult.bonus.map((s, i) => (
+                          <span
+                            key={i}
+                            className="font-body"
+                            style={{
+                              fontSize: 12,
+                              padding: '2px 8px',
+                              borderRadius: 4,
+                              background: 'rgba(0, 212, 170, 0.08)',
+                              color: 'var(--ctw-success)',
+                            }}
+                          >
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {jdResult.responsibilities && (
+                    <div style={{ marginBottom: 14 }}>
+                      <span className="font-body" style={{ fontSize: 12, color: 'var(--ctw-text-tertiary)', display: 'block', marginBottom: 6 }}>
+                        {t('matching.jdResponsibilities')}
+                      </span>
+                      <p className="font-body" style={{ fontSize: 13, color: 'var(--ctw-text-secondary)', lineHeight: 1.7, margin: 0 }}>
+                        {jdResult.responsibilities}
+                      </p>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleJdInterview}
+                    className="font-body w-full"
+                    style={{
+                      marginTop: 8,
+                      padding: '10px 0',
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: '#fff',
+                      background: 'var(--ctw-text-primary)',
+                      border: 'none',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      transition: 'opacity 200ms',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
+                    onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+                  >
+                    {t('matching.jdInterview')}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </FadeIn>
 

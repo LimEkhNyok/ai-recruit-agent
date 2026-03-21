@@ -247,7 +247,19 @@
     "personalityFit": "Personality Fit",
     "abilityFit": "Ability Fit",
     "interestFit": "Interest Fit",
-    "valueFit": "Value Fit"
+    "valueFit": "Value Fit",
+    "jdSection": "Paste Target Job Description",
+    "jdPlaceholder": "Paste the target job description (JD) here...",
+    "analyzeJD": "Analyze JD",
+    "analyzingJD": "AI is analyzing...",
+    "jdAnalyzeFailed": "JD analysis failed, please retry",
+    "jdTechStack": "Tech Stack",
+    "jdKeyPoints": "Core Competencies",
+    "jdRequirements": "Requirements",
+    "jdBonus": "Nice-to-have",
+    "jdResponsibilities": "Responsibilities",
+    "jdInterview": "Mock Interview for This Position",
+    "jdDirected": "JD-targeted Interview"
   },
   "career": {
     "title": "My Career Plan",

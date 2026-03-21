@@ -1,7 +1,7 @@
 import client from './client'
 
-export const startInterview = (jobId) =>
-  client.post('/interview/start', { job_id: jobId })
+export const startInterview = (jobId, jdContext) =>
+  client.post('/interview/start', jobId ? { job_id: jobId } : { jd_context: jdContext })
 
 export const endInterview = (interviewId) =>
   client.post('/interview/end', { interview_id: interviewId })

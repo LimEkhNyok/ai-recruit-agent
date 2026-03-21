@@ -252,7 +252,19 @@
     "personalityFit": "性格匹配",
     "abilityFit": "能力匹配",
     "interestFit": "兴趣匹配",
-    "valueFit": "价值观匹配"
+    "valueFit": "价值观匹配",
+    "jdSection": "粘贴目标岗位 JD",
+    "jdPlaceholder": "将目标岗位的 JD（职位描述）粘贴到这里...",
+    "analyzeJD": "分析 JD",
+    "analyzingJD": "AI 正在分析...",
+    "jdAnalyzeFailed": "JD 分析失败，请重试",
+    "jdTechStack": "技术栈",
+    "jdKeyPoints": "核心能力",
+    "jdRequirements": "岗位要求",
+    "jdBonus": "加分项",
+    "jdResponsibilities": "工作职责",
+    "jdInterview": "针对此岗位模拟面试",
+    "jdDirected": "JD 定向面试"
   },
   "career": {
     "title": "我的职业规划",

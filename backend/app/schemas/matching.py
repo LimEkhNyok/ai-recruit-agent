@@ -1,6 +1,19 @@
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+
+class JDAnalyzeRequest(BaseModel):
+    jd_text: str = Field(..., min_length=10, max_length=10000)
+
+
+class JDAnalyzeResponse(BaseModel):
+    title: str
+    tech_stack: list[str]
+    key_points: list[str]
+    requirements: list[str]
+    bonus: list[str]
+    responsibilities: str
 
 
 class MatchResultResponse(BaseModel):
