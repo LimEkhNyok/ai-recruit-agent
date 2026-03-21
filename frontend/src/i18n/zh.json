@@ -170,6 +170,11 @@
     "endFailed": "生成评估报告失败",
     "missingJob": "缺少岗位信息，请从匹配结果中选择岗位",
     "preparing": "正在准备面试...",
+    "recording": "正在录音...",
+    "speechUnavailable": "语音识别不可用，请使用文字输入",
+    "micDenied": "麦克风权限被拒绝，请在浏览器设置中允许",
+    "voiceInput": "语音输入",
+    "stopRecording": "停止录音",
     "report": {
       "title": "面试评估报告",
       "overallScore": "综合评分",

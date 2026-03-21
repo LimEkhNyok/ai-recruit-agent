@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
-import { message } from 'antd'
-import { ArrowUpOutlined, ArrowLeftOutlined, FileTextOutlined } from '@ant-design/icons'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { message, Tooltip } from 'antd'
+import { ArrowUpOutlined, ArrowLeftOutlined, FileTextOutlined, AudioOutlined } from '@ant-design/icons'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import ChatBubble from '../components/ChatBubble'
 import { startInterview, chatStream, endInterview } from '../api/interview'
 import useFeatureGuard from '../hooks/useFeatureGuard'
+import useSpeechRecognition from '../hooks/useSpeechRecognition'
 import useThemeStore from '../store/useThemeStore'
 import { useTranslation } from '../i18n'
 import FadeIn from '../components/motion/FadeIn'
@@ -352,7 +353,61 @@ export default function InterviewPage() {
   const [ending, setEnding] = useState(false)
   const [evaluation, setEvaluation] = useState(null)
   const [showReport, setShowReport] = useState(false)
+  const [recordingTime, setRecordingTime] = useState(0)
   const bottomRef = useRef(null)
+  const lastTranscriptRef = useRef('')
+
+  const handleSpeechError = useCallback((err) => {
+    if (err === 'not-allowed') {
+      message.warning(t('interview.micDenied'))
+    } else {
+      message.warning(t('interview.speechUnavailable'))
+    }
+  }, [t])
+
+  const {
+    isSupported: speechSupported,
+    isListening,
+    transcript,
+    interimTranscript,
+    startListening,
+    stopListening,
+    resetTranscript,
+  } = useSpeechRecognition({ onError: handleSpeechError })
+
+  useEffect(() => {
+    if (!isListening) {
+      setRecordingTime(0)
+      return
+    }
+    const timer = setInterval(() => setRecordingTime((t) => t + 1), 1000)
+    return () => clearInterval(timer)
+  }, [isListening])
+
+  useEffect(() => {
+    if (transcript && transcript !== lastTranscriptRef.current) {
+      const newText = transcript.slice(lastTranscriptRef.current.length)
+      if (newText) {
+        setInput((prev) => prev + newText)
+      }
+      lastTranscriptRef.current = transcript
+    }
+  }, [transcript])
+
+  const toggleListening = useCallback(() => {
+    if (isListening) {
+      stopListening()
+    } else {
+      lastTranscriptRef.current = ''
+      startListening()
+    }
+  }, [isListening, startListening, stopListening])
+
+  const formatRecordingTime = (seconds) => {
+    const m = Math.floor(seconds / 60)
+    const s = seconds % 60
+    return `${m}:${s.toString().padStart(2, '0')}`
+  }
 
   useEffect(() => {
     if (!jobId) {
@@ -388,6 +443,11 @@ export default function InterviewPage() {
     const text = input.trim()
     if (!text || loading || streaming) return
 
+    if (isListening) {
+      stopListening()
+    }
+    lastTranscriptRef.current = ''
+    resetTranscript()
     setInput('')
     setMessages((prev) => [...prev, { role: 'user', content: text }])
     setStreaming(true)
@@ -630,13 +690,35 @@ export default function InterviewPage() {
               background: 'var(--ctw-surface-base)',
             }}
           >
+            {/* Recording indicator */}
+            {isListening && (
+              <div
+                className="flex items-center gap-2"
+                style={{ marginBottom: 8, padding: '0 4px' }}
+              >
+                <div className="recording-dot" />
+                <span className="font-body" style={{ fontSize: 12, color: 'var(--ctw-text-tertiary)' }}>
+                  {t('interview.recording')} {formatRecordingTime(recordingTime)}
+                </span>
+                {interimTranscript && (
+                  <span
+                    className="font-body recording-indicator-interim"
+                    style={{ fontSize: 12, color: 'var(--ctw-text-tertiary)' }}
+                  >
+                    {interimTranscript}
+                  </span>
+                )}
+              </div>
+            )}
+
             <div
               className="flex items-center gap-3"
               style={{
-                border: '1px solid var(--ctw-border-default)',
+                border: `1px solid ${isListening ? 'var(--ctw-error)' : 'var(--ctw-border-default)'}`,
                 borderRadius: 12,
                 padding: '6px 6px 6px 16px',
                 background: 'var(--ctw-surface-card)',
+                transition: 'border-color 200ms',
               }}
             >
               <input
@@ -657,6 +739,27 @@ export default function InterviewPage() {
                   color: 'var(--ctw-text-primary)',
                 }}
               />
+              {speechSupported && (
+                <Tooltip title={isListening ? t('interview.stopRecording') : t('interview.voiceInput')}>
+                  <button
+                    onClick={toggleListening}
+                    disabled={streaming || ending}
+                    className={`mic-btn shrink-0 flex items-center justify-center${isListening ? ' mic-btn-recording' : ''}`}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: '50%',
+                      border: 'none',
+                      background: isListening ? undefined : 'transparent',
+                      color: isListening ? undefined : 'var(--ctw-text-tertiary)',
+                      cursor: streaming || ending ? 'not-allowed' : 'pointer',
+                      transition: 'background 200ms, color 200ms',
+                    }}
+                  >
+                    <AudioOutlined style={{ fontSize: 16 }} />
+                  </button>
+                </Tooltip>
+              )}
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || streaming}
