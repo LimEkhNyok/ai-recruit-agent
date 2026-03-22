@@ -313,6 +313,278 @@
       ]
     },
     {
+      "id": "os",
+      "name": "操作系统",
+      "type": "general",
+      "icon": "DesktopOutlined",
+      "topics": [
+        {
+          "id": "os_process_thread",
+          "name": "进程与线程",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["进程调度", "进程同步与互斥"],
+          "description": "进程是资源分配的基本单位，线程是 CPU 调度的基本单位，同一进程内的线程共享地址空间",
+          "typical_approach": "进程 vs 线程 → 进程状态转换（就绪/运行/阻塞）→ PCB 结构 → 协程 → 僵尸进程与孤儿进程"
+        },
+        {
+          "id": "os_scheduling",
+          "name": "进程调度算法",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["进程与线程"],
+          "description": "决定哪个就绪进程获得 CPU 的策略，包括抢占式和非抢占式两大类",
+          "typical_approach": "FCFS → SJF/SRTN → 最高响应比优先 → 时间片轮转 → 优先级调度 → 多级反馈队列"
+        },
+        {
+          "id": "os_sync",
+          "name": "进程同步与互斥",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["进程与线程", "死锁"],
+          "description": "通过信号量、互斥量、管程等机制协调进程对共享资源的访问",
+          "typical_approach": "临界区 → PV 操作（信号量）→ 互斥量 → 管程 → 经典问题（生产者-消费者/读者-写者/哲学家进餐）"
+        },
+        {
+          "id": "os_ipc",
+          "name": "进程间通信",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["进程与线程"],
+          "description": "不同进程之间交换数据的机制，包括管道、消息队列、共享内存、信号、Socket 等",
+          "typical_approach": "管道（匿名/命名）→ 消息队列 → 共享内存（最快）→ 信号 → Socket（可跨网络）→ 各方式对比"
+        },
+        {
+          "id": "os_deadlock",
+          "name": "死锁",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["进程同步与互斥"],
+          "description": "多个进程互相等待对方持有的资源而无法推进，需同时满足四个必要条件",
+          "typical_approach": "四个必要条件 → 死锁预防（破坏条件）→ 死锁避免（银行家算法）→ 死锁检测与恢复 → 鸵鸟策略"
+        },
+        {
+          "id": "os_memory",
+          "name": "内存管理",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["虚拟内存"],
+          "description": "操作系统对内存的分配与管理策略，包括连续分配、分页、分段、段页式等",
+          "typical_approach": "连续分配（首次/最佳/最坏适应）→ 分页（页表/地址转换）→ 分段 → 段页式 → 分页与分段的区别 → 快表 TLB → 多级页表"
+        },
+        {
+          "id": "os_virtual_memory",
+          "name": "虚拟内存与页面置换",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["内存管理"],
+          "description": "基于局部性原理将物理内存扩展为更大的逻辑地址空间，按需调页并在内存不足时置换页面",
+          "typical_approach": "局部性原理 → 缺页中断处理 → OPT（最优）→ FIFO（Belady 异常）→ LRU → Clock 算法 → 工作集模型"
+        },
+        {
+          "id": "os_filesystem",
+          "name": "文件系统",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["内存管理"],
+          "description": "文件的组织、存储、管理方式，包括目录结构、磁盘分配和空闲空间管理",
+          "typical_approach": "文件逻辑/物理结构 → 目录结构 → inode → 磁盘分配（连续/链接/索引）→ 空闲管理（位图/链表）→ 硬链接 vs 软链接"
+        },
+        {
+          "id": "os_io",
+          "name": "I/O 管理",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["文件系统"],
+          "description": "操作系统管理输入输出设备的方式，包括 I/O 控制方式和磁盘调度算法",
+          "typical_approach": "程序查询 → 中断驱动 → DMA → 通道 → 磁盘调度（FCFS/SSTF/SCAN）→ 磁盘读写时间计算"
+        },
+        {
+          "id": "os_io_model",
+          "name": "I/O 模型与多路复用",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["I/O 管理", "进程与线程"],
+          "description": "五种 I/O 模型（阻塞/非阻塞/多路复用/信号驱动/异步）和 select/poll/epoll 的区别",
+          "typical_approach": "同步 vs 异步 → 阻塞 vs 非阻塞 → select（1024限制）→ poll（无限制但遍历）→ epoll（红黑树+回调）→ LT vs ET 触发模式"
+        },
+        {
+          "id": "os_kernel",
+          "name": "用户态与内核态",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["进程与线程", "I/O 管理"],
+          "description": "用户态权限受限运行应用程序，内核态可执行特权指令，通过系统调用切换",
+          "typical_approach": "用户态 vs 内核态 → 切换时机（系统调用/中断/异常）→ 系统调用分类 → 中断与异常的区别"
+        }
+      ]
+    },
+    {
+      "id": "network",
+      "name": "计算机网络",
+      "type": "general",
+      "icon": "GlobalOutlined",
+      "topics": [
+        {
+          "id": "net_layers",
+          "name": "网络分层模型",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["TCP 协议", "IP 协议与路由"],
+          "description": "OSI 七层、TCP/IP 四层、五层协议模型，定义了网络通信的层次结构和各层职责",
+          "typical_approach": "OSI 七层 → TCP/IP 四层 → 五层模型 → 各层功能与协议 → 封装与解封装 → 电路交换 vs 分组交换"
+        },
+        {
+          "id": "net_tcp",
+          "name": "TCP 协议",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["UDP 协议", "网络分层模型"],
+          "description": "面向连接的可靠传输协议，通过三次握手建立连接、四次挥手释放连接，提供流量控制和拥塞控制",
+          "typical_approach": "三次握手 → 四次挥手 → TIME_WAIT(2MSL) → 滑动窗口 → 流量控制(rwnd) → 拥塞控制(慢开始/拥塞避免/快重传/快恢复) → 粘包问题"
+        },
+        {
+          "id": "net_udp",
+          "name": "UDP 协议",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["TCP 协议"],
+          "description": "无连接的不可靠传输协议，首部仅 8 字节，适用于实时应用和广播场景",
+          "typical_approach": "UDP 特点 → 首部格式 → TCP vs UDP 全面对比 → 适用场景（DNS/视频/游戏）→ 基于 UDP 的可靠传输（QUIC）"
+        },
+        {
+          "id": "net_http",
+          "name": "HTTP/HTTPS",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["TCP 协议", "网络安全"],
+          "description": "超文本传输协议及其安全版本，涵盖请求方法、状态码、缓存机制和 TLS 加密",
+          "typical_approach": "请求/响应报文 → GET vs POST → 状态码(2xx/3xx/4xx/5xx) → Cookie/Session → 缓存(强缓存/协商缓存) → HTTPS(TLS握手) → HTTP/2 多路复用 → HTTP/3 QUIC"
+        },
+        {
+          "id": "net_dns",
+          "name": "DNS",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["HTTP/HTTPS", "IP 协议与路由"],
+          "description": "域名系统，将域名递归/迭代解析为 IP 地址的分布式数据库",
+          "typical_approach": "域名层次结构 → 递归查询 vs 迭代查询 → 解析完整流程 → DNS 缓存 → 为什么用 UDP → DNS 劫持与 DNSSEC"
+        },
+        {
+          "id": "net_ip",
+          "name": "IP 协议与路由",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["网络分层模型", "数据链路层"],
+          "description": "网络层核心协议，负责数据报寻址和路由转发，包括 IP 编址、子网划分和路由选择",
+          "typical_approach": "IP 数据报格式 → IP 地址分类 → 子网划分与子网掩码 → CIDR → ARP 协议 → ICMP(Ping/Traceroute) → NAT → 路由协议(RIP/OSPF/BGP)"
+        },
+        {
+          "id": "net_data_link",
+          "name": "数据链路层",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["网络分层模型", "IP 协议与路由"],
+          "description": "负责相邻节点间的可靠帧传输，包括封装成帧、差错检测和介质访问控制",
+          "typical_approach": "封装成帧 → 透明传输 → CRC 差错检测 → MAC 地址 → CSMA/CD → 以太网 → 交换机(自学习) → VLAN → 信道复用"
+        },
+        {
+          "id": "net_socket",
+          "name": "Socket 编程",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["TCP 协议", "UDP 协议"],
+          "description": "应用层与传输层之间的编程接口，实现网络通信的基础 API",
+          "typical_approach": "TCP Socket 流程(socket→bind→listen→accept→read/write→close) → UDP Socket → 五种 I/O 模型 → select/poll/epoll 对比"
+        },
+        {
+          "id": "net_security",
+          "name": "网络安全",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["HTTP/HTTPS"],
+          "description": "网络通信中的加密、认证和攻击防御技术",
+          "typical_approach": "对称加密(AES) vs 非对称加密(RSA) → 数字签名 → CA 证书 → TLS/SSL 协议 → 中间人攻击 → ARP 欺骗 → DNS 劫持"
+        },
+        {
+          "id": "net_comprehensive",
+          "name": "从 URL 输入到页面显示",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["DNS", "TCP 协议", "HTTP/HTTPS"],
+          "description": "串联网络各层知识的经典综合题，面试出现率极高",
+          "typical_approach": "URL 解析 → DNS 解析 → TCP 三次握手 → TLS 握手 → HTTP 请求 → 服务器处理 → 响应返回 → 浏览器渲染"
+        }
+      ]
+    },
+    {
+      "id": "computer_org",
+      "name": "计算机组成原理",
+      "type": "general",
+      "icon": "BuildOutlined",
+      "topics": [
+        {
+          "id": "co_data_repr",
+          "name": "数据的表示与运算",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["浮点数与 IEEE 754"],
+          "description": "计算机中数值的编码方式，包括原码、反码、补码、移码，以及定点数的加减乘除运算",
+          "typical_approach": "进制转换 → 原码/反码/补码/移码 → 补码表示范围 → 补码加减运算 → 溢出判断(OF/SF/CF/ZF) → 原码/补码乘除法"
+        },
+        {
+          "id": "co_float",
+          "name": "浮点数与 IEEE 754",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["数据的表示与运算"],
+          "description": "IEEE 754 标准的浮点数表示（符号位+阶码+尾数），以及浮点数加减运算步骤",
+          "typical_approach": "单精度/双精度格式 → 浮点数与真值互转 → 浮点加减运算(对阶→尾数运算→规格化→舍入→溢出判断) → 特殊值(±∞/NaN)"
+        },
+        {
+          "id": "co_instruction",
+          "name": "指令系统与寻址方式",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["CPU 结构与指令执行"],
+          "description": "指令的格式设计和操作数的寻址方式，是理解 CPU 工作原理的基础",
+          "typical_approach": "指令格式(操作码+地址码) → 定长/扩展操作码 → 九种寻址方式(立即/直接/间接/寄存器/基址/变址/相对等) → 大小端存放 → CISC vs RISC"
+        },
+        {
+          "id": "co_cpu",
+          "name": "CPU 结构与指令执行",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["指令系统与寻址方式", "指令流水线"],
+          "description": "CPU 由运算器和控制器构成，指令执行经历取指、译码、执行、访存、写回五个阶段",
+          "typical_approach": "CPU 组成(ALU/CU/寄存器) → 指令执行微操作 → 数据通路分析 → 硬布线控制器 → 微程序控制器 → 微指令编码方式"
+        },
+        {
+          "id": "co_pipeline",
+          "name": "指令流水线",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["CPU 结构与指令执行"],
+          "description": "将指令执行分为多个阶段并行处理以提高吞吐率，需要解决三类冒险问题",
+          "typical_approach": "流水线基本概念 → 加速比计算 → 时空图 → 结构冒险 → 数据冒险(数据旁路/转发) → 控制冒险(分支预测) → 超标量/动态流水线"
+        },
+        {
+          "id": "co_storage",
+          "name": "存储系统层次结构",
+          "difficulty_levels": ["简单", "中等", "困难"],
+          "related_topics": ["Cache", "虚拟存储器"],
+          "description": "寄存器→Cache→主存→辅存的多级存储体系，速度递减、容量递增",
+          "typical_approach": "存储层次 → SRAM vs DRAM → DRAM 刷新 → 主存与 CPU 连接 → 存储芯片扩展(字扩展/位扩展) → 多模块存储器(交叉编址)"
+        },
+        {
+          "id": "co_cache",
+          "name": "Cache",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["存储系统层次结构"],
+          "description": "利用局部性原理在 CPU 与主存之间加入的高速缓冲存储器，几乎每年必考",
+          "typical_approach": "局部性原理 → 映射方式(直接/全相联/组相联) → 替换算法(LRU/FIFO/随机) → 写策略(写回/写直达) → 命中率与平均访问时间计算"
+        },
+        {
+          "id": "co_virtual_storage",
+          "name": "虚拟存储器",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["Cache", "存储系统层次结构"],
+          "description": "将主存和辅存统一管理，通过页表实现虚拟地址到物理地址的转换",
+          "typical_approach": "页式虚拟存储 → 页表与 TLB → 地址转换过程 → TLB+Cache+页表联合查找 → 段式/段页式 → 与 Cache 的对比"
+        },
+        {
+          "id": "co_bus",
+          "name": "总线",
+          "difficulty_levels": ["简单", "中等"],
+          "related_topics": ["CPU 结构与指令执行", "I/O 系统"],
+          "description": "连接 CPU、内存和 I/O 设备的公共信息传送通道",
+          "typical_approach": "总线分类(数据/地址/控制) → 性能指标(带宽计算) → 单/双/三总线结构 → 总线仲裁(链式/计数器/独立请求) → 同步 vs 异步定时"
+        },
+        {
+          "id": "co_io",
+          "name": "I/O 系统（中断/DMA）",
+          "difficulty_levels": ["中等", "困难"],
+          "related_topics": ["总线", "CPU 结构与指令执行"],
+          "description": "CPU 与外设之间的数据传输方式，从程序查询到 DMA 再到通道，CPU 参与度逐步降低",
+          "typical_approach": "I/O 接口功能 → 程序查询 → 中断方式(响应流程/优先级/屏蔽字) → DMA(传送过程/三种方式) → 通道 → 四种 I/O 方式综合对比"
+        }
+      ]
+    },
+    {
       "id": "cs_fundamentals",
       "name": "计算机基础",
       "type": "general",
