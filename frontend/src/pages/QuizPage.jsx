@@ -697,65 +697,15 @@ export default function QuizPage() {
                       </p>
                     </div>
 
-                    {/* Result actions: primary action changes based on correct/incorrect */}
+                    {/* Result action: 答对出新题，答错举一反三 */}
                     <div className="flex items-center gap-3">
-                      {result.is_correct ? (
-                        <>
-                          <Button type="primary" onClick={handleNext}>
-                            {t('quiz.next')}
-                          </Button>
-                          <button
-                            onClick={() => handleVariant(true)}
-                            disabled={variantGenerating}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              fontFamily: "'DM Sans', sans-serif",
-                              fontSize: 13,
-                              color: 'var(--ctw-text-tertiary)',
-                              cursor: variantGenerating ? 'default' : 'pointer',
-                              textDecoration: 'underline',
-                              textUnderlineOffset: 3,
-                              padding: 0,
-                              opacity: variantGenerating ? 0.5 : 1,
-                              transition: 'color 0.2s',
-                            }}
-                            onMouseEnter={(e) => { if (!variantGenerating) e.currentTarget.style.color = '#0066FF' }}
-                            onMouseLeave={(e) => { if (!variantGenerating) e.currentTarget.style.color = 'var(--ctw-text-tertiary)' }}
-                          >
-                            {variantGenerating ? '...' : t('quiz.variantDeepen')}
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <Button
-                            type="primary"
-                            onClick={() => handleVariant(false)}
-                            loading={variantGenerating}
-                          >
-                            {t('quiz.variant')}
-                          </Button>
-                          <button
-                            onClick={handleNext}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              fontFamily: "'DM Sans', sans-serif",
-                              fontSize: 13,
-                              color: 'var(--ctw-text-tertiary)',
-                              cursor: 'pointer',
-                              textDecoration: 'underline',
-                              textUnderlineOffset: 3,
-                              padding: 0,
-                              transition: 'color 0.2s',
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--ctw-text-secondary)' }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--ctw-text-tertiary)' }}
-                          >
-                            {t('quiz.next')}
-                          </button>
-                        </>
-                      )}
+                      <Button
+                        type="primary"
+                        onClick={result.is_correct ? handleNext : () => handleVariant(false)}
+                        loading={result.is_correct ? generating : variantGenerating}
+                      >
+                        {t('quiz.next')}
+                      </Button>
                     </div>
                   </div>
                 )}
