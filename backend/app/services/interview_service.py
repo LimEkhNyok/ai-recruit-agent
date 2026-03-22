@@ -227,14 +227,48 @@ async def end_interview(interview_id: int, db: AsyncSession, model_service: Mode
     lang = model_service.language
     history: list[dict] = list(interview.chat_history) if interview.chat_history else []
 
-    # Review ALL unreviewed user messages before generating evaluation
-    unreviewed = [i for i, msg in enumerate(history) if msg.get("role") == "user" and not msg.get("review")]
-    if unreviewed:
-        job_info = _get_job_info(interview)
-        for idx in unreviewed:
-            await _review_last_answer(interview_id, idx, job_info, lang, model_service)
-        await db.refresh(interview)
-        history = list(interview.chat_history) if interview.chat_history else []
+    # Review ALL unreviewed user messages inline before generating evaluation
+    review_system = (
+        "You are a professional interview coach. Output the review in JSON format."
+        if lang == "en"
+        else "你是一位专业的面试辅导教练。请以 JSON 格式输出点评。"
+    )
+    job_info = _get_job_info(interview)
+    updated = False
+    for i, msg in enumerate(history):
+        if msg.get("role") != "user" or msg.get("review"):
+            continue
+        candidate_answer = msg["parts"][0]["text"]
+        interviewer_question = ""
+        if i > 0 and history[i - 1]["role"] == "model":
+            interviewer_question = history[i - 1]["parts"][0]["text"]
+        context_start = max(0, i - 4)
+        context_msgs = history[context_start:i]
+        context_text = ""
+        for m in context_msgs:
+            role_label = "Candidate" if m["role"] == "user" else "Interviewer"
+            context_text += f"{role_label}: {m['parts'][0]['text']}\n"
+        prompt = get_review_prompt(lang).replace(
+            "{job_info}", job_info
+        ).replace(
+            "{interviewer_question}", interviewer_question
+        ).replace(
+            "{candidate_answer}", candidate_answer
+        ).replace(
+            "{context}", context_text or "N/A"
+        )
+        try:
+            review = await model_service.generate_json(
+                system_prompt=review_system,
+                content=prompt,
+            )
+            history[i]["review"] = review
+            updated = True
+        except Exception:
+            logger.exception("Review failed for interview %s msg %s", interview_id, i)
+    if updated:
+        interview.chat_history = history
+        await db.commit()
 
     dialogue_text = ""
     for msg in history:
