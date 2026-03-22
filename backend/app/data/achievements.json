@@ -154,6 +154,28 @@
           "icon": "⚔️",
           "rarity": "epic",
           "condition": { "type": "quiz_hard_correct", "value": 10 }
+        },
+        {
+          "id": "mastery_40",
+          "name": "登堂入室",
+          "name_en": "Getting There",
+          "description": "任意知识点掌握度达到 40%",
+          "description_en": "Reach 40% mastery on any knowledge point",
+          "icon": "🚪",
+          "rarity": "common",
+          "condition": { "type": "mastery_40", "value": 1 },
+          "counter": true
+        },
+        {
+          "id": "mastery_70",
+          "name": "百尺竿头",
+          "name_en": "Climbing Higher",
+          "description": "任意知识点掌握度达到 70%",
+          "description_en": "Reach 70% mastery on any knowledge point",
+          "icon": "🏔️",
+          "rarity": "rare",
+          "condition": { "type": "mastery_70", "value": 1 },
+          "counter": true
         }
       ]
     },
@@ -352,28 +374,6 @@
           "icon": "📅",
           "rarity": "epic",
           "condition": { "type": "daily_streak", "value": 7 }
-        },
-        {
-          "id": "mastery_40",
-          "name": "登堂入室",
-          "name_en": "Getting There",
-          "description": "任意知识点掌握度达到 40%",
-          "description_en": "Reach 40% mastery on any knowledge point",
-          "icon": "🚪",
-          "rarity": "common",
-          "condition": { "type": "mastery_40", "value": 1 },
-          "counter": true
-        },
-        {
-          "id": "mastery_70",
-          "name": "百尺竿头",
-          "name_en": "Climbing Higher",
-          "description": "任意知识点掌握度达到 70%",
-          "description_en": "Reach 70% mastery on any knowledge point",
-          "icon": "🏔️",
-          "rarity": "rare",
-          "condition": { "type": "mastery_70", "value": 1 },
-          "counter": true
         }
       ]
     }
