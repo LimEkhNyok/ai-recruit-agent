@@ -66,6 +66,16 @@
           "condition": { "type": "quiz_streak", "value": 10 }
         },
         {
+          "id": "quiz_hard_10",
+          "name": "攻坚克难",
+          "name_en": "Challenge Accepted",
+          "description": "在任意知识点答对 10 道「困难」难度的题",
+          "description_en": "Answer 10 hard-difficulty questions correctly on any knowledge point",
+          "icon": "⚔️",
+          "rarity": "epic",
+          "condition": { "type": "quiz_hard_correct", "value": 10 }
+        },
+        {
           "id": "mastery_40",
           "name": "登堂入室",
           "name_en": "Getting There",
@@ -146,16 +156,6 @@
           "icon": "👑",
           "rarity": "legendary",
           "condition": { "type": "quiz_domain_mastered", "value": 8 }
-        },
-        {
-          "id": "quiz_hard_10",
-          "name": "攻坚克难",
-          "name_en": "Challenge Accepted",
-          "description": "在任意知识点答对 10 道「困难」难度的题",
-          "description_en": "Answer 10 hard-difficulty questions correctly on any knowledge point",
-          "icon": "⚔️",
-          "rarity": "epic",
-          "condition": { "type": "quiz_hard_correct", "value": 10 }
         }
       ]
     },
