@@ -128,7 +128,8 @@ function EmptyState({ text }) {
 
 export default function MatchingPage() {
   const [results, setResults] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [matching, setMatching] = useState(false)
   const [rematching, setRematching] = useState(false)
   const [jdText, setJdText] = useState('')
   const [jdAnalyzing, setJdAnalyzing] = useState(false)
@@ -142,6 +143,7 @@ export default function MatchingPage() {
   useEffect(() => {
     let ignore = false
     const load = async () => {
+      setLoading(true)
       try {
         const cached = await getResults()
         if (!ignore && cached.data.results && cached.data.results.length > 0) {
@@ -152,6 +154,7 @@ export default function MatchingPage() {
       } catch {}
 
       if (ignore) return
+      setMatching(true)
       try {
         const res = await triggerMatch()
         if (!ignore) {
@@ -161,7 +164,10 @@ export default function MatchingPage() {
       } catch (err) {
         if (!ignore) message.error(err.response?.data?.detail || t('matching.matchFailed'))
       } finally {
-        if (!ignore) setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+          setMatching(false)
+        }
       }
     }
     load()
@@ -252,13 +258,17 @@ export default function MatchingPage() {
     )
   }
 
-  if (loading) {
+  if (matching) {
     return (
       <LoadingCursor
         title={t('matching.analyzing')}
         subtitle={t('matching.analyzingSubtitle')}
       />
     )
+  }
+
+  if (loading) {
+    return <LoadingCursor />
   }
 
   if (!results || results.length === 0) {
