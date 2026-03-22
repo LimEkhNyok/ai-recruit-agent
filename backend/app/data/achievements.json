@@ -73,7 +73,8 @@
           "description_en": "Answer 10 hard-difficulty questions correctly on any knowledge point",
           "icon": "⚔️",
           "rarity": "epic",
-          "condition": { "type": "quiz_hard_correct", "value": 10 }
+          "condition": { "type": "quiz_hard_correct", "value": 10 },
+          "counter": true
         },
         {
           "id": "mastery_40",
@@ -141,21 +142,23 @@
           "id": "quiz_domain_mastered_5",
           "name": "出类拔萃",
           "name_en": "Domain Expert",
-          "description": "某个领域下完全掌握 ≥5 个知识点",
-          "description_en": "Fully master 5+ knowledge points in one domain",
+          "description": "任意领域下完全掌握 ≥5 个知识点",
+          "description_en": "Fully master 5+ knowledge points in any domain",
           "icon": "🏅",
           "rarity": "epic",
-          "condition": { "type": "quiz_domain_mastered", "value": 5 }
+          "condition": { "type": "quiz_domain_mastered", "value": 5 },
+          "counter": true
         },
         {
           "id": "quiz_domain_mastered_8",
           "name": "才高八斗",
           "name_en": "Domain Master",
-          "description": "某个领域下完全掌握 ≥8 个知识点，或全部掌握",
-          "description_en": "Fully master 8+ knowledge points in one domain, or all of them",
+          "description": "任意领域下完全掌握 ≥8 个知识点，或全部掌握",
+          "description_en": "Fully master 8+ knowledge points in any domain, or all of them",
           "icon": "👑",
           "rarity": "legendary",
-          "condition": { "type": "quiz_domain_mastered", "value": 8 }
+          "condition": { "type": "quiz_domain_mastered", "value": 8 },
+          "counter": true
         }
       ]
     },

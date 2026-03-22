@@ -65,6 +65,7 @@ async def _collect_stats(user_id: int, db: AsyncSession) -> dict:
         .group_by(QuizRecord.knowledge_point)
     )).all()
     stats["quiz_hard_correct"] = max((r[1] or 0 for r in hard_rows), default=0)
+    stats["quiz_hard_correct_count"] = sum(1 for r in hard_rows if (r[1] or 0) >= 10)
 
     # Quiz distinct domains
     row = (await db.execute(
@@ -129,6 +130,8 @@ async def _collect_stats(user_id: int, db: AsyncSession) -> dict:
         if r[2] >= 100:
             domain_mastered[r[0]] = domain_mastered.get(r[0], 0) + 1
     stats["quiz_domain_mastered_max"] = max(domain_mastered.values()) if domain_mastered else 0
+    stats["quiz_domain_mastered_5_count"] = sum(1 for v in domain_mastered.values() if v >= 5)
+    stats["quiz_domain_mastered_8_count"] = sum(1 for v in domain_mastered.values() if v >= 8)
 
     # --- Interview stats ---
     interview_rows = (await db.execute(
@@ -206,12 +209,29 @@ def _check_condition(condition: dict, stats: dict) -> bool:
     return stat_value >= value
 
 
+_COUNTER_STAT_KEYS = {
+    "mastery_40": "mastery_40",
+    "mastery_70": "mastery_70",
+    "quiz_hard_correct": "quiz_hard_correct_count",
+    "quiz_domain_mastered": None,  # resolved dynamically by value
+}
+
+
+def _get_counter_value(ctype: str, value: int, stats: dict) -> int:
+    if ctype == "quiz_domain_mastered":
+        if value >= 8:
+            return stats.get("quiz_domain_mastered_8_count", 0)
+        return stats.get("quiz_domain_mastered_5_count", 0)
+    key = _COUNTER_STAT_KEYS.get(ctype, ctype)
+    return stats.get(key, 0)
+
+
 def _get_progress(condition: dict, stats: dict, is_counter: bool) -> tuple[Optional[dict], Optional[int]]:
     ctype = condition["type"]
     value = condition["value"]
 
     if is_counter:
-        counter_value = stats.get(ctype, 0)
+        counter_value = _get_counter_value(ctype, value, stats)
         return None, counter_value
 
     if ctype == "quiz_domain_mastered":
