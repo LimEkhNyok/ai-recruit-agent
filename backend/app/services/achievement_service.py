@@ -67,6 +67,51 @@ async def _collect_stats(user_id: int, db: AsyncSession) -> dict:
     stats["quiz_hard_correct"] = max((r[1] or 0 for r in hard_rows), default=0)
     stats["quiz_hard_correct_count"] = sum(1 for r in hard_rows if (r[1] or 0) >= 10)
 
+    # Coding questions correct
+    row = (await db.execute(
+        select(sa_func.count())
+        .where(and_(
+            QuizRecord.user_id == user_id,
+            QuizRecord.question_type == "编程题",
+            QuizRecord.is_correct == True,
+        ))
+    )).scalar()
+    stats["quiz_coding_total"] = row or 0
+
+    # Coding hard correct
+    row = (await db.execute(
+        select(sa_func.count())
+        .where(and_(
+            QuizRecord.user_id == user_id,
+            QuizRecord.question_type == "编程题",
+            QuizRecord.difficulty == "困难",
+            QuizRecord.is_correct == True,
+        ))
+    )).scalar()
+    stats["quiz_coding_hard"] = row or 0
+
+    # Night owl: correct answers between 23:00-01:00
+    row = (await db.execute(
+        select(sa_func.count())
+        .where(and_(
+            QuizRecord.user_id == user_id,
+            QuizRecord.is_correct == True,
+            sa_func.hour(QuizRecord.created_at).in_([23, 0]),
+        ))
+    )).scalar()
+    stats["quiz_night_owl"] = row or 0
+
+    # Early bird: correct answers between 05:00-07:00
+    row = (await db.execute(
+        select(sa_func.count())
+        .where(and_(
+            QuizRecord.user_id == user_id,
+            QuizRecord.is_correct == True,
+            sa_func.hour(QuizRecord.created_at).in_([5, 6]),
+        ))
+    )).scalar()
+    stats["quiz_early_bird"] = row or 0
+
     # Quiz distinct domains
     row = (await db.execute(
         select(sa_func.count(distinct(QuizRecord.topic)))
@@ -145,6 +190,7 @@ async def _collect_stats(user_id: int, db: AsyncSession) -> dict:
     max_score = 0
     max_communication = 0
     max_professional = 0
+    max_problem_solving = 0
     recommended_count = 0
     for row in interview_rows:
         ev = row[0]
@@ -161,11 +207,15 @@ async def _collect_stats(user_id: int, db: AsyncSession) -> dict:
         prof = dims.get("professional_skill", {})
         if isinstance(prof, dict):
             max_professional = max(max_professional, prof.get("score", 0) or 0)
+        ps = dims.get("problem_solving", {})
+        if isinstance(ps, dict):
+            max_problem_solving = max(max_problem_solving, ps.get("score", 0) or 0)
 
     stats["interview_score"] = max_score
     stats["interview_recommended"] = recommended_count
     stats["interview_communication"] = max_communication
     stats["interview_professional"] = max_professional
+    stats["interview_problem_solving"] = max_problem_solving
 
     # --- Match stats ---
     match_rows = (await db.execute(

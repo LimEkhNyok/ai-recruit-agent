@@ -46,6 +46,36 @@
           "condition": { "type": "quiz_total", "value": 100 }
         },
         {
+          "id": "quiz_coding_first",
+          "name": "一码当先",
+          "name_en": "First Code",
+          "description": "完成第 1 道编程题",
+          "description_en": "Complete your first coding question",
+          "icon": "💻",
+          "rarity": "common",
+          "condition": { "type": "quiz_coding_total", "value": 1 }
+        },
+        {
+          "id": "quiz_coding_20",
+          "name": "老码识途",
+          "name_en": "Code Veteran",
+          "description": "累计答对 20 道编程题",
+          "description_en": "Answer 20 coding questions correctly",
+          "icon": "⌨️",
+          "rarity": "epic",
+          "condition": { "type": "quiz_coding_total", "value": 20 }
+        },
+        {
+          "id": "quiz_coding_hard_10",
+          "name": "码到工成",
+          "name_en": "Code Master",
+          "description": "累计答对 10 道「困难」难度的编程题",
+          "description_en": "Answer 10 hard-difficulty coding questions correctly",
+          "icon": "🏗️",
+          "rarity": "legendary",
+          "condition": { "type": "quiz_coding_hard", "value": 10 }
+        },
+        {
           "id": "quiz_streak_5",
           "name": "步步为营",
           "name_en": "On a Roll",
@@ -266,6 +296,16 @@
           "icon": "🔧",
           "rarity": "epic",
           "condition": { "type": "interview_professional", "value": 90 }
+        },
+        {
+          "id": "interview_problem_solving_90",
+          "name": "迎刃而解",
+          "name_en": "Problem Solver",
+          "description": "面试问题解决能力维度评分 ≥ 90 分",
+          "description_en": "Score 90+ in problem solving",
+          "icon": "🧩",
+          "rarity": "epic",
+          "condition": { "type": "interview_problem_solving", "value": 90 }
         }
       ]
     },
@@ -357,6 +397,33 @@
           "icon": "📅",
           "rarity": "epic",
           "condition": { "type": "daily_streak", "value": 7 }
+        }
+      ]
+    },
+    {
+      "id": "hidden",
+      "name": "隐藏成就",
+      "name_en": "Hidden Achievements",
+      "achievements": [
+        {
+          "id": "night_owl",
+          "name": "夜猫子",
+          "name_en": "Night Owl",
+          "description": "在晚上 23:00 ~ 凌晨 1:00 答对 10 道题",
+          "description_en": "Answer 10 questions correctly between 11 PM and 1 AM",
+          "icon": "🦉",
+          "rarity": "rare",
+          "condition": { "type": "quiz_night_owl", "value": 10 }
+        },
+        {
+          "id": "early_bird",
+          "name": "闻鸡起舞",
+          "name_en": "Early Bird",
+          "description": "在早上 5:00 ~ 7:00 答对 10 道题",
+          "description_en": "Answer 10 questions correctly between 5 AM and 7 AM",
+          "icon": "🐓",
+          "rarity": "rare",
+          "condition": { "type": "quiz_early_bird", "value": 10 }
         }
       ]
     }
