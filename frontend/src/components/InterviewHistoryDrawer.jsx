@@ -5,7 +5,6 @@ import {
   RedoOutlined,
   FileTextOutlined,
   MessageOutlined,
-  ArrowLeftOutlined,
   CheckCircleFilled,
   ClockCircleFilled,
   TagOutlined,
@@ -273,19 +272,69 @@ function InterviewReviewView({ chatHistory, t }) {
   )
 }
 
+function FullScreenModal({ open, onClose, title, children }) {
+  if (!open) return null
+  return (
+    <div
+      className="fixed inset-0 z-[1100] flex items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative overflow-y-auto"
+        style={{
+          width: 640,
+          maxWidth: '90vw',
+          maxHeight: '85vh',
+          background: 'var(--ctw-surface-card)',
+          borderRadius: 16,
+          padding: 32,
+        }}
+      >
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: 16,
+            right: 16,
+            background: 'none',
+            border: 'none',
+            fontSize: 20,
+            color: 'var(--ctw-text-tertiary)',
+            cursor: 'pointer',
+            lineHeight: 1,
+          }}
+        >
+          &times;
+        </button>
+        {title && (
+          <h2
+            className="font-display text-center"
+            style={{ fontSize: 18, fontWeight: 600, color: 'var(--ctw-text-primary)', marginBottom: 24 }}
+          >
+            {title}
+          </h2>
+        )}
+        {children}
+      </div>
+    </div>
+  )
+}
+
 export default function InterviewHistoryDrawer({ open, onClose, onReinterview, t }) {
   const [historyList, setHistoryList] = useState([])
   const [loading, setLoading] = useState(false)
-  const [view, setView] = useState('list') // list | evaluation | review
   const [selectedItem, setSelectedItem] = useState(null)
+  const [modalType, setModalType] = useState(null) // null | 'evaluation' | 'review'
   const [detailData, setDetailData] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
 
   useEffect(() => {
     if (open) {
       loadHistory()
-      setView('list')
       setSelectedItem(null)
+      setModalType(null)
     }
   }, [open])
 
@@ -313,13 +362,13 @@ export default function InterviewHistoryDrawer({ open, onClose, onReinterview, t
 
   const handleViewResult = (item) => {
     setSelectedItem(item)
-    setView('evaluation')
+    setModalType('evaluation')
   }
 
   const handleViewReview = async (item) => {
     setSelectedItem(item)
     setDetailLoading(true)
-    setView('review')
+    setModalType('review')
     try {
       const res = await getInterviewDetail(item.id)
       setDetailData(res.data)
@@ -328,6 +377,12 @@ export default function InterviewHistoryDrawer({ open, onClose, onReinterview, t
     } finally {
       setDetailLoading(false)
     }
+  }
+
+  const closeModal = () => {
+    setModalType(null)
+    setSelectedItem(null)
+    setDetailData(null)
   }
 
   const handleReinterview = (item) => {
@@ -341,47 +396,16 @@ export default function InterviewHistoryDrawer({ open, onClose, onReinterview, t
     return d.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
   }
 
-  const renderTitle = () => {
-    if (view === 'evaluation') {
-      return (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setView('list')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ctw-text-secondary)', padding: 0, display: 'flex', alignItems: 'center' }}
-          >
-            <ArrowLeftOutlined style={{ fontSize: 14 }} />
-          </button>
-          <span>{selectedItem?.job_title} - {t('interview.report.title')}</span>
-        </div>
-      )
-    }
-    if (view === 'review') {
-      return (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setView('list')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ctw-text-secondary)', padding: 0, display: 'flex', alignItems: 'center' }}
-          >
-            <ArrowLeftOutlined style={{ fontSize: 14 }} />
-          </button>
-          <span>{t('interview.reviewTitle')}</span>
-        </div>
-      )
-    }
-    return t('interview.historyTitle')
-  }
-
   return (
+    <>
     <Drawer
-      title={renderTitle()}
+      title={t('interview.historyTitle')}
       open={open}
       onClose={onClose}
       width={480}
       styles={{ body: { padding: '16px 24px' } }}
     >
-      {view === 'list' && (
-        <>
-          {loading ? (
+      {loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[1, 2, 3].map((i) => (
                 <Skeleton key={i} active paragraph={{ rows: 2 }} />
@@ -523,20 +547,29 @@ export default function InterviewHistoryDrawer({ open, onClose, onReinterview, t
               ))}
             </div>
           )}
-        </>
-      )}
+    </Drawer>
 
-      {view === 'evaluation' && selectedItem && (
+    <FullScreenModal
+      open={modalType === 'evaluation' && !!selectedItem}
+      onClose={closeModal}
+      title={`${selectedItem?.job_title} - ${t('interview.report.title')}`}
+    >
+      {selectedItem?.evaluation && (
         <EvaluationDetail evaluation={selectedItem.evaluation} jobTitle={selectedItem.job_title} t={t} />
       )}
+    </FullScreenModal>
 
-      {view === 'review' && (
-        detailLoading ? (
-          <Skeleton active paragraph={{ rows: 8 }} />
-        ) : detailData ? (
-          <InterviewReviewView chatHistory={detailData.chat_history} t={t} />
-        ) : null
-      )}
-    </Drawer>
+    <FullScreenModal
+      open={modalType === 'review'}
+      onClose={closeModal}
+      title={t('interview.reviewTitle')}
+    >
+      {detailLoading ? (
+        <Skeleton active paragraph={{ rows: 8 }} />
+      ) : detailData ? (
+        <InterviewReviewView chatHistory={detailData.chat_history} t={t} />
+      ) : null}
+    </FullScreenModal>
+    </>
   )
 }
