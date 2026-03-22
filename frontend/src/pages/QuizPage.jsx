@@ -29,8 +29,6 @@ const HIDDEN_DOMAIN_IDS = [
   'cs_math',              // 计算机数学
   'software_engineering', // 软件工程
   'nginx',                // Nginx
-  'react',                // React
-  'vue',                  // Vue
 ]
 
 export default function QuizPage() {
