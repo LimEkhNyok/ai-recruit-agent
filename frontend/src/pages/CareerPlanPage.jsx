@@ -6,6 +6,7 @@ import { generatePlan, getPlan } from '../api/career'
 import useFeatureGuard from '../hooks/useFeatureGuard'
 import useThemeStore from '../store/useThemeStore'
 import { useTranslation } from '../i18n'
+import { checkAndNotify } from '../utils/achievementHelper'
 import FadeIn from '../components/motion/FadeIn'
 import StaggerContainer, { StaggerItem } from '../components/motion/StaggerContainer'
 
@@ -380,6 +381,7 @@ export default function CareerPlanPage() {
           if (!ignore) {
             setPlan(res.data)
             markApiUsed()
+            checkAndNotify()
           }
         } catch (err) {
           if (!ignore) message.error(err.response?.data?.detail || t('career.generateFailed'))
@@ -401,6 +403,7 @@ export default function CareerPlanPage() {
       setPlan(res.data)
       markApiUsed()
       message.success(t('career.regenerateSuccess'))
+      checkAndNotify()
     } catch (err) {
       message.error(err.response?.data?.detail || t('career.regenerateFailed'))
     } finally {

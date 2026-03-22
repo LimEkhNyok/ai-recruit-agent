@@ -8,6 +8,7 @@ import useFeatureGuard from '../hooks/useFeatureGuard'
 import useMatchingStore from '../store/useMatchingStore'
 import useThemeStore from '../store/useThemeStore'
 import { useTranslation } from '../i18n'
+import { checkAndNotify } from '../utils/achievementHelper'
 import FadeIn from '../components/motion/FadeIn'
 import StaggerContainer, { StaggerItem } from '../components/motion/StaggerContainer'
 
@@ -163,6 +164,7 @@ export default function MatchingPage() {
           setResults(res.data.results)
           setCachedResults(res.data.results)
           markApiUsed()
+          checkAndNotify()
         }
       } catch (err) {
         if (!ignore) message.error(err.response?.data?.detail || t('matching.matchFailed'))
@@ -186,6 +188,7 @@ export default function MatchingPage() {
       setCachedResults(res.data.results)
       markApiUsed()
       message.success(t('matching.rematchSuccess'))
+      checkAndNotify()
     } catch (err) {
       message.error(err.response?.data?.detail || t('matching.matchFailed'))
     } finally {

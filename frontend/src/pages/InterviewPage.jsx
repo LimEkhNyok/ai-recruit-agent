@@ -8,6 +8,7 @@ import useFeatureGuard from '../hooks/useFeatureGuard'
 import useSpeechRecognition from '../hooks/useSpeechRecognition'
 import useThemeStore from '../store/useThemeStore'
 import { useTranslation } from '../i18n'
+import { checkAndNotify } from '../utils/achievementHelper'
 import FadeIn from '../components/motion/FadeIn'
 
 const dimKeys = {
@@ -481,6 +482,7 @@ export default function InterviewPage() {
       const res = await endInterview(interviewId)
       setEvaluation(res.data.evaluation)
       setShowReport(true)
+      checkAndNotify()
     } catch (err) {
       message.error(t('interview.endFailed'))
     } finally {

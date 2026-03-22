@@ -29,6 +29,7 @@
     "matching": "Matching",
     "career": "Career",
     "quiz": "Quiz",
+    "achievements": "Achievements",
     "usage": "Usage",
     "settings": "Settings",
     "uploadResume": "Import Resume",
@@ -339,6 +340,20 @@
       "选择题": "Multiple Choice",
       "简答题": "Short Answer",
       "编程题": "Coding"
+    },
+    "mastery": "Mastery",
+    "masteryCapReached": "cap reached",
+    "milestoneTip40": "mastery reached 40%",
+    "milestoneTip70": "mastery reached 70%",
+    "increaseDifficulty": "Increase Difficulty"
+  },
+  "achievement": {
+    "title": "My Achievements",
+    "rarity": {
+      "common": "Common",
+      "rare": "Rare",
+      "epic": "Epic",
+      "legendary": "Legendary"
     }
   },
   "settings": {

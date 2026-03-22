@@ -7,6 +7,7 @@ import { startAssessment, chat, finishAssessment, getProfile } from '../api/asse
 import useFeatureGuard from '../hooks/useFeatureGuard'
 import useThemeStore from '../store/useThemeStore'
 import { useTranslation } from '../i18n'
+import { checkAndNotify } from '../utils/achievementHelper'
 import FadeIn from '../components/motion/FadeIn'
 
 function LoadingCursor({ text }) {
@@ -151,6 +152,7 @@ export default function AssessmentPage() {
     try {
       await finishAssessment(assessmentId)
       message.success(t('assessment.generateSuccess'))
+      checkAndNotify()
       navigate('/profile')
     } catch (err) {
       message.error(t('assessment.generateFailed'))

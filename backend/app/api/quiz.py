@@ -10,7 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
 from app.models.quiz import QuizRecord
+from app.models.mastery import KnowledgeMastery
 from app.services.model_service import ModelService
+from app.services.mastery_service import update_mastery as _update_mastery
 from app.api.deps import get_db, get_current_user, get_model_service, require_feature, require_billing
 from app.prompts.quiz import (
     get_quiz_generate_prompt,
@@ -20,8 +22,6 @@ from app.prompts.quiz import (
 )
 
 router = APIRouter(prefix="/api/quiz", tags=["quiz"])
-
-MASTERY_THRESHOLD = 2
 _quiz_sessions: dict[int, str] = {}
 
 _knowledge_data = None
@@ -77,6 +77,7 @@ class JudgeRequest(BaseModel):
     knowledge_point: str
     topic: str
     user_answer: str
+    difficulty: str = "中等"
 
 
 class SkipRequest(BaseModel):
@@ -86,33 +87,25 @@ class SkipRequest(BaseModel):
     knowledge_point: str
     topic: str
     explanation: str
+    difficulty: str = "中等"
 
 
 # ---------- Memory Context ----------
 
 async def _build_memory_context(user_id: int, topic: str, db: AsyncSession) -> str:
-    """Query quiz history and build memory context for the prompt."""
-    correct_expr = sa_func.sum(case((QuizRecord.is_correct == True, 1), else_=0))
+    """Query mastery data and build memory context for the prompt."""
     result = await db.execute(
-        select(
-            QuizRecord.knowledge_point,
-            correct_expr.label("correct_count"),
-            sa_func.count().label("total"),
-        )
-        .where(and_(QuizRecord.user_id == user_id, QuizRecord.topic == topic))
-        .group_by(QuizRecord.knowledge_point)
+        select(KnowledgeMastery.knowledge_point, KnowledgeMastery.mastery_score)
+        .where(and_(KnowledgeMastery.user_id == user_id, KnowledgeMastery.domain == topic))
     )
 
     mastered = []
     weak = []
-
     for row in result.all():
-        kp = row[0]
-        correct_count = row[1] or 0
-        if correct_count >= MASTERY_THRESHOLD:
-            mastered.append(kp)
-        else:
-            weak.append(kp)
+        if row[1] >= 100:
+            mastered.append(row[0])
+        elif row[1] > 0:
+            weak.append(f"{row[0]}({row[1]}%)")
 
     lines = []
     if mastered:
@@ -126,28 +119,19 @@ async def _build_memory_context(user_id: int, topic: str, db: AsyncSession) -> s
 
 
 async def _build_memory_context_en(user_id: int, topic: str, db: AsyncSession) -> str:
-    """Query quiz history and build English memory context for the prompt."""
-    correct_expr = sa_func.sum(case((QuizRecord.is_correct == True, 1), else_=0))
+    """Query mastery data and build English memory context for the prompt."""
     result = await db.execute(
-        select(
-            QuizRecord.knowledge_point,
-            correct_expr.label("correct_count"),
-            sa_func.count().label("total"),
-        )
-        .where(and_(QuizRecord.user_id == user_id, QuizRecord.topic == topic))
-        .group_by(QuizRecord.knowledge_point)
+        select(KnowledgeMastery.knowledge_point, KnowledgeMastery.mastery_score)
+        .where(and_(KnowledgeMastery.user_id == user_id, KnowledgeMastery.domain == topic))
     )
 
     mastered = []
     weak = []
-
     for row in result.all():
-        kp = row[0]
-        correct_count = row[1] or 0
-        if correct_count >= MASTERY_THRESHOLD:
-            mastered.append(kp)
-        else:
-            weak.append(kp)
+        if row[1] >= 100:
+            mastered.append(row[0])
+        elif row[1] > 0:
+            weak.append(f"{row[0]}({row[1]}%)")
 
     lines = []
     if mastered:
@@ -163,38 +147,29 @@ async def _build_memory_context_en(user_id: int, topic: str, db: AsyncSession) -
 async def _build_knowledge_memory_context(
     user_id: int, domain_name: str, topic_name: str, lang: str, db: AsyncSession
 ) -> str:
-    """Build memory context for knowledge-point-based quiz, querying by domain + topic."""
-    correct_expr = sa_func.sum(case((QuizRecord.is_correct == True, 1), else_=0))
-    result = await db.execute(
-        select(
-            sa_func.count().label("total"),
-            correct_expr.label("correct_count"),
-        )
-        .where(
-            and_(
-                QuizRecord.user_id == user_id,
-                QuizRecord.topic == domain_name,
-                QuizRecord.knowledge_point == topic_name,
-            )
-        )
-    )
-    row = result.first()
-    total = row[0] if row else 0
-    correct_count = row[1] or 0 if row else 0
+    """Build memory context for knowledge-point-based quiz using mastery score."""
+    from app.services.mastery_service import get_mastery
+    mastery = await get_mastery(user_id, domain_name, topic_name, db)
+    score = mastery.mastery_score if mastery else 0
 
-    if total == 0:
+    if score == 0:
         if lang == "en":
             return "## Memory Info\nThis is the user's first time on this knowledge point. Start with foundational questions."
         return "## 记忆信息\n该用户是第一次做该知识点的题，请从基础开始出题。"
 
-    if correct_count >= MASTERY_THRESHOLD:
+    if score >= 100:
         if lang == "en":
-            return f"## Memory Info\nThe user has answered {total} questions on this point ({correct_count} correct). They seem proficient — try harder or more tricky questions."
-        return f"## 记忆信息\n该用户已在该知识点做了 {total} 题（{correct_count} 题正确），已较为熟练，请出更有深度或更刁钻的题目。"
+            return f"## Memory Info\nThe user has fully mastered this point (mastery {score}%). Try very challenging or edge-case questions."
+        return f"## 记忆信息\n该用户已完全掌握该知识点（掌握度 {score}%），请出非常有挑战性或边界情况的题目。"
+
+    if score >= 70:
+        if lang == "en":
+            return f"## Memory Info\nThe user has strong knowledge on this point (mastery {score}%). Try harder or more tricky questions."
+        return f"## 记忆信息\n该用户在该知识点已较为熟练（掌握度 {score}%），请出更有深度或更刁钻的题目。"
 
     if lang == "en":
-        return f"## Memory Info\nThe user has answered {total} questions on this point ({correct_count} correct). They are still weak — focus on consolidating fundamentals with varied angles."
-    return f"## 记忆信息\n该用户已在该知识点做了 {total} 题（{correct_count} 题正确），仍较薄弱，请换不同角度巩固基础。"
+        return f"## Memory Info\nThe user is still learning this point (mastery {score}%). Focus on consolidating fundamentals with varied angles."
+    return f"## 记忆信息\n该用户在该知识点仍在学习中（掌握度 {score}%），请换不同角度巩固基础。"
 
 
 # ---------- Knowledge Points Query ----------
@@ -400,6 +375,7 @@ async def judge(
         content=prompt_content,
     )
 
+    is_correct = bool(result.get("is_correct", False))
     record = QuizRecord(
         user_id=current_user.id,
         topic=req.topic,
@@ -407,12 +383,21 @@ async def judge(
         question_type=req.question_type,
         question_text=req.question,
         user_answer=req.user_answer,
-        is_correct=bool(result.get("is_correct", False)),
+        difficulty=req.difficulty,
+        is_correct=is_correct,
         is_skipped=False,
     )
     db.add(record)
+
+    mastery_info = await _update_mastery(
+        current_user.id, req.topic, req.knowledge_point,
+        req.difficulty, is_correct, False, db,
+    )
     await db.commit()
 
+    result["mastery_score"] = mastery_info["mastery_score"]
+    result["mastery_delta"] = mastery_info["mastery_delta"]
+    result["milestone_reached"] = mastery_info["milestone_reached"]
     return result
 
 
@@ -431,16 +416,24 @@ async def skip(
         question_type=req.question_type,
         question_text=req.question,
         user_answer=None,
+        difficulty=req.difficulty,
         is_correct=False,
         is_skipped=True,
     )
     db.add(record)
+
+    mastery_info = await _update_mastery(
+        current_user.id, req.topic, req.knowledge_point,
+        req.difficulty, False, True, db,
+    )
     await db.commit()
 
     return {
         "is_correct": False,
         "explanation": req.explanation,
         "correct_answer": req.correct_answer,
+        "mastery_score": mastery_info["mastery_score"],
+        "mastery_delta": mastery_info["mastery_delta"],
     }
 
 
@@ -463,25 +456,18 @@ async def stats(
     )
     correct = result.scalar() or 0
 
-    correct_expr = sa_func.sum(case((QuizRecord.is_correct == True, 1), else_=0))
-    result = await db.execute(
-        select(
-            QuizRecord.knowledge_point,
-            correct_expr.label("cc"),
-        )
-        .where(QuizRecord.user_id == current_user.id)
-        .group_by(QuizRecord.knowledge_point)
+    mastery_result = await db.execute(
+        select(KnowledgeMastery.knowledge_point, KnowledgeMastery.mastery_score)
+        .where(KnowledgeMastery.user_id == current_user.id)
     )
 
     mastered = []
     weak = []
-    for row in result.all():
-        kp = row[0]
-        cc = row[1] or 0
-        if cc >= MASTERY_THRESHOLD:
-            mastered.append(kp)
-        else:
-            weak.append(kp)
+    for row in mastery_result.all():
+        if row[1] >= 100:
+            mastered.append(row[0])
+        elif row[1] > 0:
+            weak.append(row[0])
 
     return {
         "total": total,
@@ -499,6 +485,20 @@ async def knowledge_stats(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    # Load mastery scores into a lookup dict
+    mastery_result = await db.execute(
+        select(
+            KnowledgeMastery.domain,
+            KnowledgeMastery.knowledge_point,
+            KnowledgeMastery.mastery_score,
+        )
+        .where(KnowledgeMastery.user_id == current_user.id)
+    )
+    mastery_lookup = {}
+    for row in mastery_result.all():
+        mastery_lookup[(row[0], row[1])] = row[2]
+
+    # Load quiz record aggregates
     correct_expr = sa_func.sum(case((QuizRecord.is_correct == True, 1), else_=0))
     result = await db.execute(
         select(
@@ -520,11 +520,12 @@ async def knowledge_stats(
         total = row[2]
         cc = row[3] or 0
         accuracy = round(cc / total * 100, 1) if total > 0 else 0
+        score = mastery_lookup.get((domain_name, kp), 0)
 
-        if cc >= MASTERY_THRESHOLD:
+        if score >= 100:
             status = "mastered"
-        elif total > 0:
-            status = "weak"
+        elif score > 0:
+            status = "learning"
         else:
             status = "not_started"
 
@@ -533,6 +534,7 @@ async def knowledge_stats(
             "total": total,
             "correct": cc,
             "accuracy": accuracy,
+            "mastery_score": score,
             "status": status,
         })
 
@@ -541,14 +543,14 @@ async def knowledge_stats(
                 "total": 0,
                 "correct": 0,
                 "mastered_count": 0,
-                "weak_count": 0,
+                "learning_count": 0,
             }
         domain_stats[domain_name]["total"] += total
         domain_stats[domain_name]["correct"] += cc
         if status == "mastered":
             domain_stats[domain_name]["mastered_count"] += 1
-        elif status == "weak":
-            domain_stats[domain_name]["weak_count"] += 1
+        elif status == "learning":
+            domain_stats[domain_name]["learning_count"] += 1
 
     domains_summary = []
     for domain_name, ds in domain_stats.items():
@@ -558,7 +560,7 @@ async def knowledge_stats(
             "correct": ds["correct"],
             "accuracy": round(ds["correct"] / ds["total"] * 100, 1) if ds["total"] > 0 else 0,
             "mastered_count": ds["mastered_count"],
-            "weak_count": ds["weak_count"],
+            "learning_count": ds["learning_count"],
             "topics": topic_stats.get(domain_name, []),
         })
 

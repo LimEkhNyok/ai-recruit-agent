@@ -13,6 +13,7 @@ import MatchingPage from './pages/MatchingPage'
 import InterviewPage from './pages/InterviewPage'
 import CareerPlanPage from './pages/CareerPlanPage'
 import QuizPage from './pages/QuizPage'
+import AchievementPage from './pages/AchievementPage'
 import SettingsPage from './pages/SettingsPage'
 import UsagePage from './pages/UsagePage'
 
@@ -124,6 +125,14 @@ export default function App() {
                   <FeatureGuard feature="quiz">
                     <QuizPage />
                   </FeatureGuard>
+                </PageTransition>
+              }
+            />
+            <Route
+              path="/achievements"
+              element={
+                <PageTransition>
+                  <AchievementPage />
                 </PageTransition>
               }
             />

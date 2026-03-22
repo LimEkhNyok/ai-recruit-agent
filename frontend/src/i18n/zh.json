@@ -29,6 +29,7 @@
     "matching": "匹配",
     "career": "规划",
     "quiz": "刷题",
+    "achievements": "成就",
     "usage": "统计",
     "settings": "设置",
     "uploadResume": "导入简历",
@@ -344,6 +345,20 @@
       "选择题": "选择题",
       "简答题": "简答题",
       "编程题": "编程题"
+    },
+    "mastery": "掌握度",
+    "masteryCapReached": "已达上限",
+    "milestoneTip40": "掌握度已达 40%",
+    "milestoneTip70": "掌握度已达 70%",
+    "increaseDifficulty": "调高难度"
+  },
+  "achievement": {
+    "title": "我的成就",
+    "rarity": {
+      "common": "普通",
+      "rare": "稀有",
+      "epic": "史诗",
+      "legendary": "传说"
     }
   },
   "settings": {

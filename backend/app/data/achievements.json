@@ -1,0 +1,381 @@
+{
+  "categories": [
+    {
+      "id": "quiz",
+      "name": "刷题成就",
+      "name_en": "Quiz Achievements",
+      "achievements": [
+        {
+          "id": "quiz_first",
+          "name": "初出茅庐",
+          "name_en": "First Steps",
+          "description": "完成第 1 道题",
+          "description_en": "Complete your first question",
+          "icon": "🌱",
+          "rarity": "common",
+          "condition": { "type": "quiz_total", "value": 1 }
+        },
+        {
+          "id": "quiz_10",
+          "name": "小试牛刀",
+          "name_en": "Getting Started",
+          "description": "累计完成 10 道题",
+          "description_en": "Complete 10 questions in total",
+          "icon": "⚡",
+          "rarity": "common",
+          "condition": { "type": "quiz_total", "value": 10 }
+        },
+        {
+          "id": "quiz_50",
+          "name": "题海战术",
+          "name_en": "Question Marathon",
+          "description": "累计完成 50 道题",
+          "description_en": "Complete 50 questions in total",
+          "icon": "🔥",
+          "rarity": "rare",
+          "condition": { "type": "quiz_total", "value": 50 }
+        },
+        {
+          "id": "quiz_100",
+          "name": "书读百遍，其义自见",
+          "name_en": "Practice Makes Perfect",
+          "description": "累计完成 100 道题",
+          "description_en": "Complete 100 questions in total",
+          "icon": "💎",
+          "rarity": "epic",
+          "condition": { "type": "quiz_total", "value": 100 }
+        },
+        {
+          "id": "quiz_streak_5",
+          "name": "步步为营",
+          "name_en": "On a Roll",
+          "description": "连续答对 5 题（不含跳过）",
+          "description_en": "Answer 5 questions correctly in a row",
+          "icon": "🎯",
+          "rarity": "rare",
+          "condition": { "type": "quiz_streak", "value": 5 }
+        },
+        {
+          "id": "quiz_streak_10",
+          "name": "十全十美",
+          "name_en": "Perfect Ten",
+          "description": "连续答对 10 题（不含跳过）",
+          "description_en": "Answer 10 questions correctly in a row",
+          "icon": "🏹",
+          "rarity": "epic",
+          "condition": { "type": "quiz_streak", "value": 10 }
+        },
+        {
+          "id": "quiz_mastered_1",
+          "name": "一隅初通",
+          "name_en": "First Mastery",
+          "description": "完全掌握 1 个知识点（掌握度 100%）",
+          "description_en": "Fully master 1 knowledge point (100%)",
+          "icon": "💡",
+          "rarity": "common",
+          "condition": { "type": "quiz_mastered", "value": 1 }
+        },
+        {
+          "id": "quiz_mastered_5",
+          "name": "渐窥门径",
+          "name_en": "Getting the Hang of It",
+          "description": "完全掌握 5 个知识点",
+          "description_en": "Fully master 5 knowledge points",
+          "icon": "🔑",
+          "rarity": "rare",
+          "condition": { "type": "quiz_mastered", "value": 5 }
+        },
+        {
+          "id": "quiz_mastered_10",
+          "name": "融会贯通",
+          "name_en": "Well-Rounded",
+          "description": "完全掌握 10 个知识点",
+          "description_en": "Fully master 10 knowledge points",
+          "icon": "🧠",
+          "rarity": "epic",
+          "condition": { "type": "quiz_mastered", "value": 10 }
+        },
+        {
+          "id": "quiz_mastered_30",
+          "name": "学富五车",
+          "name_en": "Walking Encyclopedia",
+          "description": "完全掌握 30 个知识点",
+          "description_en": "Fully master 30 knowledge points",
+          "icon": "📚",
+          "rarity": "legendary",
+          "condition": { "type": "quiz_mastered", "value": 30 }
+        },
+        {
+          "id": "quiz_domains_5",
+          "name": "博学多才",
+          "name_en": "Jack of All Trades",
+          "description": "在 5 个不同领域各答题至少 1 次",
+          "description_en": "Answer questions in 5 different domains",
+          "icon": "📖",
+          "rarity": "rare",
+          "condition": { "type": "quiz_domains", "value": 5 }
+        },
+        {
+          "id": "quiz_domains_10",
+          "name": "包罗万象",
+          "name_en": "Renaissance Person",
+          "description": "在 10 个不同领域各答题至少 1 次",
+          "description_en": "Answer questions in 10 different domains",
+          "icon": "🌐",
+          "rarity": "epic",
+          "condition": { "type": "quiz_domains", "value": 10 }
+        },
+        {
+          "id": "quiz_domain_mastered_5",
+          "name": "出类拔萃",
+          "name_en": "Domain Expert",
+          "description": "某个领域下完全掌握 ≥5 个知识点",
+          "description_en": "Fully master 5+ knowledge points in one domain",
+          "icon": "🏅",
+          "rarity": "epic",
+          "condition": { "type": "quiz_domain_mastered", "value": 5 }
+        },
+        {
+          "id": "quiz_domain_mastered_8",
+          "name": "才高八斗",
+          "name_en": "Domain Master",
+          "description": "某个领域下完全掌握 ≥8 个知识点，或全部掌握",
+          "description_en": "Fully master 8+ knowledge points in one domain, or all of them",
+          "icon": "👑",
+          "rarity": "legendary",
+          "condition": { "type": "quiz_domain_mastered", "value": 8 }
+        },
+        {
+          "id": "quiz_hard_10",
+          "name": "攻坚克难",
+          "name_en": "Challenge Accepted",
+          "description": "累计答对 10 道"困难"难度的题",
+          "description_en": "Answer 10 hard-difficulty questions correctly",
+          "icon": "⚔️",
+          "rarity": "epic",
+          "condition": { "type": "quiz_hard_correct", "value": 10 }
+        }
+      ]
+    },
+    {
+      "id": "interview",
+      "name": "面试成就",
+      "name_en": "Interview Achievements",
+      "achievements": [
+        {
+          "id": "interview_first",
+          "name": "初露锋芒",
+          "name_en": "First Interview",
+          "description": "完成第 1 次模拟面试",
+          "description_en": "Complete your first mock interview",
+          "icon": "🎤",
+          "rarity": "common",
+          "condition": { "type": "interview_total", "value": 1 }
+        },
+        {
+          "id": "interview_5",
+          "name": "驾轻就熟",
+          "name_en": "Interview Veteran",
+          "description": "完成 5 次模拟面试",
+          "description_en": "Complete 5 mock interviews",
+          "icon": "💼",
+          "rarity": "rare",
+          "condition": { "type": "interview_total", "value": 5 }
+        },
+        {
+          "id": "interview_10",
+          "name": "面面俱到",
+          "name_en": "Interview Master",
+          "description": "完成 10 次模拟面试",
+          "description_en": "Complete 10 mock interviews",
+          "icon": "🏆",
+          "rarity": "epic",
+          "condition": { "type": "interview_total", "value": 10 }
+        },
+        {
+          "id": "interview_jd",
+          "name": "有的放矢",
+          "name_en": "Targeted Practice",
+          "description": "完成 1 次基于 JD 分析的针对性面试",
+          "description_en": "Complete a JD-based targeted interview",
+          "icon": "📋",
+          "rarity": "rare",
+          "condition": { "type": "interview_jd", "value": 1 }
+        },
+        {
+          "id": "interview_score_60",
+          "name": "崭露头角",
+          "name_en": "Showing Promise",
+          "description": "面试综合评分 ≥ 60 分",
+          "description_en": "Score 60+ in a mock interview",
+          "icon": "⭐",
+          "rarity": "common",
+          "condition": { "type": "interview_score", "value": 60 }
+        },
+        {
+          "id": "interview_score_80",
+          "name": "游刃有余",
+          "name_en": "Confident Performer",
+          "description": "面试综合评分 ≥ 80 分",
+          "description_en": "Score 80+ in a mock interview",
+          "icon": "🌟",
+          "rarity": "rare",
+          "condition": { "type": "interview_score", "value": 80 }
+        },
+        {
+          "id": "interview_score_90",
+          "name": "offer 收割机",
+          "name_en": "Offer Magnet",
+          "description": "面试综合评分 ≥ 90 分",
+          "description_en": "Score 90+ in a mock interview",
+          "icon": "💰",
+          "rarity": "epic",
+          "condition": { "type": "interview_score", "value": 90 }
+        },
+        {
+          "id": "interview_recommended",
+          "name": "百里挑一",
+          "name_en": "Highly Recommended",
+          "description": "获得 1 次面试"推荐录用"",
+          "description_en": "Receive a 'recommended' evaluation",
+          "icon": "✅",
+          "rarity": "rare",
+          "condition": { "type": "interview_recommended", "value": 1 }
+        },
+        {
+          "id": "interview_communication_90",
+          "name": "纵横捭阖",
+          "name_en": "Silver Tongue",
+          "description": "面试沟通表达维度评分 ≥ 90 分",
+          "description_en": "Score 90+ in communication",
+          "icon": "💬",
+          "rarity": "epic",
+          "condition": { "type": "interview_communication", "value": 90 }
+        },
+        {
+          "id": "interview_professional_90",
+          "name": "炉火纯青",
+          "name_en": "Technical Expert",
+          "description": "面试专业技能维度评分 ≥ 90 分",
+          "description_en": "Score 90+ in professional skills",
+          "icon": "🔧",
+          "rarity": "epic",
+          "condition": { "type": "interview_professional", "value": 90 }
+        }
+      ]
+    },
+    {
+      "id": "matching",
+      "name": "匹配成就",
+      "name_en": "Matching Achievements",
+      "achievements": [
+        {
+          "id": "match_first",
+          "name": "知己知彼",
+          "name_en": "Know Yourself",
+          "description": "完成第 1 次职位匹配",
+          "description_en": "Complete your first job matching",
+          "icon": "🔍",
+          "rarity": "common",
+          "condition": { "type": "match_total", "value": 1 }
+        },
+        {
+          "id": "match_score_90",
+          "name": "天作之合",
+          "name_en": "Perfect Match",
+          "description": "获得匹配度 ≥ 90% 的结果",
+          "description_en": "Get a match score of 90% or higher",
+          "icon": "💫",
+          "rarity": "epic",
+          "condition": { "type": "match_score", "value": 90 }
+        },
+        {
+          "id": "match_distinct_5",
+          "name": "广撒网",
+          "name_en": "Casting a Wide Net",
+          "description": "累计匹配 5 个不同职位",
+          "description_en": "Match with 5 different job positions",
+          "icon": "🎣",
+          "rarity": "rare",
+          "condition": { "type": "match_distinct", "value": 5 }
+        }
+      ]
+    },
+    {
+      "id": "growth",
+      "name": "成长成就",
+      "name_en": "Growth Achievements",
+      "achievements": [
+        {
+          "id": "assessment_first",
+          "name": "明心见性",
+          "name_en": "Self-Discovery",
+          "description": "完成第 1 次人才评估",
+          "description_en": "Complete your first talent assessment",
+          "icon": "🪞",
+          "rarity": "common",
+          "condition": { "type": "assessment_complete", "value": 1 }
+        },
+        {
+          "id": "career_first",
+          "name": "谋定后动",
+          "name_en": "Career Planner",
+          "description": "生成第 1 份职业规划",
+          "description_en": "Generate your first career plan",
+          "icon": "🧭",
+          "rarity": "common",
+          "condition": { "type": "career_plan", "value": 1 }
+        },
+        {
+          "id": "resume_first",
+          "name": "有备而来",
+          "name_en": "Well Prepared",
+          "description": "上传并分析第 1 份简历",
+          "description_en": "Upload and analyze your first resume",
+          "icon": "📄",
+          "rarity": "common",
+          "condition": { "type": "resume_upload", "value": 1 }
+        }
+      ]
+    },
+    {
+      "id": "comprehensive",
+      "name": "综合成就",
+      "name_en": "Comprehensive Achievements",
+      "achievements": [
+        {
+          "id": "daily_streak_7",
+          "name": "持之以恒",
+          "name_en": "Consistent Learner",
+          "description": "连续 7 天每天至少答 1 题",
+          "description_en": "Answer at least 1 question daily for 7 consecutive days",
+          "icon": "📅",
+          "rarity": "epic",
+          "condition": { "type": "daily_streak", "value": 7 }
+        },
+        {
+          "id": "mastery_40",
+          "name": "登堂入室",
+          "name_en": "Getting There",
+          "description": "任意知识点掌握度达到 40%",
+          "description_en": "Reach 40% mastery on any knowledge point",
+          "icon": "🚪",
+          "rarity": "common",
+          "condition": { "type": "mastery_40", "value": 1 },
+          "counter": true
+        },
+        {
+          "id": "mastery_70",
+          "name": "百尺竿头",
+          "name_en": "Climbing Higher",
+          "description": "任意知识点掌握度达到 70%",
+          "description_en": "Reach 70% mastery on any knowledge point",
+          "icon": "🏔️",
+          "rarity": "rare",
+          "condition": { "type": "mastery_70", "value": 1 },
+          "counter": true
+        }
+      ]
+    }
+  ]
+}

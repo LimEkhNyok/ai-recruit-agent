@@ -6,6 +6,7 @@ import {
   AimOutlined,
   RocketOutlined,
   EditOutlined,
+  TrophyOutlined,
   SettingOutlined,
   BarChartOutlined,
   UserOutlined,
@@ -27,7 +28,9 @@ import useBillingStore from '../store/useBillingStore'
 import { uploadResume, analyzeResume } from '../api/resume'
 import { getConfig } from '../api/modelConfig'
 import ResumeReport from './ResumeReport'
+import AchievementToast from './AchievementToast'
 import useThemeStore from '../store/useThemeStore'
+import { checkAndNotify } from '../utils/achievementHelper'
 import { useTranslation } from '../i18n'
 import LogoMark from './LogoMark'
 import FadeIn from './motion/FadeIn'
@@ -38,6 +41,7 @@ const navConfig = [
   { key: '/matching', icon: <AimOutlined />, labelKey: 'nav.matching' },
   { key: '/career', icon: <RocketOutlined />, labelKey: 'nav.career' },
   { key: '/quiz', icon: <EditOutlined />, labelKey: 'nav.quiz' },
+  { key: '/achievements', icon: <TrophyOutlined />, labelKey: 'nav.achievements' },
   { key: '/usage', icon: <BarChartOutlined />, labelKey: 'nav.usage' },
   { key: '/settings', icon: <SettingOutlined />, labelKey: 'nav.settings' },
 ]
@@ -155,6 +159,7 @@ export default function Layout() {
       setAnalysis(res.data.analysis)
       markApiUsed()
       setShowReport(true)
+      checkAndNotify()
     } catch (err) {
       message.error(err.response?.data?.detail || t('resume.analyzeFailed'))
     } finally {
@@ -172,6 +177,7 @@ export default function Layout() {
       className="min-h-screen"
       style={{ background: 'var(--ctw-surface-base)' }}
     >
+      <AchievementToast />
       {/* Header */}
       <FadeIn direction="down" duration={0.4}>
         <header

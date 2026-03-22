@@ -16,6 +16,7 @@ class QuizRecord(Base):
     question_type: Mapped[str] = mapped_column(String(20), nullable=False)
     question_text: Mapped[str] = mapped_column(Text, nullable=False)
     user_answer: Mapped[str | None] = mapped_column(Text, nullable=True)
+    difficulty: Mapped[str] = mapped_column(String(10), nullable=False, default="中等")
     is_correct: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_skipped: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)

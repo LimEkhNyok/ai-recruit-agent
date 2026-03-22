@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Select, Button, Input, Tag, message } from 'antd'
+import { Select, Button, Input, Tag, message, notification } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import {
   generateByKnowledge,
@@ -14,6 +14,7 @@ import useFeatureGuard from '../hooks/useFeatureGuard'
 import useBillingStore from '../store/useBillingStore'
 import useThemeStore from '../store/useThemeStore'
 import { useTranslation } from '../i18n'
+import { checkAndNotify } from '../utils/achievementHelper'
 
 const { TextArea } = Input
 
@@ -102,13 +103,28 @@ export default function QuizPage() {
   const currentDomainMeta = domains.find((d) => d.id === selectedDomain)
   const currentTopicMeta = currentDomainMeta?.topics?.find((tp) => tp.id === selectedTopic)
 
-  const getTopicStatus = (topicName) => {
-    if (!knowledgeStats?.domains || !currentDomainMeta) return 'not_started'
+  const getTopicMasteryScore = (topicName) => {
+    if (!knowledgeStats?.domains || !currentDomainMeta) return 0
     const domainStat = knowledgeStats.domains.find((d) => d.domain === currentDomainMeta.name)
-    if (!domainStat) return 'not_started'
+    if (!domainStat) return 0
     const topicStat = domainStat.topics?.find((t) => t.knowledge_point === topicName)
-    if (!topicStat) return 'not_started'
-    return topicStat.status
+    if (!topicStat) return 0
+    return topicStat.mastery_score ?? 0
+  }
+
+  const getTopicStatus = (topicName) => {
+    const score = getTopicMasteryScore(topicName)
+    if (score >= 100) return 'mastered'
+    if (score > 0) return 'learning'
+    return 'not_started'
+  }
+
+  const getMasteryColor = (score) => {
+    if (score >= 100) return 'var(--ctw-success, #00D4AA)'
+    if (score >= 70) return '#8B5CF6'
+    if (score >= 40) return '#3B82F6'
+    if (score > 0) return 'var(--ctw-text-tertiary, #9CA3AF)'
+    return 'var(--ctw-text-tertiary, #9CA3AF)'
   }
 
   const getTopicAccuracy = (topicName) => {
@@ -155,6 +171,29 @@ export default function QuizPage() {
     }
   }
 
+  const showMilestoneNotification = (milestone) => {
+    const nextDifficulty = milestone === 40 ? '中等' : '困难'
+    const tipKey = milestone === 40 ? 'quiz.milestoneTip40' : 'quiz.milestoneTip70'
+    notification.info({
+      message: `${question?.knowledge_point || ''} ${t(tipKey)}`,
+      description: t('quiz.masteryCapReached'),
+      btn: (
+        <Button
+          type="primary"
+          size="small"
+          onClick={() => {
+            setDifficulty(nextDifficulty)
+            notification.destroy()
+          }}
+        >
+          {t('quiz.increaseDifficulty')} → {t(`quiz.difficulty.${nextDifficulty}`)}
+        </Button>
+      ),
+      duration: 6,
+      placement: 'topRight',
+    })
+  }
+
   const handleSubmit = async () => {
     if (!userAnswer.trim()) {
       message.warning(t('quiz.answerRequired'))
@@ -169,12 +208,17 @@ export default function QuizPage() {
         knowledge_point: question.knowledge_point,
         topic: currentDomainMeta?.name || '',
         user_answer: userAnswer,
+        difficulty,
       })
       setResult(res.data)
       setResultAnimState('entering')
       setTimeout(() => setResultAnimState('visible'), 50)
+      if (res.data.milestone_reached) {
+        showMilestoneNotification(res.data.milestone_reached)
+      }
       loadStats()
       loadKnowledgeStats()
+      checkAndNotify()
     } catch (err) {
       message.error(t('quiz.judgeFailed'))
     } finally {
@@ -192,12 +236,14 @@ export default function QuizPage() {
         knowledge_point: question.knowledge_point,
         topic: currentDomainMeta?.name || '',
         explanation: question.explanation,
+        difficulty,
       })
       setResult(res.data)
       setResultAnimState('entering')
       setTimeout(() => setResultAnimState('visible'), 50)
       loadStats()
       loadKnowledgeStats()
+      checkAndNotify()
     } catch (err) {
       message.error(t('quiz.judgeFailed'))
     } finally {
@@ -404,7 +450,7 @@ export default function QuizPage() {
 
   const statusColors = {
     mastered: 'var(--ctw-success, #00D4AA)',
-    weak: 'var(--ctw-warning, #F59E0B)',
+    learning: 'var(--ctw-warning, #F59E0B)',
     not_started: 'var(--ctw-text-tertiary, #9CA3AF)',
   }
 
@@ -420,15 +466,19 @@ export default function QuizPage() {
     },
   ]
 
-  // Build knowledge point Select options with status dots
+  // Build knowledge point Select options with mastery indicator
   const topicOptions = currentDomainMeta?.topics?.map((tp) => {
-    const status = getTopicStatus(tp.name)
-    const dotColor = status === 'mastered' ? '#00D4AA' : status === 'weak' ? '#F59E0B' : '#9CA3AF'
+    const score = getTopicMasteryScore(tp.name)
+    const color = getMasteryColor(score)
     return {
       label: (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
-          {tp.name}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, width: '100%' }}>
+          <span style={{ flex: 1 }}>{tp.name}</span>
+          {score > 0 && (
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color, fontWeight: 600, flexShrink: 0 }}>
+              {score}%
+            </span>
+          )}
         </span>
       ),
       value: tp.id,
@@ -688,7 +738,7 @@ export default function QuizPage() {
                       </p>
                     </div>
 
-                    <div style={{ marginBottom: 16 }}>
+                    <div style={{ marginBottom: 12 }}>
                       <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-primary)' }}>
                         {t('quiz.explanation')}
                       </span>
@@ -696,6 +746,26 @@ export default function QuizPage() {
                         {result.explanation}
                       </p>
                     </div>
+
+                    {/* Mastery delta */}
+                    {result.mastery_score != null && (
+                      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-primary)' }}>
+                          {t('quiz.mastery')}
+                        </span>
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: getMasteryColor(result.mastery_score), fontWeight: 600 }}>
+                          {result.mastery_score}%
+                        </span>
+                        <span style={{
+                          fontFamily: "'JetBrains Mono', monospace",
+                          fontSize: 12,
+                          color: result.mastery_delta > 0 ? 'var(--ctw-success)' : result.mastery_delta < 0 ? 'var(--ctw-error)' : 'var(--ctw-text-tertiary)',
+                          fontWeight: 600,
+                        }}>
+                          {result.mastery_delta > 0 ? `+${result.mastery_delta}` : result.mastery_delta === 0 ? `+0 ${t('quiz.masteryCapReached')}` : result.mastery_delta}
+                        </span>
+                      </div>
+                    )}
 
                     {/* Result action: 答对出新题，答错举一反三 */}
                     <div className="flex items-center gap-3">
@@ -832,10 +902,8 @@ export default function QuizPage() {
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {currentDomainMeta.topics.map((tp) => {
-                        const status = getTopicStatus(tp.name)
-                        const topicStat = getTopicAccuracy(tp.name)
-                        const accuracy = topicStat?.accuracy ?? 0
-                        const barColor = statusColors[status]
+                        const score = getTopicMasteryScore(tp.name)
+                        const barColor = getMasteryColor(score)
                         return (
                           <div key={tp.id}>
                             <div className="flex justify-between items-center" style={{ marginBottom: 3 }}>
@@ -843,14 +911,14 @@ export default function QuizPage() {
                                 {tp.name}
                               </span>
                               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: barColor, fontWeight: 600 }}>
-                                {topicStat ? `${accuracy}%` : '-'}
+                                {score > 0 ? `${score}%` : '-'}
                               </span>
                             </div>
                             <div style={{ height: 4, borderRadius: 2, background: 'var(--ctw-border-default)', overflow: 'hidden' }}>
                               <div
                                 style={{
                                   height: '100%',
-                                  width: topicStat ? `${Math.max(accuracy, 3)}%` : '0%',
+                                  width: score > 0 ? `${Math.max(score, 3)}%` : '0%',
                                   background: barColor,
                                   borderRadius: 2,
                                   transition: 'width 0.3s ease',
