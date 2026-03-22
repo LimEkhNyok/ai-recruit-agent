@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { Select, Button, Input, Tag, message, notification } from 'antd'
+import { Select, Button, Input, Tag, message, notification, Drawer } from 'antd'
+import { EyeOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import {
   generateByKnowledge,
@@ -9,6 +10,7 @@ import {
   getQuizStats,
   getKnowledgePoints,
   getKnowledgeStats,
+  getWeaknesses,
 } from '../api/quiz'
 import useFeatureGuard from '../hooks/useFeatureGuard'
 import useBillingStore from '../store/useBillingStore'
@@ -54,6 +56,11 @@ export default function QuizPage() {
   const [stats, setStats] = useState(null)
   const [knowledgeStats, setKnowledgeStats] = useState(null)
 
+  // Weakness
+  const [weaknessOpen, setWeaknessOpen] = useState(false)
+  const [weaknessList, setWeaknessList] = useState([])
+  const [weaknessLoading, setWeaknessLoading] = useState(false)
+
   // UI
   const [resultAnimState, setResultAnimState] = useState('hidden')
   const navigate = useNavigate()
@@ -79,6 +86,20 @@ export default function QuizPage() {
       const res = await getQuizStats()
       setStats(res.data)
     } catch {}
+  }
+
+  const loadWeaknesses = async () => {
+    setWeaknessLoading(true)
+    try {
+      const res = await getWeaknesses()
+      setWeaknessList(res.data.weaknesses || [])
+    } catch {}
+    setWeaknessLoading(false)
+  }
+
+  const handleOpenWeakness = () => {
+    setWeaknessOpen(true)
+    loadWeaknesses()
   }
 
   const loadKnowledgePoints = async () => {
@@ -987,8 +1008,31 @@ export default function QuizPage() {
                   </>
                 )}
 
+                {/* View Weak Points button */}
+                <div style={{ marginTop: 16 }}>
+                  <button
+                    onClick={handleOpenWeakness}
+                    className="flex items-center justify-center gap-1.5"
+                    style={{
+                      width: '100%',
+                      padding: '8px 0',
+                      fontSize: 13,
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontWeight: 500,
+                      color: '#0066FF',
+                      background: 'rgba(0,102,255,0.06)',
+                      border: '1px solid rgba(0,102,255,0.15)',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <EyeOutlined style={{ fontSize: 13 }} />
+                    {t('quiz.viewWeaknesses')}
+                  </button>
+                </div>
+
                 {stats.total === 0 && (
-                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--ctw-text-tertiary)', margin: 0 }}>
+                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--ctw-text-tertiary)', margin: '12px 0 0' }}>
                     {t('quiz.noRecords')}
                   </p>
                 )}
@@ -1014,6 +1058,74 @@ export default function QuizPage() {
           </div>
         </div>
       </div>
+
+      {/* Weakness Drawer */}
+      <Drawer
+        title={t('quiz.weaknessTitle')}
+        open={weaknessOpen}
+        onClose={() => setWeaknessOpen(false)}
+        width={400}
+        styles={{ body: { padding: '16px 24px' } }}
+      >
+        {weaknessLoading ? (
+          <div className="flex items-center justify-center" style={{ padding: 40 }}>
+            <div className="flex items-center gap-1">
+              {[0, 1, 2].map((i) => (
+                <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#0066FF', animation: `loading-dot 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+              ))}
+            </div>
+          </div>
+        ) : weaknessList.length === 0 ? (
+          <div className="text-center" style={{ padding: '40px 0', color: 'var(--ctw-text-tertiary)' }}>
+            <p style={{ fontSize: 14 }}>{t('quiz.noWeakness')}</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {weaknessList.map((w) => (
+              <div
+                key={w.id}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 8,
+                  border: '1px solid var(--ctw-border-default)',
+                  background: 'var(--ctw-surface-card)',
+                  opacity: w.status === 'mastered' ? 0.5 : 1,
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: 'var(--ctw-text-primary)',
+                      textDecoration: w.status === 'mastered' ? 'line-through' : 'none',
+                    }}
+                  >
+                    {w.knowledge_point}
+                  </span>
+                  {w.status === 'mastered' ? (
+                    <span style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, background: 'rgba(0,212,170,0.1)', color: 'var(--ctw-success)' }}>
+                      {t('quiz.weaknessMastered')}
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        padding: '1px 6px',
+                        borderRadius: 4,
+                        background: w.source === 'interview' ? 'rgba(0,102,255,0.08)' : 'rgba(250,140,22,0.08)',
+                        color: w.source === 'interview' ? '#0066FF' : 'var(--ctw-warning)',
+                      }}
+                    >
+                      {w.source === 'interview' ? t('quiz.weaknessFromInterview') : t('quiz.weaknessFromQuiz')}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Drawer>
 
       <style>{`
         @keyframes icon-bounce {

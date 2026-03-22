@@ -248,6 +248,17 @@ async def generate_by_knowledge(
         current_user.id, domain_meta["name"], topic_meta["name"], lang, db
     )
 
+    # Fetch user weakness profile to guide question generation
+    from app.services.weakness_service import get_user_weaknesses
+    weaknesses = await get_user_weaknesses(current_user.id, db)
+    weak_points = [w["knowledge_point"] for w in weaknesses if w["status"] == "weak"]
+    weakness_hint = ""
+    if weak_points:
+        if lang == "en":
+            weakness_hint = f"\n\n## User's Weak Points (prioritize testing these)\n{', '.join(weak_points[:10])}"
+        else:
+            weakness_hint = f"\n\n## 用户薄弱知识点（优先针对这些出题）\n{', '.join(weak_points[:10])}"
+
     prompt_content = get_knowledge_quiz_prompt(lang).replace(
         "{domain_name}", domain_meta["name"]
     ).replace(
@@ -261,7 +272,7 @@ async def generate_by_knowledge(
     ).replace(
         "{difficulty}", req.difficulty
     ).replace(
-        "{memory_context}", memory_context
+        "{memory_context}", memory_context + weakness_hint
     )
 
     sid = str(uuid.uuid4())
@@ -393,6 +404,10 @@ async def judge(
         current_user.id, req.topic, req.knowledge_point,
         req.difficulty, is_correct, False, db,
     )
+
+    from app.services.weakness_service import update_on_quiz_result
+    await update_on_quiz_result(current_user.id, req.knowledge_point, is_correct, db)
+
     await db.commit()
 
     result["mastery_score"] = mastery_info["mastery_score"]
@@ -476,6 +491,18 @@ async def stats(
         "mastered": mastered,
         "weak": weak,
     }
+
+
+# ---------- Weaknesses ----------
+
+@router.get("/weaknesses")
+async def get_weaknesses(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.services.weakness_service import get_user_weaknesses
+    data = await get_user_weaknesses(current_user.id, db)
+    return {"weaknesses": data}
 
 
 # ---------- Knowledge Stats ----------

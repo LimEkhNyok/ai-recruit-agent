@@ -12,11 +12,12 @@ from app.models.refresh_token import RefreshToken
 from app.models.billing import UserWallet, Subscription, RechargeRecord
 from app.models.mastery import KnowledgeMastery
 from app.models.achievement import UserAchievement
+from app.models.weakness_profile import UserWeaknessProfile
 
 __all__ = [
     "User", "Assessment", "TalentProfile",
     "JobPosition", "MatchResult", "Interview", "CareerPlan", "QuizRecord",
     "UserModelConfig", "UsageRecord", "Resume", "RefreshToken",
     "UserWallet", "Subscription", "RechargeRecord",
-    "KnowledgeMastery", "UserAchievement",
+    "KnowledgeMastery", "UserAchievement", "UserWeaknessProfile",
 ]

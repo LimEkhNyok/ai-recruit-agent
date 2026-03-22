@@ -1,4 +1,6 @@
+import asyncio
 import json
+import logging
 from datetime import datetime, timezone
 from typing import AsyncGenerator
 
@@ -13,8 +15,13 @@ from app.prompts.interview import (
     get_evaluation_prompt,
     build_jd_interview_prompt,
     build_jd_evaluation_prompt,
+    get_review_prompt,
 )
 from app.utils.job_translation import translate_title, translate_category
+
+logger = logging.getLogger(__name__)
+
+_review_tasks: dict[int, list[asyncio.Task]] = {}
 
 
 def _build_system_prompt(job: JobPosition, language: str = "zh") -> str:
@@ -81,6 +88,86 @@ async def start_interview(
     return interview.id, job_title, first_message
 
 
+def _get_job_info(interview: Interview) -> str:
+    """Extract job info string for review prompt."""
+    if interview.jd_context:
+        jd = interview.jd_context
+        return f"岗位: {jd.get('title', '')}, 技术栈: {', '.join(jd.get('tech_stack', []))}"
+    return f"job_id: {interview.job_id}"
+
+
+async def _review_last_answer(
+    interview_id: int,
+    user_msg_index: int,
+    job_info: str,
+    language: str,
+    model_service: ModelService,
+) -> None:
+    """Background task: review a user's answer and write result to chat_history."""
+    from app.database import AsyncSessionLocal
+
+    try:
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(select(Interview).where(Interview.id == interview_id))
+            interview = result.scalar_one_or_none()
+            if not interview:
+                return
+
+            history = list(interview.chat_history) if interview.chat_history else []
+            if user_msg_index >= len(history):
+                return
+
+            user_msg = history[user_msg_index]
+            if user_msg.get("role") != "user" or user_msg.get("review"):
+                return
+
+            candidate_answer = user_msg["parts"][0]["text"]
+
+            interviewer_question = ""
+            if user_msg_index > 0 and history[user_msg_index - 1]["role"] == "model":
+                interviewer_question = history[user_msg_index - 1]["parts"][0]["text"]
+
+            context_start = max(0, user_msg_index - 4)
+            context_msgs = history[context_start:user_msg_index]
+            context_text = ""
+            for m in context_msgs:
+                role_label = "Candidate" if m["role"] == "user" else "Interviewer"
+                context_text += f"{role_label}: {m['parts'][0]['text']}\n"
+
+            prompt = get_review_prompt(language).replace(
+                "{job_info}", job_info
+            ).replace(
+                "{interviewer_question}", interviewer_question
+            ).replace(
+                "{candidate_answer}", candidate_answer
+            ).replace(
+                "{context}", context_text or "N/A"
+            )
+
+            review_system = (
+                "You are a professional interview coach. Output the review in JSON format."
+                if language == "en"
+                else "你是一位专业的面试辅导教练。请以 JSON 格式输出点评。"
+            )
+
+            review = await model_service.generate_json(
+                system_prompt=review_system,
+                content=prompt,
+            )
+
+            result = await db.execute(select(Interview).where(Interview.id == interview_id))
+            interview = result.scalar_one_or_none()
+            if not interview:
+                return
+            history = list(interview.chat_history)
+            if user_msg_index < len(history):
+                history[user_msg_index]["review"] = review
+                interview.chat_history = history
+                await db.commit()
+    except Exception:
+        logger.exception("Background review failed for interview %s msg %s", interview_id, user_msg_index)
+
+
 async def chat_stream(
     interview_id: int, user_message: str, db: AsyncSession, model_service: ModelService
 ) -> AsyncGenerator[str, None]:
@@ -115,16 +202,45 @@ async def chat_stream(
     interview.chat_history = history
     await db.commit()
 
+    # Find the last unreviewed user message and start background review
+    user_msg_index = len(history) - 2  # the user message we just appended
+    if user_msg_index >= 0 and history[user_msg_index]["role"] == "user":
+        job_info = _get_job_info(interview)
+        task = asyncio.create_task(
+            _review_last_answer(interview_id, user_msg_index, job_info, lang, model_service)
+        )
+        _review_tasks.setdefault(interview_id, []).append(task)
+
 
 async def end_interview(interview_id: int, db: AsyncSession, model_service: ModelService) -> tuple[str, dict]:
     """Generate evaluation report, return (job_title, evaluation_dict)."""
+    # Wait for all pending background review tasks
+    pending_tasks = _review_tasks.pop(interview_id, [])
+    if pending_tasks:
+        await asyncio.gather(*pending_tasks, return_exceptions=True)
+
     result = await db.execute(select(Interview).where(Interview.id == interview_id))
     interview = result.scalar_one_or_none()
     if interview is None:
         raise ValueError("Interview not found")
 
     lang = model_service.language
-    history: list[dict] = interview.chat_history or []
+    history: list[dict] = list(interview.chat_history) if interview.chat_history else []
+
+    # Review the last user message synchronously before generating evaluation
+    last_user_idx = None
+    for i in range(len(history) - 1, -1, -1):
+        if history[i]["role"] == "user" and not history[i].get("review"):
+            last_user_idx = i
+            break
+
+    if last_user_idx is not None:
+        job_info = _get_job_info(interview)
+        await _review_last_answer(interview_id, last_user_idx, job_info, lang, model_service)
+        # Refresh interview data after review
+        await db.refresh(interview)
+        history = list(interview.chat_history) if interview.chat_history else []
+
     dialogue_text = ""
     for msg in history:
         if lang == "en":
@@ -164,7 +280,58 @@ async def end_interview(interview_id: int, db: AsyncSession, model_service: Mode
     interview.completed_at = datetime.now(timezone.utc)
     await db.commit()
 
+    # Extract weaknesses from reviews into user weakness profile
+    try:
+        from app.services.weakness_service import add_weaknesses_from_interview
+        await add_weaknesses_from_interview(interview.user_id, interview_id, db)
+        await db.commit()
+    except Exception:
+        logger.exception("Failed to extract weaknesses from interview %s", interview_id)
+
     return job_title, evaluation
+
+
+async def delete_interview(interview_id: int, user_id: int, db: AsyncSession) -> None:
+    """Delete an interview record owned by the user."""
+    result = await db.execute(
+        select(Interview).where(Interview.id == interview_id, Interview.user_id == user_id)
+    )
+    interview = result.scalar_one_or_none()
+    if interview is None:
+        raise ValueError("Interview not found or access denied")
+    await db.delete(interview)
+    await db.commit()
+
+
+async def get_interview_detail(interview_id: int, user_id: int, db: AsyncSession) -> dict:
+    """Return full interview data including chat_history with reviews."""
+    result = await db.execute(
+        select(Interview).where(Interview.id == interview_id, Interview.user_id == user_id)
+    )
+    interview = result.scalar_one_or_none()
+    if interview is None:
+        raise ValueError("Interview not found or access denied")
+
+    job_title = ""
+    if interview.jd_context:
+        job_title = interview.jd_context.get("title", "JD Interview")
+    elif interview.job_id:
+        job_result = await db.execute(select(JobPosition).where(JobPosition.id == interview.job_id))
+        job = job_result.scalar_one_or_none()
+        if job:
+            job_title = job.title
+
+    return {
+        "id": interview.id,
+        "job_id": interview.job_id,
+        "job_title": job_title,
+        "interview_type": "custom_jd" if interview.jd_context else "preset",
+        "jd_context": interview.jd_context,
+        "status": interview.status,
+        "chat_history": interview.chat_history or [],
+        "evaluation": interview.evaluation,
+        "created_at": interview.created_at.isoformat() if interview.created_at else "",
+    }
 
 
 async def get_history(user_id: int, db: AsyncSession, language: str = "zh") -> list[dict]:
@@ -196,6 +363,7 @@ async def get_history(user_id: int, db: AsyncSession, language: str = "zh") -> l
             "id": iv.id,
             "job_id": iv.job_id,
             "job_title": title,
+            "interview_type": "custom_jd" if iv.jd_context else "preset",
             "status": iv.status,
             "created_at": iv.created_at.isoformat() if iv.created_at else "",
             "evaluation": iv.evaluation,

@@ -24,3 +24,5 @@ export const getKnowledgePoints = (type) =>
   client.get('/quiz/knowledge-points', { params: type ? { type } : {} })
 
 export const getKnowledgeStats = () => client.get('/quiz/knowledge-stats')
+
+export const getWeaknesses = () => client.get('/quiz/weaknesses')

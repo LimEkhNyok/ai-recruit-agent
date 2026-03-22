@@ -99,3 +99,29 @@ async def history(
 ):
     data = await interview_service.get_history(current_user.id, db, language=model_service.language)
     return InterviewHistoryResponse(interviews=data)
+
+
+@router.get("/{interview_id}")
+async def get_detail(
+    interview_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        data = await interview_service.get_interview_detail(interview_id, current_user.id, db)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    return data
+
+
+@router.delete("/{interview_id}")
+async def delete(
+    interview_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        await interview_service.delete_interview(interview_id, current_user.id, db)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    return {"detail": "deleted"}

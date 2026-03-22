@@ -167,6 +167,77 @@ def build_jd_interview_prompt(jd_context: dict, language: str = "zh") -> str:
     )
 
 
+REVIEW_PROMPT_ZH = """你是一位专业的面试辅导教练，请对候选人的这条回答进行点评。
+
+## 岗位信息
+{job_info}
+
+## 面试官的问题
+{interviewer_question}
+
+## 候选人的回答
+{candidate_answer}
+
+## 对话上下文（最近几轮）
+{context}
+
+## 输出 JSON 格式
+```json
+{{
+  "summary": "简要评价（1-2句话，先肯定做得好的地方，再指出可以改进的地方）",
+  "suggestions": ["具体的改进建议1", "具体的改进建议2"],
+  "related_knowledge": ["回答涉及的知识点"],
+  "missing_knowledge": ["回答中缺失或薄弱的知识点"],
+  "depth": "deep 或 brief"
+}}
+```
+
+## 点评规则
+1. 根据回答内容自动判断 depth：
+   - 寒暄、自我介绍、简单确认等用 `brief`，此时只给 summary，其余字段为空数组
+   - 技术问题、行为面试问题、专业问题等用 `deep`，完整填写所有字段
+2. suggestions 要具体、有建设性、可操作
+3. missing_knowledge 只填候选人确实遗漏或回答薄弱的知识点，不要过度挑剔
+4. 语气礼貌友好，建设性为主"""
+
+REVIEW_PROMPT_EN = """You are a professional interview coach. Please review the candidate's answer.
+
+## Job Information
+{job_info}
+
+## Interviewer's Question
+{interviewer_question}
+
+## Candidate's Answer
+{candidate_answer}
+
+## Conversation Context (Recent Rounds)
+{context}
+
+## Output JSON Format
+```json
+{{
+  "summary": "Brief evaluation (1-2 sentences, acknowledge strengths first, then mention areas for improvement)",
+  "suggestions": ["Specific improvement suggestion 1", "Specific improvement suggestion 2"],
+  "related_knowledge": ["Knowledge points covered in the answer"],
+  "missing_knowledge": ["Knowledge points missing or weak in the answer"],
+  "depth": "deep or brief"
+}}
+```
+
+## Review Rules
+1. Automatically determine depth based on the answer content:
+   - Use `brief` for greetings, self-introductions, simple confirmations — only fill summary, leave other fields as empty arrays
+   - Use `deep` for technical questions, behavioral interview questions, professional questions — fill all fields completely
+2. Suggestions should be specific, constructive, and actionable
+3. Only list missing_knowledge for points the candidate genuinely missed or answered weakly — don't be overly critical
+4. Maintain a polite, friendly, and constructive tone"""
+
+
+def get_review_prompt(language: str = "zh") -> str:
+    return REVIEW_PROMPT_EN if language == "en" else REVIEW_PROMPT_ZH
+
+
 def build_jd_evaluation_prompt(jd_context: dict, chat_history_text: str, language: str = "zh") -> str:
     title = jd_context.get("title", "")
     category = "JD 定向面试" if language == "zh" else "JD-targeted Interview"

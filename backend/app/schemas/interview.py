@@ -35,6 +35,7 @@ class InterviewHistoryItem(BaseModel):
     id: int
     job_id: int | None = None
     job_title: str
+    interview_type: str = "preset"
     status: str
     created_at: str
     evaluation: dict[str, Any] | None = None

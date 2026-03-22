@@ -8,6 +8,12 @@ export const endInterview = (interviewId) =>
 
 export const getHistory = () => client.get('/interview/history')
 
+export const getInterviewDetail = (interviewId) =>
+  client.get(`/interview/${interviewId}`)
+
+export const deleteInterview = (interviewId) =>
+  client.delete(`/interview/${interviewId}`)
+
 export async function* chatStream(interviewId, message) {
   const token = localStorage.getItem('token')
   const response = await fetch('/api/interview/chat', {
