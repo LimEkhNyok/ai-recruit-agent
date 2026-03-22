@@ -201,6 +201,15 @@ function AchievementCard({ achievement: ach, t }) {
         </span>
       ) : hasProgress ? (
         <div style={{ width: '100%' }}>
+          <span style={{
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 11,
+            color: 'var(--ctw-text-tertiary)',
+            display: 'block',
+            marginBottom: 6,
+          }}>
+            {ach.description}
+          </span>
           <div style={{
             height: 4,
             borderRadius: 2,
