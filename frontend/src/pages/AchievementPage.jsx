@@ -187,18 +187,28 @@ function AchievementCard({ achievement: ach, t }) {
         {ach.name}
       </span>
 
-      {/* Description or progress */}
+      {/* Description and progress */}
       {ach.unlocked ? (
-        <span style={{
-          fontFamily: "'DM Sans', sans-serif",
-          fontSize: 11,
-          color: 'var(--ctw-text-tertiary)',
-        }}>
-          {ach.unlocked_at
-            ? new Date(ach.unlocked_at).toLocaleDateString()
-            : ''
-          }
-        </span>
+        <div style={{ textAlign: 'center' }}>
+          <span style={{
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 11,
+            color: 'var(--ctw-text-secondary)',
+            display: 'block',
+            marginBottom: 4,
+          }}>
+            {ach.description}
+          </span>
+          {ach.unlocked_at && (
+            <span style={{
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 10,
+              color: 'var(--ctw-text-tertiary)',
+            }}>
+              {new Date(ach.unlocked_at).toLocaleDateString()}
+            </span>
+          )}
+        </div>
       ) : hasProgress ? (
         <div style={{ width: '100%' }}>
           <span style={{
