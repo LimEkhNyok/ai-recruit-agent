@@ -47,14 +47,24 @@ async def _collect_stats(user_id: int, db: AsyncSession) -> dict:
 
     # --- Quiz stats ---
     row = (await db.execute(
-        select(
-            sa_func.count().label("total"),
-            sa_func.sum(case((and_(QuizRecord.is_correct == True, QuizRecord.difficulty == "困难"), 1), else_=0)).label("hard_correct"),
-        )
+        select(sa_func.count().label("total"))
         .where(and_(QuizRecord.user_id == user_id, QuizRecord.is_skipped == False))
     )).first()
     stats["quiz_total"] = row[0] if row else 0
-    stats["quiz_hard_correct"] = row[1] or 0 if row else 0
+
+    # Hard correct per knowledge point (max across all KPs)
+    hard_rows = (await db.execute(
+        select(
+            QuizRecord.knowledge_point,
+            sa_func.sum(case((QuizRecord.is_correct == True, 1), else_=0)).label("hc"),
+        )
+        .where(and_(
+            QuizRecord.user_id == user_id,
+            QuizRecord.difficulty == "困难",
+        ))
+        .group_by(QuizRecord.knowledge_point)
+    )).all()
+    stats["quiz_hard_correct"] = max((r[1] or 0 for r in hard_rows), default=0)
 
     # Quiz distinct domains
     row = (await db.execute(
