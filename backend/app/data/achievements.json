@@ -66,13 +66,35 @@
           "condition": { "type": "quiz_streak", "value": 10 }
         },
         {
+          "id": "mastery_40",
+          "name": "登堂入室",
+          "name_en": "Getting There",
+          "description": "任意知识点掌握度达到 40%",
+          "description_en": "Reach 40% mastery on any knowledge point",
+          "icon": "🚪",
+          "rarity": "common",
+          "condition": { "type": "mastery_40", "value": 1 },
+          "counter": true
+        },
+        {
+          "id": "mastery_70",
+          "name": "百尺竿头",
+          "name_en": "Climbing Higher",
+          "description": "任意知识点掌握度达到 70%",
+          "description_en": "Reach 70% mastery on any knowledge point",
+          "icon": "🏔️",
+          "rarity": "common",
+          "condition": { "type": "mastery_70", "value": 1 },
+          "counter": true
+        },
+        {
           "id": "quiz_mastered_1",
           "name": "一隅初通",
           "name_en": "First Mastery",
           "description": "完全掌握 1 个知识点（掌握度 100%）",
           "description_en": "Fully master 1 knowledge point (100%)",
           "icon": "💡",
-          "rarity": "common",
+          "rarity": "rare",
           "condition": { "type": "quiz_mastered", "value": 1 }
         },
         {
@@ -154,28 +176,6 @@
           "icon": "⚔️",
           "rarity": "epic",
           "condition": { "type": "quiz_hard_correct", "value": 10 }
-        },
-        {
-          "id": "mastery_40",
-          "name": "登堂入室",
-          "name_en": "Getting There",
-          "description": "任意知识点掌握度达到 40%",
-          "description_en": "Reach 40% mastery on any knowledge point",
-          "icon": "🚪",
-          "rarity": "common",
-          "condition": { "type": "mastery_40", "value": 1 },
-          "counter": true
-        },
-        {
-          "id": "mastery_70",
-          "name": "百尺竿头",
-          "name_en": "Climbing Higher",
-          "description": "任意知识点掌握度达到 70%",
-          "description_en": "Reach 70% mastery on any knowledge point",
-          "icon": "🏔️",
-          "rarity": "rare",
-          "condition": { "type": "mastery_70", "value": 1 },
-          "counter": true
         }
       ]
     },
