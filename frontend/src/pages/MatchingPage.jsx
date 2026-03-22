@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { message, Button } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
+import { HistoryOutlined } from '@ant-design/icons'
 import MatchCard from '../components/MatchCard'
 import { triggerMatch, getResults, analyzeJD } from '../api/matching'
 import useFeatureGuard from '../hooks/useFeatureGuard'
@@ -11,6 +12,7 @@ import { useTranslation } from '../i18n'
 import { checkAndNotify } from '../utils/achievementHelper'
 import FadeIn from '../components/motion/FadeIn'
 import StaggerContainer, { StaggerItem } from '../components/motion/StaggerContainer'
+import InterviewHistoryDrawer from '../components/InterviewHistoryDrawer'
 
 function LoadingCursor({ title, subtitle }) {
   return (
@@ -137,6 +139,7 @@ export default function MatchingPage() {
   const [jdAnalyzing, setJdAnalyzing] = useState(false)
   const [jdResult, setJdResult] = useState(null)
   const [jdExpanded, setJdExpanded] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const navigate = useNavigate()
   const { loading: guardLoading, available, featureLabel } = useFeatureGuard("matching")
   const { markApiUsed } = useThemeStore()
@@ -306,28 +309,52 @@ export default function MatchingPage() {
               {t('matching.subtitle')}
             </p>
           </div>
-          <button
-            onClick={handleRematch}
-            disabled={rematching}
-            style={{
-              padding: '8px 16px',
-              fontSize: 14,
-              fontWeight: 500,
-              fontFamily: "'DM Sans', sans-serif",
-              color: 'var(--ctw-text-primary)',
-              background: 'transparent',
-              border: '1.5px solid var(--ctw-text-tertiary)',
-              borderRadius: 8,
-              cursor: rematching ? 'not-allowed' : 'pointer',
-              opacity: rematching ? 0.6 : 1,
-              transition: 'border-color 200ms',
-              whiteSpace: 'nowrap',
-            }}
-            onMouseEnter={(e) => !rematching && (e.currentTarget.style.borderColor = '#0066FF')}
-            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--ctw-text-tertiary)'}
-          >
-            {rematching ? t('common.loading') : t('matching.rematch')}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setHistoryOpen(true)}
+              className="flex items-center gap-1.5 font-body"
+              style={{
+                padding: '8px 16px',
+                fontSize: 14,
+                fontWeight: 500,
+                fontFamily: "'DM Sans', sans-serif",
+                color: 'var(--ctw-text-secondary)',
+                background: 'transparent',
+                border: '1.5px solid var(--ctw-text-tertiary)',
+                borderRadius: 8,
+                cursor: 'pointer',
+                transition: 'border-color 200ms',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = '#0066FF'}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--ctw-text-tertiary)'}
+            >
+              <HistoryOutlined style={{ fontSize: 14 }} />
+              {t('interview.history')}
+            </button>
+            <button
+              onClick={handleRematch}
+              disabled={rematching}
+              style={{
+                padding: '8px 16px',
+                fontSize: 14,
+                fontWeight: 500,
+                fontFamily: "'DM Sans', sans-serif",
+                color: 'var(--ctw-text-primary)',
+                background: 'transparent',
+                border: '1.5px solid var(--ctw-text-tertiary)',
+                borderRadius: 8,
+                cursor: rematching ? 'not-allowed' : 'pointer',
+                opacity: rematching ? 0.6 : 1,
+                transition: 'border-color 200ms',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={(e) => !rematching && (e.currentTarget.style.borderColor = '#0066FF')}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--ctw-text-tertiary)'}
+            >
+              {rematching ? t('common.loading') : t('matching.rematch')}
+            </button>
+          </div>
         </div>
       </FadeIn>
 
@@ -632,6 +659,19 @@ export default function MatchingPage() {
           </StaggerContainer>
         </FadeIn>
       )}
+
+      <InterviewHistoryDrawer
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        onReinterview={(item) => {
+          if (item.interview_type === 'custom_jd' && item.jd_context) {
+            navigate('/interview', { state: { jd_context: item.jd_context }, replace: true })
+          } else if (item.job_id) {
+            navigate(`/interview?job_id=${item.job_id}`)
+          }
+        }}
+        t={t}
+      />
     </div>
   )
 }

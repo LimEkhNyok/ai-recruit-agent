@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { message, Tooltip } from 'antd'
-import { ArrowUpOutlined, ArrowLeftOutlined, FileTextOutlined, AudioOutlined, HistoryOutlined } from '@ant-design/icons'
+import { ArrowUpOutlined, ArrowLeftOutlined, FileTextOutlined, AudioOutlined } from '@ant-design/icons'
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import ChatBubble from '../components/ChatBubble'
-import InterviewHistoryDrawer from '../components/InterviewHistoryDrawer'
 import { startInterview, chatStream, endInterview } from '../api/interview'
 import useFeatureGuard from '../hooks/useFeatureGuard'
 import useSpeechRecognition from '../hooks/useSpeechRecognition'
@@ -358,7 +357,6 @@ export default function InterviewPage() {
   const [evaluation, setEvaluation] = useState(null)
   const [showReport, setShowReport] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
-  const [historyOpen, setHistoryOpen] = useState(false)
   const bottomRef = useRef(null)
   const lastTranscriptRef = useRef('')
 
@@ -499,16 +497,6 @@ export default function InterviewPage() {
     }
   }
 
-  const handleReinterview = (item) => {
-    if (item.interview_type === 'custom_jd' && item.jd_context) {
-      navigate('/interview', { state: { jd_context: item.jd_context }, replace: true })
-      window.location.reload()
-    } else if (item.job_id) {
-      navigate(`/interview?job_id=${item.job_id}`, { replace: true })
-      window.location.reload()
-    }
-  }
-
   if (guardLoading) {
     return <LoadingCursor />
   }
@@ -578,22 +566,6 @@ export default function InterviewPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={() => setHistoryOpen(true)}
-              className="flex items-center gap-1.5 font-body"
-              style={{
-                padding: '8px 16px',
-                fontSize: 13,
-                color: 'var(--ctw-text-secondary)',
-                background: 'transparent',
-                border: '1px solid var(--ctw-border-default)',
-                borderRadius: 8,
-                cursor: 'pointer',
-              }}
-            >
-              <HistoryOutlined style={{ fontSize: 14 }} />
-              {t('interview.history')}
-            </button>
             {evaluation ? (
               <>
                 <button
@@ -829,14 +801,6 @@ export default function InterviewPage() {
         evaluation={evaluation}
         jobTitle={jobTitle}
         onBack={() => navigate('/matching')}
-        t={t}
-      />
-
-      {/* History Drawer */}
-      <InterviewHistoryDrawer
-        open={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        onReinterview={handleReinterview}
         t={t}
       />
 
