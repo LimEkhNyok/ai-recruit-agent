@@ -133,9 +133,10 @@ export default function AchievementPage() {
 function AchievementCard({ achievement: ach, t }) {
   const borderColor = RARITY_COLORS[ach.rarity] || RARITY_COLORS.common
   const bgColor = ach.unlocked ? RARITY_BG[ach.rarity] || RARITY_BG.common : 'var(--ctw-surface-card)'
+  const isHidden = ach.category_id === 'hidden'
 
   const progress = ach.progress
-  const hasProgress = progress && progress.current > 0 && !ach.unlocked
+  const hasProgress = !isHidden && progress && progress.current > 0 && !ach.unlocked
 
   return (
     <div style={{
@@ -173,7 +174,7 @@ function AchievementCard({ achievement: ach, t }) {
 
       {/* Icon */}
       <span style={{ fontSize: 32, lineHeight: 1 }}>
-        {ach.unlocked ? ach.icon : '🔒'}
+        {ach.unlocked ? ach.icon : isHidden ? '❓' : '🔒'}
       </span>
 
       {/* Name */}
@@ -184,7 +185,7 @@ function AchievementCard({ achievement: ach, t }) {
         color: ach.unlocked ? 'var(--ctw-text-primary)' : 'var(--ctw-text-tertiary)',
         lineHeight: 1.3,
       }}>
-        {ach.name}
+        {(!isHidden || ach.unlocked) ? ach.name : '???'}
       </span>
 
       {/* Description and progress */}
@@ -249,7 +250,7 @@ function AchievementCard({ achievement: ach, t }) {
           fontSize: 11,
           color: 'var(--ctw-text-tertiary)',
         }}>
-          {ach.description}
+          {isHidden && !ach.unlocked ? '达成特定条件后解锁' : ach.description}
         </span>
       )}
 

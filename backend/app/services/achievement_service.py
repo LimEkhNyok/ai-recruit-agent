@@ -364,6 +364,7 @@ async def get_achievements_with_progress(
             "icon": ach["icon"],
             "rarity": ach["rarity"],
             "category": ach["category_name"],
+            "category_id": ach["category"],
             "unlocked": is_unlocked,
             "unlocked_at": unlocked_map.get(ach["id"]),
             "progress": progress,
