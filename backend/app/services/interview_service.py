@@ -6,6 +6,7 @@ from typing import AsyncGenerator
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.models.interview import Interview
 from app.models.job import JobPosition
@@ -265,10 +266,13 @@ async def end_interview(interview_id: int, db: AsyncSession, model_service: Mode
             history[i]["review"] = review
             updated = True
         except Exception:
-            logger.exception("Review failed for interview %s msg %s", interview_id, i)
+            import traceback
+            print(f"[REVIEW] Failed interview={interview_id} msg={i}: {traceback.format_exc()}")
     if updated:
         interview.chat_history = history
+        flag_modified(interview, "chat_history")
         await db.commit()
+        print(f"[REVIEW] Saved {len([m for m in history if m.get('review')])} reviews for interview {interview_id}")
 
     dialogue_text = ""
     for msg in history:
