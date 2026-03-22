@@ -227,17 +227,12 @@ async def end_interview(interview_id: int, db: AsyncSession, model_service: Mode
     lang = model_service.language
     history: list[dict] = list(interview.chat_history) if interview.chat_history else []
 
-    # Review the last user message synchronously before generating evaluation
-    last_user_idx = None
-    for i in range(len(history) - 1, -1, -1):
-        if history[i]["role"] == "user" and not history[i].get("review"):
-            last_user_idx = i
-            break
-
-    if last_user_idx is not None:
+    # Review ALL unreviewed user messages before generating evaluation
+    unreviewed = [i for i, msg in enumerate(history) if msg.get("role") == "user" and not msg.get("review")]
+    if unreviewed:
         job_info = _get_job_info(interview)
-        await _review_last_answer(interview_id, last_user_idx, job_info, lang, model_service)
-        # Refresh interview data after review
+        for idx in unreviewed:
+            await _review_last_answer(interview_id, idx, job_info, lang, model_service)
         await db.refresh(interview)
         history = list(interview.chat_history) if interview.chat_history else []
 
