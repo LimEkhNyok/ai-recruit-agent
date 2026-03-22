@@ -1,7 +1,7 @@
 """add_user_weakness_profiles
 
 Revision ID: c1d2e3f4a5b6
-Revises: f3a1b2c4d5e6
+Revises: 6bd2eecdce3e
 Create Date: 2026-03-22 12:00:00.000000
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "c1d2e3f4a5b6"
-down_revision: Union[str, None] = "f3a1b2c4d5e6"
+down_revision: Union[str, None] = "6bd2eecdce3e"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
