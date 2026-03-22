@@ -486,6 +486,7 @@ export default function QuizPage() {
                 showSearch
                 optionFilterProp="label"
                 optionRender={(option) => option.data.label}
+                popupMatchSelectWidth={false}
               />
               <Select
                 style={{ width: 100 }}
