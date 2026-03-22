@@ -5,6 +5,7 @@ import { motion } from 'motion/react'
 import MatchCard from '../components/MatchCard'
 import { triggerMatch, getResults, analyzeJD } from '../api/matching'
 import useFeatureGuard from '../hooks/useFeatureGuard'
+import useMatchingStore from '../store/useMatchingStore'
 import useThemeStore from '../store/useThemeStore'
 import { useTranslation } from '../i18n'
 import FadeIn from '../components/motion/FadeIn'
@@ -127,8 +128,8 @@ function EmptyState({ text }) {
 }
 
 export default function MatchingPage() {
-  const [results, setResults] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const { results: cachedResults, setResults: setCachedResults } = useMatchingStore()
+  const [results, setResults] = useState(cachedResults)
   const [matching, setMatching] = useState(false)
   const [rematching, setRematching] = useState(false)
   const [jdText, setJdText] = useState('')
@@ -143,31 +144,30 @@ export default function MatchingPage() {
   useEffect(() => {
     let ignore = false
     const load = async () => {
-      setLoading(true)
+      // store 里有缓存，直接用，后台静默刷新
       try {
         const cached = await getResults()
         if (!ignore && cached.data.results && cached.data.results.length > 0) {
           setResults(cached.data.results)
-          setLoading(false)
+          setCachedResults(cached.data.results)
           return
         }
       } catch {}
 
+      // 没有缓存，首次匹配，显示"AI正在为你匹配"
       if (ignore) return
       setMatching(true)
       try {
         const res = await triggerMatch()
         if (!ignore) {
           setResults(res.data.results)
+          setCachedResults(res.data.results)
           markApiUsed()
         }
       } catch (err) {
         if (!ignore) message.error(err.response?.data?.detail || t('matching.matchFailed'))
       } finally {
-        if (!ignore) {
-          setLoading(false)
-          setMatching(false)
-        }
+        if (!ignore) setMatching(false)
       }
     }
     load()
@@ -183,6 +183,7 @@ export default function MatchingPage() {
     try {
       const res = await triggerMatch()
       setResults(res.data.results)
+      setCachedResults(res.data.results)
       markApiUsed()
       message.success(t('matching.rematchSuccess'))
     } catch (err) {
@@ -265,10 +266,6 @@ export default function MatchingPage() {
         subtitle={t('matching.analyzingSubtitle')}
       />
     )
-  }
-
-  if (loading) {
-    return <LoadingCursor />
   }
 
   if (!results || results.length === 0) {
