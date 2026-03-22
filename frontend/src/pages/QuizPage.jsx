@@ -22,6 +22,17 @@ const DIFFICULTIES = ['简单', '中等', '困难']
 
 const difficultyColors = { '简单': 'green', '中等': 'blue', '困难': 'red' }
 
+// 暂时隐藏的领域，后端数据保留，后续可在此处移除 ID 重新启用
+const HIDDEN_DOMAIN_IDS = [
+  'cs_fundamentals',      // 计算机基础
+  'devops',               // DevOps / 云计算
+  'cs_math',              // 计算机数学
+  'software_engineering', // 软件工程
+  'nginx',                // Nginx
+  'react',                // React
+  'vue',                  // Vue
+]
+
 export default function QuizPage() {
   // Domain & knowledge point selection
   const [domains, setDomains] = useState([])
@@ -85,6 +96,11 @@ export default function QuizPage() {
     } catch {}
   }
 
+  // Filter out hidden domains
+  const visibleDomains = domains.filter((d) => !HIDDEN_DOMAIN_IDS.includes(d.id))
+  const generalDomains = visibleDomains.filter((d) => d.type === 'general')
+  const languageDomains = visibleDomains.filter((d) => d.type === 'language')
+
   const currentDomainMeta = domains.find((d) => d.id === selectedDomain)
   const currentTopicMeta = currentDomainMeta?.topics?.find((tp) => tp.id === selectedTopic)
 
@@ -106,30 +122,13 @@ export default function QuizPage() {
     return topicStat
   }
 
-  const handleSelectDomain = (domainId) => {
+  const handleDomainChange = (domainId) => {
     setSelectedDomain(domainId)
     setSelectedTopic(null)
-    setQuestion(null)
-    setResult(null)
-    setResultAnimState('hidden')
-    setIsVariant(false)
   }
 
-  const handleSelectTopic = (topicId) => {
+  const handleTopicChange = (topicId) => {
     setSelectedTopic(topicId)
-    setQuestion(null)
-    setResult(null)
-    setResultAnimState('hidden')
-    setIsVariant(false)
-  }
-
-  const handleBackToDomains = () => {
-    setSelectedDomain(null)
-    setSelectedTopic(null)
-    setQuestion(null)
-    setResult(null)
-    setResultAnimState('hidden')
-    setIsVariant(false)
   }
 
   const handleGenerate = async () => {
@@ -403,8 +402,6 @@ export default function QuizPage() {
     )
   }
 
-  const generalDomains = domains.filter((d) => d.type === 'general')
-  const languageDomains = domains.filter((d) => d.type === 'language')
   const questionNumber = String(questionCountRef.current).padStart(3, '0')
 
   const statusColors = {
@@ -412,6 +409,35 @@ export default function QuizPage() {
     weak: 'var(--ctw-warning, #F59E0B)',
     not_started: 'var(--ctw-text-tertiary, #9CA3AF)',
   }
+
+  // Build domain Select options with OptGroup
+  const domainOptions = [
+    {
+      label: t('quiz.generalDomains'),
+      options: generalDomains.map((d) => ({ label: d.name, value: d.id })),
+    },
+    {
+      label: t('quiz.languageDomains'),
+      options: languageDomains.map((d) => ({ label: d.name, value: d.id })),
+    },
+  ]
+
+  // Build knowledge point Select options with status dots
+  const topicOptions = currentDomainMeta?.topics?.map((tp) => {
+    const status = getTopicStatus(tp.name)
+    const dotColor = status === 'mastered' ? '#00D4AA' : status === 'weak' ? '#F59E0B' : '#9CA3AF'
+    return {
+      label: (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+          {tp.name}
+        </span>
+      ),
+      value: tp.id,
+    }
+  }) || []
+
+  const canGenerate = selectedDomain && selectedTopic && questionType
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -441,224 +467,71 @@ export default function QuizPage() {
               </h2>
             </div>
 
-            {/* Domain Selection */}
-            {!selectedDomain && (
-              <div>
-                {/* General Domains */}
-                <div style={{ marginBottom: 20 }}>
-                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-secondary)', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                    {t('quiz.generalDomains')}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {generalDomains.map((domain) => (
-                      <button
-                        key={domain.id}
-                        onClick={() => handleSelectDomain(domain.id)}
-                        style={{
-                          padding: '10px 18px',
-                          borderRadius: 8,
-                          border: '1px solid var(--ctw-border-default)',
-                          background: 'var(--ctw-surface-card)',
-                          color: 'var(--ctw-text-primary)',
-                          fontFamily: "'DM Sans', sans-serif",
-                          fontSize: 14,
-                          fontWeight: 500,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = '#0066FF'
-                          e.currentTarget.style.color = '#0066FF'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = 'var(--ctw-border-default)'
-                          e.currentTarget.style.color = 'var(--ctw-text-primary)'
-                        }}
-                      >
-                        {domain.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            {/* Controls: Select dropdowns in one row */}
+            <div className="flex gap-3 mb-4 flex-wrap items-center">
+              <Select
+                style={{ width: 180 }}
+                placeholder={t('quiz.selectDomain')}
+                value={selectedDomain}
+                onChange={handleDomainChange}
+                options={domainOptions}
+                showSearch
+                optionFilterProp="label"
+              />
+              <Select
+                style={{ width: 180 }}
+                placeholder={t('quiz.selectKnowledge')}
+                value={selectedTopic}
+                onChange={handleTopicChange}
+                options={topicOptions}
+                disabled={!selectedDomain}
+                showSearch
+                optionFilterProp="label"
+                optionRender={(option) => option.data.label}
+              />
+              <Select
+                style={{ width: 100 }}
+                placeholder={t('quiz.selectDifficulty')}
+                value={difficulty}
+                onChange={setDifficulty}
+                options={DIFFICULTIES.map((d) => ({ label: t(`quiz.difficulty.${d}`), value: d }))}
+              />
+              <Select
+                style={{ width: 120 }}
+                placeholder={t('quiz.selectType')}
+                value={questionType}
+                onChange={setQuestionType}
+                options={QUESTION_TYPES.map((tp) => ({ label: t(`quiz.types.${tp}`), value: tp }))}
+              />
+              <Button
+                type="primary"
+                onClick={handleGenerate}
+                loading={generating}
+                disabled={!canGenerate}
+              >
+                {question ? t('quiz.change') : t('quiz.start')}
+              </Button>
+            </div>
 
-                {/* Language Domains */}
-                <div style={{ marginBottom: 20 }}>
-                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-secondary)', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                    {t('quiz.languageDomains')}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {languageDomains.map((domain) => (
-                      <button
-                        key={domain.id}
-                        onClick={() => handleSelectDomain(domain.id)}
-                        style={{
-                          padding: '10px 18px',
-                          borderRadius: 8,
-                          border: '1px solid var(--ctw-border-default)',
-                          background: 'var(--ctw-surface-card)',
-                          color: 'var(--ctw-text-primary)',
-                          fontFamily: "'DM Sans', sans-serif",
-                          fontSize: 14,
-                          fontWeight: 500,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = '#0066FF'
-                          e.currentTarget.style.color = '#0066FF'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = 'var(--ctw-border-default)'
-                          e.currentTarget.style.color = 'var(--ctw-text-primary)'
-                        }}
-                      >
-                        {domain.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Empty hint */}
-                <div className="flex flex-col items-center justify-center py-8">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ctw-text-tertiary)' }}>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" />
-                  </svg>
-                  <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 18, fontWeight: 600, color: 'var(--ctw-text-primary)', margin: '16px 0 0' }}>
-                    {t('quiz.emptyTitle')}
-                  </h3>
-                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-secondary)', margin: '8px 0 0' }}>
-                    {t('quiz.emptySubtitle')}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Knowledge Point Selection (domain selected, no question yet or browsing) */}
-            {selectedDomain && !question && !generating && (
-              <div>
-                {/* Back + Domain name */}
-                <div className="flex items-center gap-3 mb-4">
-                  <button
-                    onClick={handleBackToDomains}
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: 6,
-                      border: '1px solid var(--ctw-border-default)',
-                      background: 'transparent',
-                      color: 'var(--ctw-text-secondary)',
-                      fontFamily: "'DM Sans', sans-serif",
-                      fontSize: 13,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#0066FF'; e.currentTarget.style.color = '#0066FF' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--ctw-border-default)'; e.currentTarget.style.color = 'var(--ctw-text-secondary)' }}
-                  >
-                    ← {t('quiz.backToDomains')}
-                  </button>
-                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, fontWeight: 600, color: 'var(--ctw-text-primary)' }}>
-                    {currentDomainMeta?.name}
-                  </span>
-                </div>
-
-                {/* Knowledge points grid */}
-                <div style={{ marginBottom: 20 }}>
-                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-secondary)', margin: '0 0 10px' }}>
-                    {t('quiz.selectKnowledge')}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {currentDomainMeta?.topics?.map((tp) => {
-                      const status = getTopicStatus(tp.name)
-                      const isActive = selectedTopic === tp.id
-                      const borderColor = isActive ? '#0066FF' : 'var(--ctw-border-default)'
-                      const statusDotColor = statusColors[status]
-                      return (
-                        <button
-                          key={tp.id}
-                          onClick={() => handleSelectTopic(tp.id)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 6,
-                            padding: '8px 14px',
-                            borderRadius: 8,
-                            border: `1px solid ${borderColor}`,
-                            background: isActive ? 'rgba(0,102,255,0.06)' : 'var(--ctw-surface-card)',
-                            color: isActive ? '#0066FF' : 'var(--ctw-text-primary)',
-                            fontFamily: "'DM Sans', sans-serif",
-                            fontSize: 13,
-                            fontWeight: isActive ? 600 : 400,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!isActive) e.currentTarget.style.borderColor = '#0066FF'
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!isActive) e.currentTarget.style.borderColor = 'var(--ctw-border-default)'
-                          }}
-                        >
-                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusDotColor, flexShrink: 0 }} />
-                          {tp.name}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Selected knowledge point detail + controls */}
-                {currentTopicMeta && (
-                  <div
-                    style={{
-                      padding: 16,
-                      borderRadius: 8,
-                      border: '1px solid var(--ctw-border-default)',
-                      background: 'var(--ctw-surface-default, var(--ctw-surface-card))',
-                      marginBottom: 16,
-                    }}
-                  >
-                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-secondary)', margin: '0 0 4px' }}>
-                      {t('quiz.knowledgeDesc')}
-                    </p>
-                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-primary)', margin: '0 0 12px', lineHeight: 1.6 }}>
-                      {currentTopicMeta.description}
-                    </p>
-                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--ctw-text-secondary)', margin: '0 0 4px' }}>
-                      {t('quiz.typicalApproach')}
-                    </p>
-                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-primary)', margin: '0 0 16px', lineHeight: 1.6 }}>
-                      {currentTopicMeta.typical_approach}
-                    </p>
-
-                    {/* Difficulty + Type + Start */}
-                    <div className="flex gap-3 flex-wrap items-center">
-                      <Select
-                        style={{ width: 120 }}
-                        placeholder={t('quiz.selectDifficulty')}
-                        value={difficulty}
-                        onChange={setDifficulty}
-                        options={DIFFICULTIES.map((d) => ({ label: t(`quiz.difficulty.${d}`), value: d }))}
-                      />
-                      <Select
-                        style={{ width: 140 }}
-                        placeholder={t('quiz.selectType')}
-                        value={questionType}
-                        onChange={setQuestionType}
-                        options={QUESTION_TYPES.map((tp) => ({ label: t(`quiz.types.${tp}`), value: tp }))}
-                      />
-                      <Button
-                        type="primary"
-                        onClick={handleGenerate}
-                        loading={generating}
-                        disabled={!questionType}
-                      >
-                        {t('quiz.start')}
-                      </Button>
-                    </div>
-                  </div>
-                )}
+            {/* Knowledge point info bar */}
+            {currentTopicMeta && !question && !generating && (
+              <div
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 8,
+                  background: 'var(--ctw-surface-default, rgba(0,102,255,0.03))',
+                  border: '1px solid var(--ctw-border-default)',
+                  marginBottom: 16,
+                  lineHeight: 1.6,
+                }}
+              >
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--ctw-text-secondary)' }}>
+                  {currentTopicMeta.description}
+                </span>
+                <span style={{ margin: '0 8px', color: 'var(--ctw-border-default)' }}>|</span>
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--ctw-text-tertiary)' }}>
+                  {currentTopicMeta.typical_approach}
+                </span>
               </div>
             )}
 
@@ -688,33 +561,6 @@ export default function QuizPage() {
             {/* Question display */}
             {question && !generating && (
               <div>
-                {/* Back button when question is showing */}
-                {selectedDomain && (
-                  <div className="flex items-center gap-3 mb-3">
-                    <button
-                      onClick={handleBackToDomains}
-                      style={{
-                        padding: '4px 12px',
-                        borderRadius: 6,
-                        border: '1px solid var(--ctw-border-default)',
-                        background: 'transparent',
-                        color: 'var(--ctw-text-secondary)',
-                        fontFamily: "'DM Sans', sans-serif",
-                        fontSize: 13,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#0066FF'; e.currentTarget.style.color = '#0066FF' }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--ctw-border-default)'; e.currentTarget.style.color = 'var(--ctw-text-secondary)' }}
-                    >
-                      ← {t('quiz.backToDomains')}
-                    </button>
-                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-tertiary)' }}>
-                      {currentDomainMeta?.name}
-                    </span>
-                  </div>
-                )}
-
                 {/* Question number + tags */}
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
                   <span
@@ -756,21 +602,37 @@ export default function QuizPage() {
 
                 {/* Action buttons */}
                 {!result && (
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-3">
                     <Button
                       type="primary"
                       onClick={handleSubmit}
                       loading={judging}
                       disabled={!userAnswer.trim()}
+                      style={{ minWidth: 120 }}
                     >
                       {t('quiz.submit')}
                     </Button>
-                    <Button
+                    <button
                       onClick={handleSkip}
-                      loading={judging}
+                      disabled={judging}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        fontFamily: "'DM Sans', sans-serif",
+                        fontSize: 13,
+                        color: 'var(--ctw-text-tertiary)',
+                        cursor: judging ? 'default' : 'pointer',
+                        textDecoration: 'underline',
+                        textUnderlineOffset: 3,
+                        padding: 0,
+                        opacity: judging ? 0.5 : 1,
+                        transition: 'color 0.2s',
+                      }}
+                      onMouseEnter={(e) => { if (!judging) e.currentTarget.style.color = 'var(--ctw-text-secondary)' }}
+                      onMouseLeave={(e) => { if (!judging) e.currentTarget.style.color = 'var(--ctw-text-tertiary)' }}
                     >
                       {t('quiz.skip')}
-                    </Button>
+                    </button>
                   </div>
                 )}
 
@@ -836,30 +698,93 @@ export default function QuizPage() {
                       </p>
                     </div>
 
-                    {/* Action buttons: Next + Variant */}
-                    <div className="flex gap-2 flex-wrap">
-                      <Button type="primary" onClick={handleNext}>
-                        {t('quiz.next')}
-                      </Button>
-                      {!result.is_correct && (
-                        <Button
-                          onClick={() => handleVariant(false)}
-                          loading={variantGenerating}
-                        >
-                          {t('quiz.variant')}
-                        </Button>
-                      )}
-                      {result.is_correct && (
-                        <Button
-                          onClick={() => handleVariant(true)}
-                          loading={variantGenerating}
-                        >
-                          {t('quiz.variantDeepen')}
-                        </Button>
+                    {/* Result actions: primary action changes based on correct/incorrect */}
+                    <div className="flex items-center gap-3">
+                      {result.is_correct ? (
+                        <>
+                          <Button type="primary" onClick={handleNext}>
+                            {t('quiz.next')}
+                          </Button>
+                          <button
+                            onClick={() => handleVariant(true)}
+                            disabled={variantGenerating}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              fontFamily: "'DM Sans', sans-serif",
+                              fontSize: 13,
+                              color: 'var(--ctw-text-tertiary)',
+                              cursor: variantGenerating ? 'default' : 'pointer',
+                              textDecoration: 'underline',
+                              textUnderlineOffset: 3,
+                              padding: 0,
+                              opacity: variantGenerating ? 0.5 : 1,
+                              transition: 'color 0.2s',
+                            }}
+                            onMouseEnter={(e) => { if (!variantGenerating) e.currentTarget.style.color = '#0066FF' }}
+                            onMouseLeave={(e) => { if (!variantGenerating) e.currentTarget.style.color = 'var(--ctw-text-tertiary)' }}
+                          >
+                            {variantGenerating ? '...' : t('quiz.variantDeepen')}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            type="primary"
+                            onClick={() => handleVariant(false)}
+                            loading={variantGenerating}
+                          >
+                            {t('quiz.variant')}
+                          </Button>
+                          <button
+                            onClick={handleNext}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              fontFamily: "'DM Sans', sans-serif",
+                              fontSize: 13,
+                              color: 'var(--ctw-text-tertiary)',
+                              cursor: 'pointer',
+                              textDecoration: 'underline',
+                              textUnderlineOffset: 3,
+                              padding: 0,
+                              transition: 'color 0.2s',
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--ctw-text-secondary)' }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--ctw-text-tertiary)' }}
+                          >
+                            {t('quiz.next')}
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Empty state */}
+            {!question && !generating && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ctw-text-tertiary)' }}>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                <h3
+                  style={{
+                    fontFamily: "'Sora', sans-serif",
+                    fontSize: 18,
+                    fontWeight: 600,
+                    color: 'var(--ctw-text-primary)',
+                    margin: '16px 0 0',
+                  }}
+                >
+                  {t('quiz.emptyTitle')}
+                </h3>
+                <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--ctw-text-secondary)', margin: '8px 0 0' }}>
+                  {t('quiz.emptySubtitle')}
+                </p>
               </div>
             )}
           </div>
