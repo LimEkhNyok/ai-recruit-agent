@@ -24,7 +24,7 @@ export default function AchievementPage() {
 
   useEffect(() => {
     loadAchievements()
-  }, [])
+  }, [language])
 
   const loadAchievements = async () => {
     try {
