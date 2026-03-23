@@ -58,27 +58,27 @@
     "startAssessment": "Complete an AI assessment to start your career exploration journey",
     "assessment": {
       "title": "AI Career Assessment",
-      "desc": "Through natural conversation, AI comprehensively analyzes your personality, abilities, interests, and values"
+      "desc": "In-depth conversational assessment covering personality, abilities, interests, and values — generating your MBTI profile and multi-dimensional talent portrait"
     },
     "matching": {
       "title": "Smart Job Matching",
-      "desc": "Using vector similarity and AI deep scoring to recommend the best-fit positions for you"
+      "desc": "Vector similarity + AI deep scoring for precise matching with top-quality positions"
     },
     "interview": {
       "title": "AI Mock Interview",
-      "desc": "AI interviewer for target positions with real-time conversation practice and detailed evaluation reports"
+      "desc": "Choose any target role, practice with a human-like AI interviewer via text or voice, review full session recordings, and receive detailed scoring reports with round-by-round analysis"
     },
     "career": {
       "title": "Career Planning",
-      "desc": "AI-customized short, mid, and long-term career goals based on your profile and matching results"
+      "desc": "Combining your talent profile, interview results, and quiz performance, AI crafts personalized short, mid, and long-term career goals with a tailored skill growth roadmap"
     },
     "resume": {
       "title": "AI Resume Analysis",
-      "desc": "Upload your resume for a detailed AI analysis report to help you identify areas for improvement"
+      "desc": "Upload your resume for a detailed AI analysis that pinpoints weaknesses and helps you craft a standout resume"
     },
     "quiz": {
       "title": "Smart Quiz Practice",
-      "desc": "AI-powered question generation and grading with a spaced repetition system for effective learning"
+      "desc": "Structured practice across multiple domains and knowledge points with intelligent mastery tracking to solidify your fundamentals"
     },
     "loginRequired": "Please Log In",
     "loginRequiredDesc": "Log in to access assessment, matching, quiz, and all other features.",
