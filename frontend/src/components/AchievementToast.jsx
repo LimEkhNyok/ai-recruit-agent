@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import useAchievementStore from '../store/useAchievementStore'
+import { useTranslation } from '../i18n'
 
 const RARITY_COLORS = {
   common: '#9CA3AF',
@@ -9,16 +10,10 @@ const RARITY_COLORS = {
   legendary: '#F59E0B',
 }
 
-const RARITY_LABELS = {
-  common: '普通',
-  rare: '稀有',
-  epic: '史诗',
-  legendary: '传说',
-}
-
 export default function AchievementToast() {
   const { newlyUnlocked, shiftUnlocked } = useAchievementStore()
   const [current, setCurrent] = useState(null)
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (!current && newlyUnlocked.length > 0) {
@@ -74,7 +69,7 @@ export default function AchievementToast() {
                 letterSpacing: '0.06em',
                 marginBottom: 2,
               }}>
-                {RARITY_LABELS[current.rarity] || current.rarity}
+                {t(`achievement.rarity.${current.rarity}`)}
               </div>
               <div style={{
                 fontFamily: "'Sora', sans-serif",

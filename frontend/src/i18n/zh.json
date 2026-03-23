@@ -380,6 +380,7 @@
   },
   "achievement": {
     "title": "我的成就",
+    "hiddenHint": "达成特定条件后解锁",
     "rarity": {
       "common": "普通",
       "rare": "稀有",

@@ -375,6 +375,7 @@
   },
   "achievement": {
     "title": "My Achievements",
+    "hiddenHint": "Unlock by meeting specific conditions",
     "rarity": {
       "common": "Common",
       "rare": "Rare",

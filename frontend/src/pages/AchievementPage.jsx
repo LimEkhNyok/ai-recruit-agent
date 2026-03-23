@@ -20,7 +20,7 @@ const RARITY_BG = {
 export default function AchievementPage() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
 
   useEffect(() => {
     loadAchievements()
@@ -121,7 +121,7 @@ export default function AchievementPage() {
             gap: 14,
           }}>
             {achievements.map((ach) => (
-              <AchievementCard key={ach.id} achievement={ach} t={t} />
+              <AchievementCard key={ach.id} achievement={ach} t={t} language={language} />
             ))}
           </div>
         </div>
@@ -130,7 +130,15 @@ export default function AchievementPage() {
   )
 }
 
-function AchievementCard({ achievement: ach, t }) {
+function formatDate(dateStr, language) {
+  const d = new Date(dateStr)
+  if (language === 'en') {
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+  }
+  return d.toLocaleDateString('zh-CN')
+}
+
+function AchievementCard({ achievement: ach, t, language }) {
   const borderColor = RARITY_COLORS[ach.rarity] || RARITY_COLORS.common
   const bgColor = ach.unlocked ? RARITY_BG[ach.rarity] || RARITY_BG.common : 'var(--ctw-surface-card)'
   const isHidden = ach.category_id === 'hidden'
@@ -206,7 +214,7 @@ function AchievementCard({ achievement: ach, t }) {
               fontSize: 10,
               color: 'var(--ctw-text-tertiary)',
             }}>
-              {new Date(ach.unlocked_at).toLocaleDateString()}
+              {formatDate(ach.unlocked_at, language)}
             </span>
           )}
         </div>
@@ -250,7 +258,7 @@ function AchievementCard({ achievement: ach, t }) {
           fontSize: 11,
           color: 'var(--ctw-text-tertiary)',
         }}>
-          {isHidden && !ach.unlocked ? '达成特定条件后解锁' : ach.description}
+          {isHidden && !ach.unlocked ? t('achievement.hiddenHint') : ach.description}
         </span>
       )}
 
