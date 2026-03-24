@@ -97,7 +97,7 @@ async def save_config(
     if not test_result["supports_chat"]:
         raise HTTPException(
             status_code=400,
-            detail=f"基础 Chat 能力测试失败，无法保存：{test_result['errors'].get('chat', '未知错误')}",
+            detail="基础 Chat 能力测试失败，请检查 API Key、Base URL 和模型名称是否正确",
         )
 
     if config is None:

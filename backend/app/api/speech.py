@@ -1,5 +1,9 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from openai import OpenAI
+
+logger = logging.getLogger(__name__)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,4 +41,5 @@ async def transcribe(
         )
         return {"code": 0, "data": {"text": transcription.text}}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"语音识别失败: {str(e)}")
+        logger.error(f"语音识别失败 user={current_user.id}: {e}")
+        raise HTTPException(status_code=500, detail="语音识别失败，请稍后重试")

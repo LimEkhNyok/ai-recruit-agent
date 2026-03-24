@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     GEMINI_BASE_URL: str = "https://www.sophnet.com/api/open-apis/v1"
     GEMINI_MODEL: str = "gemini-3-pro-preview"
     ENCRYPTION_KEY: str = ""
-    JWT_SECRET_KEY: str = "dev-secret-change-in-production"
+    JWT_SECRET_KEY: str = ""
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
@@ -24,7 +24,12 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    s = Settings()
+    if not s.JWT_SECRET_KEY or s.JWT_SECRET_KEY.startswith("dev-secret"):
+        raise RuntimeError("JWT_SECRET_KEY 未设置或使用了不安全的默认值，请在 .env 中配置")
+    if not s.ENCRYPTION_KEY:
+        raise RuntimeError("ENCRYPTION_KEY 未设置，请在 .env 中配置")
+    return s
 
 
 VERIFY_CODE_LENGTH = 6

@@ -1,6 +1,9 @@
 import io
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+
+logger = logging.getLogger(__name__)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -52,10 +55,25 @@ async def upload(
     if len(content) > 10 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="文件大小不能超过 10MB")
 
+    MIME_SIGNATURES = {
+        b"%PDF": ".pdf",
+        b"PK\x03\x04": ".docx",
+    }
+    ext = file.filename.lower().rsplit(".", 1)[-1]
+    if ext != "txt":
+        matched = False
+        for magic, expected_ext in MIME_SIGNATURES.items():
+            if content[:len(magic)] == magic and file.filename.lower().endswith(expected_ext):
+                matched = True
+                break
+        if not matched:
+            raise HTTPException(status_code=400, detail="文件内容与扩展名不匹配，请上传真实的文件")
+
     try:
         text = _extract_text(file.filename, content)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"文件解析失败: {e}")
+        logger.error(f"文件解析失败 user={current_user.id}: {e}")
+        raise HTTPException(status_code=400, detail="文件解析失败，请检查文件格式后重试")
 
     if not text.strip():
         raise HTTPException(status_code=400, detail="无法从文件中提取到文本内容")
