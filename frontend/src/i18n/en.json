@@ -169,6 +169,8 @@
     "recording": "Recording...",
     "speechUnavailable": "Speech recognition unavailable, please use text input",
     "micDenied": "Microphone permission denied, please allow in browser settings",
+    "transcribing": "Transcribing...",
+    "transcribeFailed": "Speech recognition failed, please retry or use text input",
     "voiceInput": "Voice input",
     "stopRecording": "Stop recording",
     "history": "History",

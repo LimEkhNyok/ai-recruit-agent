@@ -14,6 +14,15 @@ export const getInterviewDetail = (interviewId) =>
 export const deleteInterview = (interviewId) =>
   client.delete(`/interview/${interviewId}`)
 
+export const transcribeAudio = (audioBlob) => {
+  const formData = new FormData()
+  formData.append('file', audioBlob, 'recording.webm')
+  return client.post('/speech/transcribe', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 30000,
+  })
+}
+
 export async function* chatStream(interviewId, message) {
   const token = localStorage.getItem('token')
   const response = await fetch('/api/interview/chat', {

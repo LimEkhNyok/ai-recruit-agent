@@ -20,6 +20,7 @@ from app.api.model_config import router as model_config_router
 from app.api.usage import router as usage_router
 from app.api.billing import router as billing_router
 from app.api.achievement import router as achievement_router
+from app.api.speech import router as speech_router
 
 
 @asynccontextmanager
@@ -62,6 +63,7 @@ app.include_router(model_config_router)
 app.include_router(usage_router)
 app.include_router(billing_router)
 app.include_router(achievement_router)
+app.include_router(speech_router)
 
 
 @app.get("/api/health")

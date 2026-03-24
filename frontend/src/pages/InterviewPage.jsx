@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { message, Tooltip } from 'antd'
-import { ArrowUpOutlined, ArrowLeftOutlined, FileTextOutlined, AudioOutlined } from '@ant-design/icons'
+import { ArrowUpOutlined, ArrowLeftOutlined, FileTextOutlined, AudioOutlined, LoadingOutlined } from '@ant-design/icons'
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import ChatBubble from '../components/ChatBubble'
 import { startInterview, chatStream, endInterview } from '../api/interview'
@@ -363,6 +363,8 @@ export default function InterviewPage() {
   const handleSpeechError = useCallback((err) => {
     if (err === 'not-allowed') {
       message.warning(t('interview.micDenied'))
+    } else if (err === 'transcribe-failed') {
+      message.warning(t('interview.transcribeFailed'))
     } else {
       message.warning(t('interview.speechUnavailable'))
     }
@@ -371,6 +373,7 @@ export default function InterviewPage() {
   const {
     isSupported: speechSupported,
     isListening,
+    transcribing,
     transcript,
     interimTranscript,
     startListening,
@@ -389,10 +392,7 @@ export default function InterviewPage() {
 
   useEffect(() => {
     if (transcript && transcript !== lastTranscriptRef.current) {
-      const newText = transcript.slice(lastTranscriptRef.current.length)
-      if (newText) {
-        setInput((prev) => prev + newText)
-      }
+      setInput((prev) => prev + transcript)
       lastTranscriptRef.current = transcript
     }
   }, [transcript])
@@ -697,23 +697,15 @@ export default function InterviewPage() {
             }}
           >
             {/* Recording indicator */}
-            {isListening && (
+            {(isListening || transcribing) && (
               <div
                 className="flex items-center gap-2"
                 style={{ marginBottom: 8, padding: '0 4px' }}
               >
-                <div className="recording-dot" />
+                {isListening && <div className="recording-dot" />}
                 <span className="font-body" style={{ fontSize: 12, color: 'var(--ctw-text-tertiary)' }}>
-                  {t('interview.recording')} {formatRecordingTime(recordingTime)}
+                  {transcribing ? t('interview.transcribing') : `${t('interview.recording')} ${formatRecordingTime(recordingTime)}`}
                 </span>
-                {interimTranscript && (
-                  <span
-                    className="font-body recording-indicator-interim"
-                    style={{ fontSize: 12, color: 'var(--ctw-text-tertiary)' }}
-                  >
-                    {interimTranscript}
-                  </span>
-                )}
               </div>
             )}
 
@@ -746,10 +738,10 @@ export default function InterviewPage() {
                 }}
               />
               {speechSupported && (
-                <Tooltip title={isListening ? t('interview.stopRecording') : t('interview.voiceInput')}>
+                <Tooltip title={transcribing ? t('interview.transcribing') : isListening ? t('interview.stopRecording') : t('interview.voiceInput')}>
                   <button
                     onClick={toggleListening}
-                    disabled={streaming || ending}
+                    disabled={streaming || ending || transcribing}
                     className={`mic-btn shrink-0 flex items-center justify-center${isListening ? ' mic-btn-recording' : ''}`}
                     style={{
                       width: 36,
@@ -757,12 +749,12 @@ export default function InterviewPage() {
                       borderRadius: '50%',
                       border: 'none',
                       background: isListening ? undefined : 'transparent',
-                      color: isListening ? undefined : 'var(--ctw-text-tertiary)',
-                      cursor: streaming || ending ? 'not-allowed' : 'pointer',
+                      color: transcribing ? 'var(--ctw-primary)' : isListening ? undefined : 'var(--ctw-text-tertiary)',
+                      cursor: streaming || ending || transcribing ? 'not-allowed' : 'pointer',
                       transition: 'background 200ms, color 200ms',
                     }}
                   >
-                    <AudioOutlined style={{ fontSize: 16 }} />
+                    {transcribing ? <LoadingOutlined style={{ fontSize: 16 }} /> : <AudioOutlined style={{ fontSize: 16 }} />}
                   </button>
                 </Tooltip>
               )}
