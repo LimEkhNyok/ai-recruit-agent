@@ -39,7 +39,12 @@ app = FastAPI(
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://codetowork.net",
+        "https://www.codetowork.net",
+        "http://3.0.110.64",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
