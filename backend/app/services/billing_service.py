@@ -65,31 +65,35 @@ async def get_wallet_info(user_id: int, db: AsyncSession) -> dict:
 
 async def check_access(user_id: int, feature: str, mode: str, db: AsyncSession) -> tuple[bool, str]:
     """Check access and deduct fixed credits upfront. Returns (allowed, reason)."""
-    if mode == "byok":
-        return True, "ok"
+    # 暂不收费，所有模式直接放行
+    return True, "free"
 
-    sub = await get_active_subscription(user_id, db)
-    if sub is not None:
-        return True, "subscription"
-
-    wallet = await get_or_create_wallet(user_id, db)
-    _maybe_reset_daily_quiz(wallet)
-
-    if feature == "quiz" and wallet.free_quiz_remaining > 0:
-        wallet.free_quiz_remaining -= 1
-        await db.commit()
-        return True, "free_quiz"
-
-    cost = FEATURE_CREDITS_COST.get(feature, 0)
-    if wallet.balance >= cost and cost > 0:
-        wallet.balance -= cost
-        await db.commit()
-        return True, "balance"
-
-    if feature == "quiz":
-        return False, "今日免费刷题额度已用尽，请充值或订阅后继续刷题"
-
-    return False, f"积分不足（需要 {cost} 积分），请充值或订阅"
+    # --- 以下为收费逻辑，后续恢复时取消注释 ---
+    # if mode == "byok":
+    #     return True, "ok"
+    #
+    # sub = await get_active_subscription(user_id, db)
+    # if sub is not None:
+    #     return True, "subscription"
+    #
+    # wallet = await get_or_create_wallet(user_id, db)
+    # _maybe_reset_daily_quiz(wallet)
+    #
+    # if feature == "quiz" and wallet.free_quiz_remaining > 0:
+    #     wallet.free_quiz_remaining -= 1
+    #     await db.commit()
+    #     return True, "free_quiz"
+    #
+    # cost = FEATURE_CREDITS_COST.get(feature, 0)
+    # if wallet.balance >= cost and cost > 0:
+    #     wallet.balance -= cost
+    #     await db.commit()
+    #     return True, "balance"
+    #
+    # if feature == "quiz":
+    #     return False, "今日免费刷题额度已用尽，请充值或订阅后继续刷题"
+    #
+    # return False, f"积分不足（需要 {cost} 积分），请充值或订阅"
 
 
 async def recharge(user_id: int, tier: str, db: AsyncSession) -> dict:

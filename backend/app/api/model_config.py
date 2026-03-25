@@ -33,7 +33,7 @@ async def get_config(
 ):
     config = await _get_user_config(current_user.id, db)
     if config is None:
-        return ModelConfigResponse(mode="byok")
+        return ModelConfigResponse(mode="platform")
 
     api_key_masked = None
     if config.api_key_encrypted:

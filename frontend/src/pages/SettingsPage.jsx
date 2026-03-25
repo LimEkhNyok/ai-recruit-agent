@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Input, Button, Tag, Space, Modal, message, Row, Col } from 'antd'
+import { Input, Button, Tag, Space, message } from 'antd'
 import { getConfig, saveConfig, testConfig, getFeatures } from '../api/modelConfig'
 import { getWallet, recharge, subscribe } from '../api/billing'
 import useBillingStore from '../store/useBillingStore'
@@ -308,13 +308,14 @@ export default function SettingsPage() {
             supports_embedding: cfg.supports_embedding,
           })
         }
-        if (cfg.mode === 'platform' && cfg.last_test_status) {
-          setShowPricing(true)
-          try {
-            const walletRes = await getWallet()
-            setWallet(walletRes.data)
-          } catch {}
-        }
+        // 暂不收费，跳过加载计费信息
+        // if (cfg.mode === 'platform' && cfg.last_test_status) {
+        //   setShowPricing(true)
+        //   try {
+        //     const walletRes = await getWallet()
+        //     setWallet(walletRes.data)
+        //   } catch {}
+        // }
       } catch {}
       setLoading(false)
     }
@@ -362,17 +363,18 @@ export default function SettingsPage() {
       setFeatures(featRes.data)
       message.success(t('settings.saveSuccess'))
 
-      if (mode === 'platform') {
-        setShowPricing(true)
-        try {
-          const walletRes = await getWallet()
-          setWallet(walletRes.data)
-          refreshGlobalWallet()
-        } catch {}
-      } else {
-        setShowPricing(false)
-        refreshGlobalWallet()
-      }
+      // 暂不收费，跳过计费逻辑
+      // if (mode === 'platform') {
+      //   setShowPricing(true)
+      //   try {
+      //     const walletRes = await getWallet()
+      //     setWallet(walletRes.data)
+      //     refreshGlobalWallet()
+      //   } catch {}
+      // } else {
+      //   setShowPricing(false)
+      //   refreshGlobalWallet()
+      // }
     } catch (err) {
       message.error(err.response?.data?.detail || t('settings.saveFailed'))
     } finally {
@@ -484,13 +486,7 @@ export default function SettingsPage() {
           }}
         >
           <button
-            onClick={() => {
-              Modal.info({
-                title: t('settings.platformNotReady'),
-                content: t('settings.platformModeDesc'),
-                okText: t('common.confirm'),
-              })
-            }}
+            onClick={() => { setMode('platform'); setTestResult(null) }}
             style={{
               padding: '10px 24px',
               fontFamily: "'DM Sans', sans-serif",
@@ -501,22 +497,9 @@ export default function SettingsPage() {
               transition: 'all 0.2s',
               background: mode === 'platform' ? 'var(--ctw-text-primary)' : 'transparent',
               color: mode === 'platform' ? 'var(--ctw-surface-card)' : 'var(--ctw-text-secondary)',
-              opacity: 0.5,
             }}
           >
             {t('settings.platformMode')}
-            <span
-              style={{
-                marginLeft: 8,
-                fontSize: 11,
-                padding: '1px 6px',
-                borderRadius: 4,
-                border: '1px solid var(--ctw-warning)',
-                color: 'var(--ctw-warning)',
-              }}
-            >
-              {t('settings.platformNotReady')}
-            </span>
           </button>
           <button
             onClick={() => { setMode('byok'); setTestResult(null) }}
@@ -643,8 +626,8 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Platform not ready */}
-      {mode === 'platform' && !showPricing && (
+      {/* 暂未开放提示（暂不收费期间注释掉，后续可能改回）*/}
+      {/* {mode === 'platform' && !showPricing && (
         <div
           style={{
             border: '1px solid var(--ctw-warning)',
@@ -658,10 +641,10 @@ export default function SettingsPage() {
             {t('settings.platformNotReady')}
           </p>
         </div>
-      )}
+      )} */}
 
-      {/* Pricing */}
-      {mode === 'platform' && showPricing && (
+      {/* Pricing（暂不收费，注释掉）*/}
+      {/* {mode === 'platform' && showPricing && (
         <div
           style={{
             border: '1px solid var(--ctw-border-default)',
@@ -683,7 +666,7 @@ export default function SettingsPage() {
             t={t}
           />
         </div>
-      )}
+      )} */}
 
       {/* Feature Availability */}
       {features && (
