@@ -60,7 +60,7 @@ async def callback(
 ):
     verified_provider = await verify_state(state)
     if verified_provider is None or verified_provider != provider:
-        raise HTTPException(status_code=400, detail="Invalid or expired state")
+        return RedirectResponse(url=f"/api/auth/oauth/{provider}/authorize")
 
     config = get_provider_config(provider)
     if config is None:
