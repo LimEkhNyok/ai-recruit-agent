@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 import httpx
 
 from app.config import get_settings
-from app.redis import get_redis
+from app.redis import redis_client
 
 
 OAUTH_STATE_PREFIX = "oauth_state:"
@@ -42,12 +42,12 @@ def build_authorize_url(provider: dict, redirect_uri: str) -> tuple[str, str]:
 
 
 async def save_state(state: str, provider_name: str):
-    r = await get_redis()
+    r = redis_client
     await r.set(OAUTH_STATE_PREFIX + state, provider_name, ex=OAUTH_STATE_EXPIRE)
 
 
 async def verify_state(state: str) -> str | None:
-    r = await get_redis()
+    r = redis_client
     provider_name = await r.get(OAUTH_STATE_PREFIX + state)
     if provider_name:
         await r.delete(OAUTH_STATE_PREFIX + state)
@@ -87,14 +87,14 @@ async def fetch_userinfo(provider: dict, access_token: str) -> dict:
 
 async def save_pending_oauth(oauth_info: dict) -> str:
     key = secrets.token_urlsafe(32)
-    r = await get_redis()
+    r = redis_client
     import json
     await r.set(OAUTH_PENDING_PREFIX + key, json.dumps(oauth_info), ex=OAUTH_PENDING_EXPIRE)
     return key
 
 
 async def get_pending_oauth(key: str) -> dict | None:
-    r = await get_redis()
+    r = redis_client
     data = await r.get(OAUTH_PENDING_PREFIX + key)
     if data:
         await r.delete(OAUTH_PENDING_PREFIX + key)
