@@ -88,7 +88,12 @@
     "uploadResumeHint": "Please click the \"Upload Resume\" button in the header",
     "configBannerAction": "Go to Settings",
     "modelSettings": "Model Settings",
-    "availableFeatures": "Available Features"
+    "availableFeatures": "Available Features",
+    "credits": "Credits",
+    "freeQuizToday": "Free Quiz Today",
+    "byokLabel": "Your Own API Key",
+    "platformLabel": "Platform Model",
+    "uploadResume": "Upload Resume"
   },
   "auth": {
     "loginTitle": "Log In",
