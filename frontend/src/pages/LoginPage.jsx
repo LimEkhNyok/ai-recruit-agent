@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Form, Input, Button, message } from 'antd'
 import { MailOutlined, LockOutlined } from '@ant-design/icons'
 import { useNavigate, Link } from 'react-router-dom'
@@ -9,6 +9,7 @@ import LogoMark from '../components/LogoMark'
 import LanguageToggle from '../components/LanguageToggle'
 import FadeIn from '../components/motion/FadeIn'
 import StaggerContainer, { StaggerItem } from '../components/motion/StaggerContainer'
+import { getOAuthProviders } from '../api/auth'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
@@ -17,6 +18,13 @@ export default function LoginPage() {
   const { t } = useTranslation()
   const theme = useThemeStore((s) => s.theme)
   const isDark = theme === 'dark'
+  const [oauthProviders, setOauthProviders] = useState([])
+
+  useEffect(() => {
+    getOAuthProviders()
+      .then((res) => setOauthProviders(res.data || []))
+      .catch(() => {})
+  }, [])
 
   const onFinish = async (values) => {
     setLoading(true)
@@ -217,6 +225,43 @@ export default function LoginPage() {
               </Link>
             </div>
           </StaggerItem>
+
+          {oauthProviders.length > 0 && (
+            <StaggerItem>
+              <div style={{ marginTop: 24 }}>
+                <div className="flex items-center" style={{ marginBottom: 16 }}>
+                  <div style={{ flex: 1, height: 1, background: 'var(--ctw-border-default)' }} />
+                  <span style={{ padding: '0 12px', fontSize: 13, color: 'var(--ctw-text-tertiary)' }}>
+                    {t('auth.oauthDivider')}
+                  </span>
+                  <div style={{ flex: 1, height: 1, background: 'var(--ctw-border-default)' }} />
+                </div>
+                <div className="flex flex-col gap-2">
+                  {oauthProviders.map((p) => (
+                    <Button
+                      key={p.name}
+                      block
+                      onClick={() => {
+                        window.location.href = `/api/auth/oauth/${p.name}/authorize`
+                      }}
+                      style={{
+                        height: 44,
+                        borderRadius: 8,
+                        border: '1px solid var(--ctw-border-default)',
+                        background: 'transparent',
+                        color: 'var(--ctw-text-primary)',
+                        fontWeight: 500,
+                        fontSize: 15,
+                        fontFamily: "'DM Sans', sans-serif",
+                      }}
+                    >
+                      {p.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </StaggerItem>
+          )}
         </StaggerContainer>
       </div>
 

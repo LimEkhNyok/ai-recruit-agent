@@ -139,7 +139,13 @@
     "codeSent": "Verification code sent, please check your email",
     "codeFailed": "Failed to send verification code",
     "resetSuccess": "Password reset successful, please log in with your new password",
-    "resetFailed": "Password reset failed"
+    "resetFailed": "Password reset failed",
+    "oauthDivider": "Or sign in with",
+    "oauthRegisterTitle": "Complete Your Account",
+    "oauthRegisterSubtitle": "Set up email and password for direct login",
+    "oauthRegisterSubmit": "Complete Registration",
+    "emailAlreadyUsed": "Email already registered, please log in with password",
+    "codeSendFailed": "Failed to send verification code"
   },
   "assessment": {
     "title": "AI Career Assessment",

@@ -1,3 +1,4 @@
+import json
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 
@@ -19,7 +20,18 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_FROM_EMAIL: str = "noreply@smartmeal.longstock.com"
 
+    OAUTH_PROVIDERS: str = ""
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+
+    def get_oauth_providers(self) -> list[dict]:
+        if not self.OAUTH_PROVIDERS:
+            return []
+        try:
+            providers = json.loads(self.OAUTH_PROVIDERS)
+            return providers if isinstance(providers, list) else []
+        except json.JSONDecodeError:
+            return []
 
 
 @lru_cache

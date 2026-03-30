@@ -139,7 +139,13 @@
     "codeSent": "验证码已发送，请查收邮箱",
     "codeFailed": "发送验证码失败",
     "resetSuccess": "密码重置成功，请用新密码登录",
-    "resetFailed": "密码重置失败"
+    "resetFailed": "密码重置失败",
+    "oauthDivider": "或通过以下方式登录",
+    "oauthRegisterTitle": "完善账号信息",
+    "oauthRegisterSubtitle": "设置邮箱和密码后，即可直接登录",
+    "oauthRegisterSubmit": "完成注册",
+    "emailAlreadyUsed": "该邮箱已注册，请使用密码登录",
+    "codeSendFailed": "发送验证码失败"
   },
   "assessment": {
     "title": "AI 职业测评",

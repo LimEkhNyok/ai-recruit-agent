@@ -16,6 +16,8 @@ import QuizPage from './pages/QuizPage'
 import AchievementPage from './pages/AchievementPage'
 import SettingsPage from './pages/SettingsPage'
 import UsagePage from './pages/UsagePage'
+import OAuthCompletePage from './pages/OAuthCompletePage'
+import OAuthRegisterPage from './pages/OAuthRegisterPage'
 
 function PageTransition({ children }) {
   return (
@@ -57,6 +59,18 @@ export default function App() {
           element={
             <PageTransition>
               <ForgotPasswordPage />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/oauth/complete"
+          element={<OAuthCompletePage />}
+        />
+        <Route
+          path="/oauth/complete-register"
+          element={
+            <PageTransition>
+              <OAuthRegisterPage />
             </PageTransition>
           }
         />
