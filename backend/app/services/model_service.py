@@ -1,4 +1,5 @@
 import json
+import re
 import asyncio
 import hashlib
 import time
@@ -71,6 +72,17 @@ class ModelService:
         except Exception:
             pass
 
+    def _strip_leading_english(self, text: str) -> str:
+        """中文模式下，去掉模型回复开头的英文前言。"""
+        if self._language != "zh":
+            return text
+        lines = text.split('\n')
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped and re.match(r'[\u4e00-\u9fff]', stripped):
+                return '\n'.join(lines[i:])
+        return text
+
     def _history_to_messages(
         self, system_prompt: str, history: list[dict] | None, user_message: str
     ) -> list[dict]:
@@ -111,7 +123,7 @@ class ModelService:
                     getattr(u, "total_tokens", None) if u else None,
                     ms, True,
                 )
-                return response.choices[0].message.content
+                return self._strip_leading_english(response.choices[0].message.content)
             except asyncio.TimeoutError:
                 if attempt < MAX_RETRIES - 1:
                     await asyncio.sleep(RETRY_DELAY * (attempt + 1))
