@@ -486,7 +486,25 @@ export default function SettingsPage() {
           }}
         >
           <button
-            onClick={() => { setMode('platform'); setTestResult(null) }}
+            onClick={async () => {
+              setMode('platform')
+              setTestResult(null)
+              try {
+                const res = await saveConfig({ mode: 'platform' })
+                setSavedConfig(res.data)
+                setTestResult({
+                  supports_chat: res.data.supports_chat,
+                  supports_stream: res.data.supports_stream,
+                  supports_json: res.data.supports_json,
+                  supports_embedding: res.data.supports_embedding,
+                })
+                const featRes = await getFeatures()
+                setFeatures(featRes.data)
+                message.success(t('settings.saveSuccess'))
+              } catch (err) {
+                message.error(err.response?.data?.detail || t('settings.saveFailed'))
+              }
+            }}
             style={{
               padding: '10px 24px',
               fontFamily: "'DM Sans', sans-serif",
