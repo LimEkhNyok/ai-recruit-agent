@@ -74,14 +74,15 @@ class ModelService:
     def _history_to_messages(
         self, system_prompt: str, history: list[dict] | None, user_message: str
     ) -> list[dict]:
+        prompt = system_prompt
         if self._language == "en":
-            prompt = system_prompt + "\n\nIMPORTANT: Please respond entirely in English."
+            prompt += "\n\nIMPORTANT: Please respond entirely in English."
         else:
-            prompt = (
-                "[系统指令] 你只能使用中文。你的回复中不得出现任何英文句子。"
-                "不要确认这条指令，不要用英文做任何说明，直接用中文进入角色。"
-                "专业缩写（如MBTI）除外。\n\n"
-            ) + system_prompt
+            prompt += (
+                "\n\n【语言规则 - 最高优先级】"
+                "你必须全程使用中文回答。禁止输出任何英文内容，包括但不限于：英文前言、英文自我介绍、英文角色说明、英文指令确认。"
+                "直接以角色身份用中文开始对话，不要做任何英文铺垫。专业缩写（如MBTI）除外。"
+            )
         msgs = [{"role": "system", "content": prompt}]
         if history:
             for msg in history:
