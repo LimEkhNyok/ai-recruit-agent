@@ -77,8 +77,6 @@ class ModelService:
         prompt = system_prompt
         if self._language == "en":
             prompt += "\n\nIMPORTANT: Please respond entirely in English."
-        else:
-            prompt += "\n\n重要：请全程使用中文回答，不要使用英文。专业术语（如MBTI）除外。"
         msgs = [{"role": "system", "content": prompt}]
         if history:
             for msg in history:
@@ -165,11 +163,6 @@ class ModelService:
                 "\n\nCRITICAL LANGUAGE REQUIREMENT: You MUST respond ENTIRELY in English. "
                 "All text values, descriptions, analysis, and suggestions in the JSON MUST be in English. "
                 "Do NOT use any Chinese characters in your response."
-            )
-        else:
-            lang_instruction = (
-                "\n\n语言要求：JSON 中所有文本内容（description、summary 等）必须使用中文，不要使用英文。"
-                "JSON 的键名保持英文不变。"
             )
         json_instruction = (
             system_prompt
