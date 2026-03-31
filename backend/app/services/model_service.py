@@ -31,6 +31,7 @@ class ModelService:
         self._feature: str = "unknown"
         self._session_id: str | None = None
         self._language: str = "zh"
+        self._agentpit_access_token: str | None = None
 
     @property
     def language(self) -> str:
@@ -44,6 +45,10 @@ class ModelService:
         self._user_id = user_id
         self._mode = mode
         self._feature = feature
+        return self
+
+    def set_agentpit_token(self, access_token: str | None):
+        self._agentpit_access_token = access_token
         return self
 
     def set_session(self, session_id: str):
@@ -69,6 +74,34 @@ class ModelService:
                 success=success,
                 error_message=error,
             )
+        except Exception:
+            pass
+
+    async def _report_agentpit_usage(self, input_tokens: int | None, output_tokens: int | None):
+        if self._mode != "platform" or not self._agentpit_access_token:
+            return
+        if not input_tokens and not output_tokens:
+            return
+        try:
+            import httpx
+            settings = get_settings()
+            providers = settings.get_oauth_providers()
+            agentpit = next((p for p in providers if p.get("name") == "agentpit"), None)
+            if not agentpit:
+                return
+            async with httpx.AsyncClient(timeout=10) as client:
+                await client.post(
+                    "https://agentpit.io/api/v1/partner/report-usage",
+                    json={
+                        "client_id": agentpit["client_id"],
+                        "client_secret": agentpit["client_secret"],
+                        "access_token": self._agentpit_access_token,
+                        "input_tokens": input_tokens or 0,
+                        "output_tokens": output_tokens or 0,
+                        "model_name": self._model,
+                        "request_path": f"/api/{self._feature}",
+                    },
+                )
         except Exception:
             pass
 
@@ -117,12 +150,15 @@ class ModelService:
                 )
                 ms = int((time.monotonic() - t0) * 1000)
                 u = getattr(response, "usage", None)
+                input_tokens = getattr(u, "prompt_tokens", None) if u else None
+                output_tokens = getattr(u, "completion_tokens", None) if u else None
                 await self._log(
-                    getattr(u, "prompt_tokens", None) if u else None,
-                    getattr(u, "completion_tokens", None) if u else None,
+                    input_tokens,
+                    output_tokens,
                     getattr(u, "total_tokens", None) if u else None,
                     ms, True,
                 )
+                asyncio.create_task(self._report_agentpit_usage(input_tokens, output_tokens))
                 return self._strip_leading_english(response.choices[0].message.content)
             except asyncio.TimeoutError:
                 if attempt < MAX_RETRIES - 1:
@@ -207,9 +243,12 @@ class ModelService:
                 result = json.loads(text)
                 ms = int((time.monotonic() - t0) * 1000)
                 u = getattr(response, "usage", None)
+                input_tokens = getattr(u, "prompt_tokens", None) if u else None
+                output_tokens = getattr(u, "completion_tokens", None) if u else None
+                asyncio.create_task(self._report_agentpit_usage(input_tokens, output_tokens))
                 await self._log(
-                    getattr(u, "prompt_tokens", None) if u else None,
-                    getattr(u, "completion_tokens", None) if u else None,
+                    input_tokens,
+                    output_tokens,
                     getattr(u, "total_tokens", None) if u else None,
                     ms, True,
                 )

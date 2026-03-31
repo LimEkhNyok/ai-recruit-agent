@@ -100,6 +100,8 @@ async def callback(
     oauth_account = result.scalar_one_or_none()
 
     if oauth_account and oauth_account.user_id:
+        oauth_account.provider_access_token = access_token
+        await db.commit()
         tokens = await _create_tokens(oauth_account.user_id, db)
         return RedirectResponse(
             url=f"{FRONTEND_BASE}/oauth/complete?token={tokens.access_token}&refresh_token={tokens.refresh_token}"
@@ -111,10 +113,14 @@ async def callback(
             provider_user_id=provider_user_id,
             provider_email=provider_email,
             provider_name=provider_name,
+            provider_access_token=access_token,
         )
         db.add(oauth_account)
         await db.commit()
         await db.refresh(oauth_account)
+    else:
+        oauth_account.provider_access_token = access_token
+        await db.commit()
 
     oauth_key = await save_pending_oauth({
         "oauth_account_id": oauth_account.id,

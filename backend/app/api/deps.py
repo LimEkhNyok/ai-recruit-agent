@@ -10,6 +10,7 @@ from app.database import AsyncSessionLocal
 from app.config import get_settings
 from app.models.user import User
 from app.models.model_config import UserModelConfig
+from app.models.oauth_account import OAuthAccount
 from app.services.model_service import ModelService, get_model_service_for_user
 from app.services.capability_test import FEATURE_REQUIREMENTS, get_available_features
 from app.services.billing_service import check_access
@@ -51,6 +52,18 @@ async def get_model_service(
     service = await get_model_service_for_user(current_user, db)
     lang = request.headers.get("accept-language", "zh")
     service.set_language("en" if lang.startswith("en") else "zh")
+
+    if service._mode == "platform":
+        result = await db.execute(
+            select(OAuthAccount).where(
+                OAuthAccount.user_id == current_user.id,
+                OAuthAccount.provider == "agentpit",
+            )
+        )
+        oauth_account = result.scalar_one_or_none()
+        if oauth_account and oauth_account.provider_access_token:
+            service.set_agentpit_token(oauth_account.provider_access_token)
+
     return service
 
 
